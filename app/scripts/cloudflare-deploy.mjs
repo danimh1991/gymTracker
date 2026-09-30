@@ -25,6 +25,12 @@ const config = JSON.parse(readFileSync(generatedWranglerPath, "utf8"));
 // Reuse the existing Worker that already owns danieta.com/gymtracker*.
 config.name = "gymtracker";
 config.workers_dev = false;
+config.vars = {
+  ...config.vars,
+  GYM_SINGLE_USER_MODE: "true",
+  GYM_SINGLE_USER_ID: "danieta-gymtracker",
+  GYM_SINGLE_USER_EMAIL: "gymtracker@danieta.com",
+};
 config.routes = [
   {
     pattern: "danieta.com/gymtracker*",

@@ -24,3 +24,5 @@ La raíz del repositorio contiene un `package.json` puente y `wrangler.jsonc`, p
 - Root directory: vacío (raíz del repositorio)
 
 El build instala de forma reproducible las dependencias de `app/`, compila con la ruta base `/gymtracker` y despliega el Worker `gymtracker` con la D1 `gym-tracker-db`.
+
+El despliegue de Cloudflare funciona temporalmente en modo de usuario único y sin login. Toda persona con acceso a `danieta.com/gymtracker` comparte el mismo espacio de datos. Sites mantiene su autenticación independiente.

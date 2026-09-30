@@ -17,26 +17,29 @@ type AccessAwareExecutionContext = ExecutionContext<{
 
 async function withCloudflareAccessIdentity(
   request: Request,
+  env: Cloudflare.Env,
   ctx: AccessAwareExecutionContext,
 ): Promise<Request> {
-  if (request.headers.has("oai-authenticated-user-id") || !ctx.access) {
-    return request;
-  }
+  if (request.headers.has("oai-authenticated-user-id")) return request;
 
-  const identity = await ctx.access.getIdentity();
-  const email = identity?.email?.trim().toLowerCase();
+  const identity = ctx.access ? await ctx.access.getIdentity() : null;
+  const accessEmail = identity?.email?.trim().toLowerCase();
+  const singleUser = env.GYM_SINGLE_USER_MODE === "true";
+  const email = accessEmail ??
+    (singleUser ? env.GYM_SINGLE_USER_EMAIL ?? "gymtracker@danieta.com" : null);
   if (!email) return request;
+  const userId = accessEmail
+    ? `cloudflare:${accessEmail}`
+    : env.GYM_SINGLE_USER_ID ?? "danieta-gymtracker";
 
   const authenticatedRequest = new Request(request);
-  authenticatedRequest.headers.set(
-    "oai-authenticated-user-id",
-    `cloudflare:${email}`,
-  );
+  authenticatedRequest.headers.set("oai-authenticated-user-id", userId);
   authenticatedRequest.headers.set("oai-authenticated-user-email", email);
-  if (identity?.name) {
+  const fullName = identity?.name ?? (singleUser ? "Gym Tracker" : null);
+  if (fullName) {
     authenticatedRequest.headers.set(
       "oai-authenticated-user-full-name",
-      encodeURIComponent(identity.name),
+      encodeURIComponent(fullName),
     );
     authenticatedRequest.headers.set(
       "oai-authenticated-user-full-name-encoding",
@@ -67,7 +70,11 @@ export default {
         },
       };
     }
-    const authenticatedRequest = await withCloudflareAccessIdentity(request, ctx);
+    const authenticatedRequest = await withCloudflareAccessIdentity(
+      request,
+      env,
+      ctx,
+    );
     return runWithConnectorBinding(binding, () =>
       handler.fetch(authenticatedRequest, env, ctx),
     );

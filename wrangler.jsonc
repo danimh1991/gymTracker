@@ -6,6 +6,11 @@
   "compatibility_flags": ["nodejs_compat"],
   "no_bundle": true,
   "workers_dev": false,
+  "vars": {
+    "GYM_SINGLE_USER_MODE": "true",
+    "GYM_SINGLE_USER_ID": "danieta-gymtracker",
+    "GYM_SINGLE_USER_EMAIL": "gymtracker@danieta.com"
+  },
   "routes": [
     {
       "pattern": "danieta.com/gymtracker*",
