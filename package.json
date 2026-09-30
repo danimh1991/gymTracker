@@ -1,0 +1,8 @@
+{
+  "name": "gym-tracker-cloudflare-build",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix app ci && npm --prefix app run build:cloudflare",
+    "deploy": "npx wrangler deploy --config wrangler.jsonc"
+  }
+}

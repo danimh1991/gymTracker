@@ -1,0 +1,35 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "gymtracker",
+  "main": "app/dist/server/index.js",
+  "compatibility_date": "2026-05-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "no_bundle": true,
+  "workers_dev": false,
+  "routes": [
+    {
+      "pattern": "danieta.com/gymtracker*",
+      "zone_name": "danieta.com"
+    }
+  ],
+  "assets": {
+    "directory": "app/dist/client"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "gym-tracker-db",
+      "database_id": "cc659d7b-76be-4c3c-bbfd-0d0872c9ece8",
+      "migrations_dir": "app/drizzle"
+    }
+  ],
+  "rules": [
+    {
+      "type": "ESModule",
+      "globs": ["**/*.js", "**/*.mjs"]
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
