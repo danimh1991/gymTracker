@@ -10,6 +10,17 @@ const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
 
 const { d1, r2 } = hostingConfig;
 
+/**
+ * Base path used when deploying the app under a subpath.
+ *
+ * Cloudflare:
+ *   APP_BASE_PATH=/gymtracker
+ *
+ * Local/Codex Sites:
+ *   APP_BASE_PATH is normally undefined, so the app remains mounted at "/".
+ */
+const APP_BASE_PATH = (process.env.APP_BASE_PATH ?? "").replace(/\/+$/, "");
+
 // macOS Seatbelt blocks FSEvents, so Codex previews need polling for HMR.
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
 const managedLinux = readExecutionProfile() === "managed-linux";
@@ -54,21 +65,45 @@ export default defineConfig(async ({ command }) => {
   return {
     server: {
       ...(managedLinux
-        ? { host: "0.0.0.0", allowedHosts: ["terminal.local"] }
+        ? {
+            host: "0.0.0.0",
+            allowedHosts: ["terminal.local"],
+          }
         : {}),
       ...(isCodexSeatbeltSandbox
-        ? { watch: { useFsEvents: false, usePolling: true } }
+        ? {
+            watch: {
+              useFsEvents: false,
+              usePolling: true,
+            },
+          }
         : {}),
     },
+
     plugins: [
-      vinext(),
-      sites({ mockAuth: !managedLinux }),
+      vinext({
+        nextConfig: {
+          basePath: APP_BASE_PATH,
+        },
+      }),
+
+      sites({
+        mockAuth: !managedLinux,
+      }),
+
       connectorPreview(),
+
       cloudflare({
-        viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
+        viteEnvironment: {
+          name: "rsc",
+          childEnvironments: ["ssr"],
+        },
+
         inspectorPort: false,
+
         config: {
           ...localBindingConfig,
+
           ...(command === "serve"
             ? {
                 services: [
@@ -81,6 +116,7 @@ export default defineConfig(async ({ command }) => {
               }
             : {}),
         },
+
         ...(command === "serve"
           ? {
               auxiliaryWorkers: [
