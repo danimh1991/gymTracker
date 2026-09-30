@@ -22,7 +22,8 @@ run(process.execPath, ["scripts/run-framework.mjs", "build"], {
 });
 
 const config = JSON.parse(readFileSync(generatedWranglerPath, "utf8"));
-config.name = "gym-tracker";
+// Reuse the existing Worker that already owns danieta.com/gymtracker*.
+config.name = "gymtracker";
 config.workers_dev = false;
 config.routes = [
   {
