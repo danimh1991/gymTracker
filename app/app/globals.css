@@ -1485,6 +1485,186 @@ textarea {
   text-align: center;
   color: var(--muted);
 }
+.template-toolbar,
+.save-template,
+.library-actions,
+.inline-add {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.template-toolbar label,
+.save-template label {
+  display: grid;
+  gap: 6px;
+  flex: 1;
+  font-size: 13px;
+}
+.template-toolbar select,
+.save-template input,
+.plan-row select,
+.plan-row input,
+.active-exercise-editor select,
+.active-exercise-editor input,
+.inline-add select {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  padding: 8px 10px;
+}
+.plan-editor {
+  display: grid;
+  gap: 10px;
+}
+.plan-row {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 14px;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  gap: 14px;
+  align-items: end;
+}
+.plan-main {
+  display: flex;
+  gap: 10px;
+  align-items: end;
+}
+.plan-main label {
+  display: grid;
+  gap: 5px;
+  flex: 1;
+  font-size: 12px;
+}
+.plan-targets {
+  display: flex;
+  gap: 8px;
+  align-items: end;
+}
+.plan-targets label {
+  display: grid;
+  gap: 5px;
+  width: 68px;
+  font-size: 12px;
+}
+.plan-targets input {
+  width: 100%;
+}
+.add-plan {
+  justify-self: start;
+}
+.save-template {
+  padding: 15px;
+  background: #eef2e8;
+  border-radius: 8px;
+}
+.session-editor {
+  padding: 18px;
+  background: #eef2e8;
+  border-radius: 9px;
+  margin-bottom: 15px;
+}
+.session-editor > p {
+  font-size: 13px;
+  color: var(--muted);
+}
+.inline-add select {
+  flex: 1;
+  min-width: 220px;
+}
+.active-exercise-editor {
+  display: grid;
+  grid-template-columns: minmax(170px, 1fr) repeat(3, 72px) 42px;
+  gap: 8px;
+  align-items: end;
+  margin-bottom: 18px;
+  padding: 13px;
+  background: #f2f5ed;
+  border-radius: 7px;
+}
+.active-exercise-editor label {
+  display: grid;
+  gap: 5px;
+  font-size: 11px;
+}
+.saved-set-wrap {
+  display: flex;
+  background: #eff5e6;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.saved-set-wrap > button:first-child {
+  flex: 1;
+  background: transparent;
+}
+.saved-set-wrap.failure-row {
+  background: #fff0e7;
+}
+.clone-set {
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #536d31;
+  border-left: 1px solid #dce7cc;
+}
+.file-button {
+  cursor: pointer;
+}
+.file-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.quick-add {
+  margin-top: 18px;
+  padding: 18px;
+  background: #f2f5ed;
+  border-radius: 8px;
+}
+.quick-add .primary {
+  margin-top: 10px;
+}
+@media (max-width: 760px) {
+  .plan-row {
+    grid-template-columns: 1fr;
+  }
+  .plan-targets {
+    flex-wrap: wrap;
+  }
+  .plan-targets label {
+    flex: 1;
+    min-width: 56px;
+  }
+  .active-exercise-editor {
+    grid-template-columns: 1fr repeat(3, 62px) 42px;
+  }
+  .active-exercise-editor label:first-child {
+    grid-column: 1/-1;
+  }
+  .template-toolbar > * {
+    width: 100%;
+  }
+  .saved-set-wrap {
+    align-items: stretch;
+  }
+  .clone-set {
+    font-size: 0;
+  }
+  .clone-set svg {
+    width: 18px;
+    height: 18px;
+  }
+  .library-actions > * {
+    width: 100%;
+  }
+}
 @media (max-width: 1100px) {
   .demo-card {
     flex-direction: column;

@@ -53,6 +53,7 @@ export function SetEditor({
   saved,
   previous,
   copied,
+  clone,
   busy,
   onSave,
 }: {
@@ -61,21 +62,34 @@ export function SetEditor({
   saved?: WorkoutSet;
   previous?: WorkoutSet;
   copied?: WorkoutSet;
+  clone?: WorkoutSet;
   busy: boolean;
   onSave: (s: SetCommand) => Promise<boolean>;
 }) {
   const key = `gym-draft:${exercise.id}:${number}`;
   const base = {
-    value: String(saved?.reps ?? saved?.durationSeconds ?? ""),
+    value: String(
+      saved?.reps ??
+        saved?.durationSeconds ??
+        clone?.reps ??
+        clone?.durationSeconds ??
+        "",
+    ),
     load: String(
       exercise.supportsAssistance
-        ? (saved?.assistanceWeight ?? copied?.assistanceWeight ?? "")
+        ? (saved?.assistanceWeight ??
+            clone?.assistanceWeight ??
+            copied?.assistanceWeight ??
+            "")
         : exercise.bodyweightExercise
-          ? (saved?.addedWeight ?? copied?.addedWeight ?? 0)
-          : (saved?.weight ?? copied?.weight ?? ""),
+          ? (saved?.addedWeight ??
+            clone?.addedWeight ??
+            copied?.addedWeight ??
+            0)
+          : (saved?.weight ?? clone?.weight ?? copied?.weight ?? ""),
     ),
-    rir: saved?.RIR ?? null,
-    notes: saved?.notes ?? "",
+    rir: saved?.RIR ?? clone?.RIR ?? null,
+    notes: saved?.notes ?? clone?.notes ?? "",
   };
   const [draft, setDraft] = useState(base),
     [restored, setRestored] = useState(false);
@@ -83,7 +97,7 @@ export function SetEditor({
   useEffect(() => {
     try {
       const value = localStorage.getItem(key);
-      if (value && !saved) {
+      if (value && !saved && !clone) {
         const parsed = JSON.parse(value);
         if (
           typeof parsed.value === "string" &&
@@ -123,6 +137,11 @@ export function SetEditor({
       {restored && (
         <p className="small notice">
           Borrador recuperado. Pulsa guardar para registrarlo.
+        </p>
+      )}
+      {clone && (
+        <p className="small notice">
+          Serie clonada. Revisa los valores antes de confirmarla.
         </p>
       )}
       <div className="inputs-row">

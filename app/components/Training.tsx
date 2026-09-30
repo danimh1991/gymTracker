@@ -1,6 +1,17 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Check, ChevronDown, Copy, Timer, X } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  Copy,
+  CopyPlus,
+  Edit3,
+  Plus,
+  Save,
+  Timer,
+  Trash2,
+  X,
+} from "lucide-react";
 import type { Snapshot, Workout, WorkoutSet } from "../domain/types";
 import type { Command } from "../services/validation";
 import { previousSets, loadLabel, stats } from "../services/training";
@@ -28,6 +39,9 @@ export function Training({
     );
   const [open, setOpen] = useState(first?.id ?? exercises[0].id),
     [editing, setEditing] = useState<number | null>(null),
+    [clone, setClone] = useState<WorkoutSet | null>(null),
+    [editSession, setEditSession] = useState(false),
+    [newExercise, setNewExercise] = useState(data.exercises[0]?.id ?? ""),
     [copy, setCopy] = useState(false),
     [copyVersion, setCopyVersion] = useState(0),
     [seconds, setSeconds] = useState(150),
@@ -64,12 +78,22 @@ export function Training({
               : ""}
           </p>
         </div>
-        <button className="secondary" onClick={copyPrevious} disabled={busy}>
-          <Copy size={17} />
-          {copy
-            ? "Cargas anteriores precargadas"
-            : "Copiar entrenamiento anterior"}
-        </button>
+        <div className="button-row">
+          <button
+            className="secondary"
+            onClick={() => setEditSession(!editSession)}
+            disabled={busy}
+          >
+            <Edit3 size={17} />
+            {editSession ? "Cerrar edición" : "Editar sesión"}
+          </button>
+          <button className="secondary" onClick={copyPrevious} disabled={busy}>
+            <Copy size={17} />
+            {copy
+              ? "Cargas anteriores precargadas"
+              : "Copiar entrenamiento anterior"}
+          </button>
+        </div>
       </div>
       <progress
         aria-label="Series completadas"
@@ -106,6 +130,48 @@ export function Training({
         <span className="small muted">Dominadas y fondos: 2:30–3:00</span>
       </div>
       <div className="training-list">
+        {editSession && (
+          <div className="session-editor">
+            <p>
+              Puedes sustituir ejercicios y cambiar objetivos. Los ejercicios
+              con series guardadas se pueden ajustar, pero no quitar.
+            </p>
+            <div className="inline-add">
+              <select
+                value={newExercise}
+                onChange={(e) => setNewExercise(e.target.value)}
+              >
+                {data.exercises.map((e) => (
+                  <option value={e.id} key={e.id}>
+                    {e.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                className="secondary"
+                onClick={() =>
+                  void execute({
+                    action: "addWorkoutExercise",
+                    workoutId: workout.id,
+                    exercise: {
+                      exerciseId: newExercise,
+                      sets: 3,
+                      repMin: 8,
+                      repMax: 12,
+                      rir: "1–2",
+                      optional: 0,
+                      notes: "",
+                      priority: "Accesorio",
+                    },
+                  })
+                }
+              >
+                <Plus size={17} />
+                Añadir a la sesión
+              </button>
+            </div>
+          </div>
+        )}
         {exercises.map((e, i) => {
           const done = sets
               .filter((s) => s.workoutExerciseId === e.id)
@@ -158,6 +224,123 @@ export function Training({
               </button>
               {open === e.id && (
                 <div className="exercise-body">
+                  {editSession && (
+                    <div className="active-exercise-editor">
+                      <label>
+                        Ejercicio
+                        <select
+                          value={e.exerciseId}
+                          onChange={(ev) =>
+                            void execute({
+                              action: "updateWorkoutExercise",
+                              workoutExerciseId: e.id,
+                              exercise: {
+                                exerciseId: ev.target.value,
+                                sets: e.sets,
+                                repMin: e.repMin,
+                                repMax: e.repMax,
+                                rir: e.rir,
+                                optional: e.optional,
+                                notes: e.notes,
+                                priority: e.priority,
+                              },
+                            })
+                          }
+                        >
+                          {data.exercises.map((x) => (
+                            <option key={x.id} value={x.id}>
+                              {x.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        Series
+                        <input
+                          type="number"
+                          min={Math.max(1, done.length)}
+                          value={e.sets}
+                          onChange={(ev) =>
+                            void execute({
+                              action: "updateWorkoutExercise",
+                              workoutExerciseId: e.id,
+                              exercise: {
+                                exerciseId: e.exerciseId,
+                                sets: Number(ev.target.value),
+                                repMin: e.repMin,
+                                repMax: e.repMax,
+                                rir: e.rir,
+                                optional: e.optional,
+                                notes: e.notes,
+                                priority: e.priority,
+                              },
+                            })
+                          }
+                        />
+                      </label>
+                      <label>
+                        Mín.
+                        <input
+                          type="number"
+                          min="0"
+                          value={e.repMin}
+                          onChange={(ev) =>
+                            void execute({
+                              action: "updateWorkoutExercise",
+                              workoutExerciseId: e.id,
+                              exercise: {
+                                exerciseId: e.exerciseId,
+                                sets: e.sets,
+                                repMin: Number(ev.target.value),
+                                repMax: e.repMax,
+                                rir: e.rir,
+                                optional: e.optional,
+                                notes: e.notes,
+                                priority: e.priority,
+                              },
+                            })
+                          }
+                        />
+                      </label>
+                      <label>
+                        Máx.
+                        <input
+                          type="number"
+                          min={e.repMin}
+                          value={e.repMax}
+                          onChange={(ev) =>
+                            void execute({
+                              action: "updateWorkoutExercise",
+                              workoutExerciseId: e.id,
+                              exercise: {
+                                exerciseId: e.exerciseId,
+                                sets: e.sets,
+                                repMin: e.repMin,
+                                repMax: Number(ev.target.value),
+                                rir: e.rir,
+                                optional: e.optional,
+                                notes: e.notes,
+                                priority: e.priority,
+                              },
+                            })
+                          }
+                        />
+                      </label>
+                      <button
+                        className="icon-button danger"
+                        disabled={done.length > 0}
+                        title="Quitar ejercicio"
+                        onClick={() =>
+                          void execute({
+                            action: "removeWorkoutExercise",
+                            workoutExerciseId: e.id,
+                          })
+                        }
+                      >
+                        <Trash2 size={17} />
+                      </button>
+                    </div>
+                  )}
                   {(e.notes || library?.notes) && (
                     <p className="technique">
                       {library?.notes} {e.notes}
@@ -168,7 +351,10 @@ export function Training({
                     <strong>
                       {prev.length
                         ? prev
-                            .map((s) => s.reps ?? `${s.durationSeconds}s`)
+                            .map(
+                              (s) =>
+                                `${s.reps ?? `${s.durationSeconds}s`} · ${loadLabel(s, !!e.bodyweightExercise)}`,
+                            )
                             .join(" / ")
                         : "Aún sin registros"}
                     </strong>
@@ -216,21 +402,40 @@ export function Training({
                   {done.length > 0 && (
                     <div className="saved-sets">
                       {done.map((s) => (
-                        <button
-                          disabled={busy}
-                          className={s.RIR === 0 ? "failure-row" : ""}
+                        <div
+                          className={`saved-set-wrap ${s.RIR === 0 ? "failure-row" : ""}`}
                           key={s.id}
-                          onClick={() => setEditing(s.setNumber)}
                         >
-                          <Check size={15} />
-                          <span>Serie {s.setNumber}</span>
-                          <strong>{s.reps ?? `${s.durationSeconds} s`}</strong>
-                          <span>{loadLabel(s, !!e.bodyweightExercise)}</span>
-                          <span>
-                            {s.RIR === 0 ? "Fallo" : `RIR ${s.RIR ?? "—"}`}
-                          </span>
-                          <small>Editar</small>
-                        </button>
+                          <button
+                            disabled={busy}
+                            onClick={() => setEditing(s.setNumber)}
+                          >
+                            <Check size={15} />
+                            <span>Serie {s.setNumber}</span>
+                            <strong>
+                              {s.reps ?? `${s.durationSeconds} s`}
+                            </strong>
+                            <span>{loadLabel(s, !!e.bodyweightExercise)}</span>
+                            <span>
+                              {s.RIR === 0 ? "Fallo" : `RIR ${s.RIR ?? "—"}`}
+                            </span>
+                            <small>Editar</small>
+                          </button>
+                          {done.length < e.sets && (
+                            <button
+                              className="clone-set"
+                              title="Clonar en la siguiente serie"
+                              onClick={() => {
+                                setClone(s);
+                                setEditing(done.length + 1);
+                                setCopyVersion((v) => v + 1);
+                              }}
+                            >
+                              <CopyPlus size={16} />
+                              Clonar
+                            </button>
+                          )}
+                        </div>
                       ))}
                     </div>
                   )}
@@ -245,6 +450,7 @@ export function Training({
                           ? prev.find((s) => s.setNumber === next)
                           : undefined
                       }
+                      clone={clone ?? undefined}
                       saved={done.find((s) => s.setNumber === next)}
                       busy={busy}
                       onSave={async (set) => {
@@ -254,6 +460,7 @@ export function Training({
                         });
                         if (!updated) return false;
                         setEditing(null);
+                        setClone(null);
                         if (autoRest) setEnd(Date.now() + seconds * 1000);
                         const current = updated.sets.filter(
                           (s) => s.workoutExerciseId === e.id,

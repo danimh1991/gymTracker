@@ -1,6 +1,13 @@
 "use client";
 import { useState } from "react";
-import { Download, FlaskConical, Scale, BookOpen } from "lucide-react";
+import {
+  Download,
+  FlaskConical,
+  Scale,
+  BookOpen,
+  Plus,
+  Upload,
+} from "lucide-react";
 import type { Snapshot } from "../domain/types";
 import type { Execute } from "./Training";
 import { exportData } from "../services/export";
@@ -21,7 +28,40 @@ export function More({
   const [weight, setWeight] = useState(""),
     [date, setDate] = useState(new Date().toLocaleDateString("sv-SE")),
     [saved, setSaved] = useState(false),
-    [search, setSearch] = useState("");
+    [search, setSearch] = useState(""),
+    [showAdd, setShowAdd] = useState(false),
+    [exerciseName, setExerciseName] = useState("");
+  const downloadJson = (name: string, value: unknown) => {
+    const url = URL.createObjectURL(
+        new Blob([JSON.stringify(value, null, 2)], {
+          type: "application/json",
+        }),
+      ),
+      a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  const importJson = async (
+    file: File | undefined,
+    kind: "templates" | "exercises",
+  ) => {
+    if (!file) return;
+    try {
+      const value = JSON.parse(await file.text());
+      const rows = Array.isArray(value) ? value : value[kind];
+      if (!Array.isArray(rows))
+        throw new Error("El JSON no contiene una lista válida.");
+      await execute(
+        kind === "templates"
+          ? { action: "importTemplates", templates: rows }
+          : { action: "importExercises", exercises: rows },
+      );
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "No se pudo leer el archivo.");
+    }
+  };
   return (
     <>
       <div className="page-heading">
@@ -208,6 +248,143 @@ export function More({
                 )}
               </details>
             ))}
+        </div>
+        <div className="library-actions">
+          <button className="secondary" onClick={() => setShowAdd(!showAdd)}>
+            <Plus size={17} />
+            Añadir ejercicio
+          </button>
+          <button
+            className="secondary"
+            onClick={() =>
+              downloadJson("gym-tracker-ejercicios.json", {
+                version: 1,
+                exercises: data.exercises,
+              })
+            }
+          >
+            <Download size={17} />
+            Exportar ejercicios
+          </button>
+          <label className="secondary file-button">
+            <Upload size={17} />
+            Importar ejercicios
+            <input
+              type="file"
+              accept="application/json,.json"
+              onChange={(e) =>
+                void importJson(e.target.files?.[0], "exercises")
+              }
+            />
+          </label>
+        </div>
+        {showAdd && (
+          <form
+            className="quick-add"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const result = await execute({
+                action: "addExercise",
+                exercise: {
+                  name: exerciseName,
+                  shortName: exerciseName,
+                  type: "calisthenics",
+                  movementPattern: "skill",
+                  primaryMuscles: "",
+                  secondaryMuscles: "",
+                  equipment: "Peso corporal",
+                  metricType: "reps",
+                  bodyweightExercise: 1,
+                  supportsAssistance: 0,
+                  supportsAddedWeight: 0,
+                  defaultRepMin: 8,
+                  defaultRepMax: 12,
+                  defaultRIR: "1–2",
+                  notes: "",
+                  enabled: 1,
+                },
+              });
+              if (result) {
+                setExerciseName("");
+                setShowAdd(false);
+              }
+            }}
+          >
+            <label className="field">
+              Nombre
+              <input
+                required
+                minLength={2}
+                value={exerciseName}
+                onChange={(e) => setExerciseName(e.target.value)}
+                placeholder="Nuevo ejercicio"
+              />
+            </label>
+            <p className="small muted">
+              Se crea como ejercicio de calistenia por repeticiones. Después
+              podrás usarlo en cualquier plantilla o sesión.
+            </p>
+            <button className="primary">Guardar ejercicio</button>
+          </form>
+        )}
+      </section>
+      <section className="settings-card">
+        <h2>
+          <Download size={21} /> Plantillas
+        </h2>
+        <p className="muted">
+          Importa o exporta grupos completos de plantillas A/B/C. Los ejercicios
+          referenciados deben existir en tu biblioteca.
+        </p>
+        <div className="library-actions">
+          <button
+            className="secondary"
+            onClick={() =>
+              downloadJson("gym-tracker-plantillas.json", {
+                version: 1,
+                templates: data.templates.map((t) => ({
+                  ...t,
+                  exercises: data.templateExercises
+                    .filter((e) => e.templateId === t.id)
+                    .map(
+                      ({
+                        exerciseId,
+                        sets,
+                        repMin,
+                        repMax,
+                        rir,
+                        optional,
+                        notes,
+                        priority,
+                      }) => ({
+                        exerciseId,
+                        sets,
+                        repMin,
+                        repMax,
+                        rir,
+                        optional,
+                        notes,
+                        priority,
+                      }),
+                    ),
+                })),
+              })
+            }
+          >
+            <Download size={17} />
+            Exportar plantillas
+          </button>
+          <label className="secondary file-button">
+            <Upload size={17} />
+            Importar plantillas
+            <input
+              type="file"
+              accept="application/json,.json"
+              onChange={(e) =>
+                void importJson(e.target.files?.[0], "templates")
+              }
+            />
+          </label>
         </div>
       </section>
       <p className="notice">

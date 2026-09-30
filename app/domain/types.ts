@@ -18,6 +18,27 @@ export interface Exercise {
   defaultRIR: string;
   notes: string;
   enabled: number;
+  ownerId?: string | null;
+}
+export interface Template {
+  id: string;
+  dayId: DayKey;
+  name: string;
+  description: string;
+  createdAt: string;
+}
+export interface TemplateExercise extends RoutineExercise {
+  templateId: string;
+}
+export interface PlanExercise {
+  exerciseId: string;
+  sets: number;
+  repMin: number;
+  repMax: number;
+  rir: string;
+  optional: number;
+  notes: string;
+  priority: string;
 }
 export interface RoutineDay {
   id: DayKey;
@@ -45,6 +66,7 @@ export interface Workout {
   finishedAt: string | null;
   bodyweight: number | null;
   notes: string;
+  templateName: string;
 }
 export interface WorkoutExercise extends RoutineExercise {
   workoutId: string;
@@ -119,4 +141,6 @@ export interface Snapshot {
   sets: WorkoutSet[];
   bodyWeights: BodyWeight[];
   goals: Goal[];
+  templates: Template[];
+  templateExercises: TemplateExercise[];
 }

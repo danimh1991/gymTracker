@@ -26,7 +26,41 @@ export const exercises = sqliteTable("exercises", {
   defaultRIR: text("defaultRIR").notNull(),
   notes: text("notes").notNull(),
   enabled: integer("enabled").notNull(),
+  ownerId: text("ownerId"),
 });
+export const workoutTemplates = sqliteTable(
+  "workoutTemplates",
+  {
+    id: text("id").primaryKey(),
+    ownerId: owner(),
+    dayId: text("dayId").notNull(),
+    name: text("name").notNull(),
+    description: text("description").notNull(),
+    createdAt: text("createdAt").notNull(),
+  },
+  (t) => [index("templates_owner_day").on(t.ownerId, t.dayId)],
+);
+export const templateExercises = sqliteTable(
+  "templateExercises",
+  {
+    id: text("id").primaryKey(),
+    templateId: text("templateId")
+      .notNull()
+      .references(() => workoutTemplates.id),
+    exerciseId: text("exerciseId")
+      .notNull()
+      .references(() => exercises.id),
+    position: integer("position").notNull(),
+    sets: integer("sets").notNull(),
+    repMin: integer("repMin").notNull(),
+    repMax: integer("repMax").notNull(),
+    rir: text("rir").notNull(),
+    optional: integer("optional").notNull(),
+    notes: text("notes").notNull(),
+    priority: text("priority").notNull(),
+  },
+  (t) => [index("template_exercises_template").on(t.templateId)],
+);
 export const routines = sqliteTable("routines", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -69,6 +103,7 @@ export const workouts = sqliteTable(
     finishedAt: text("finishedAt"),
     bodyweight: real("bodyweight"),
     notes: text("notes").notNull(),
+    templateName: text("templateName").notNull().default(""),
   },
   (t) => [
     uniqueIndex("one_active_per_owner")

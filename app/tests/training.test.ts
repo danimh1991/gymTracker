@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import { D1TrainingRepository } from "../repositories/d1TrainingRepository";
 import {
@@ -117,7 +117,10 @@ test("validación rechaza cargas negativas y asistencia con lastre", () => {
 function database() {
   const sql = new DatabaseSync(":memory:");
   sql.exec("PRAGMA foreign_keys=ON");
-  sql.exec(readFileSync("drizzle/0000_chubby_jubilee.sql", "utf8"));
+  for (const file of readdirSync("drizzle")
+    .filter((f) => f.endsWith(".sql"))
+    .sort())
+    sql.exec(readFileSync(`drizzle/${file}`, "utf8"));
   class Statement {
     values: unknown[] = [];
     constructor(readonly text: string) {}
@@ -181,8 +184,43 @@ test("persistencia: inicio idempotente, series sin duplicar, snapshot, cierre y 
     date: "2026-01-01",
     weightKg: 73.5,
   });
-  await repo.execute({ action: "start", dayId: "A" });
-  await repo.execute({ action: "start", dayId: "B" });
+  const planA = d.templateExercises
+    .filter(
+      (e) => e.templateId === d.templates.find((t) => t.dayId === "A")!.id,
+    )
+    .map(
+      ({
+        exerciseId,
+        sets,
+        repMin,
+        repMax,
+        rir,
+        optional,
+        notes,
+        priority,
+      }) => ({
+        exerciseId,
+        sets,
+        repMin,
+        repMax,
+        rir,
+        optional,
+        notes,
+        priority,
+      }),
+    );
+  await repo.execute({
+    action: "start",
+    dayId: "A",
+    templateName: "Base A",
+    exercises: planA,
+  });
+  await repo.execute({
+    action: "start",
+    dayId: "B",
+    templateName: "Ignorada",
+    exercises: planA,
+  });
   d = await repo.snapshot();
   assert.equal(d.workouts.length, 1);
   assert.equal(d.workouts[0].bodyweight, 73.5);
@@ -231,7 +269,38 @@ test("persistencia: inicio idempotente, series sin duplicar, snapshot, cierre y 
     () => repo.execute({ action: "saveSet", set: value }),
     /ya no está activa/,
   );
-  await repo.execute({ action: "start", dayId: "C" });
+  d = await repo.snapshot();
+  const planC = d.templateExercises
+    .filter(
+      (e) => e.templateId === d.templates.find((t) => t.dayId === "C")!.id,
+    )
+    .map(
+      ({
+        exerciseId,
+        sets,
+        repMin,
+        repMax,
+        rir,
+        optional,
+        notes,
+        priority,
+      }) => ({
+        exerciseId,
+        sets,
+        repMin,
+        repMax,
+        rir,
+        optional,
+        notes,
+        priority,
+      }),
+    );
+  await repo.execute({
+    action: "start",
+    dayId: "C",
+    templateName: "Base C",
+    exercises: planC,
+  });
   d = await repo.snapshot();
   const c = d.workouts.find((w) => w.status === "active")!,
     assisted = d.workoutExercises.find(
@@ -275,6 +344,94 @@ test("demo reiniciable y aislada del espacio real", async () => {
     (await new D1TrainingRepository(db, "alice:real").snapshot()).workouts
       .length,
     0,
+  );
+  sql.close();
+});
+test("plantillas, ejercicios propios y edición de sesión quedan persistidos", async () => {
+  const { db, sql } = database(),
+    repo = new D1TrainingRepository(db, "templates:real");
+  let d = await repo.snapshot();
+  await repo.execute({
+    action: "addExercise",
+    exercise: {
+      id: "custom-press",
+      name: "Press personalizado",
+      shortName: "Press",
+      type: "gym",
+      movementPattern: "vertical_push",
+      primaryMuscles: "Hombro",
+      secondaryMuscles: "Tríceps",
+      equipment: "Mancuernas",
+      metricType: "reps",
+      bodyweightExercise: 0,
+      supportsAssistance: 0,
+      supportsAddedWeight: 0,
+      defaultRepMin: 6,
+      defaultRepMax: 10,
+      defaultRIR: "2",
+      notes: "",
+      enabled: 1,
+    },
+  });
+  const plan = [
+    {
+      exerciseId: "custom-press",
+      sets: 4,
+      repMin: 6,
+      repMax: 10,
+      rir: "2",
+      optional: 0,
+      notes: "Alternativa",
+      priority: "Principal",
+    },
+  ];
+  await repo.execute({
+    action: "saveTemplate",
+    dayId: "A",
+    name: "A · Hombro",
+    description: "Variante",
+    exercises: plan,
+  });
+  d = await repo.snapshot();
+  assert.ok(d.exercises.some((e) => e.id === "custom-press"));
+  assert.ok(d.templates.some((t) => t.name === "A · Hombro"));
+  await repo.execute({
+    action: "start",
+    dayId: "A",
+    templateName: "A · Hombro",
+    exercises: plan,
+  });
+  d = await repo.snapshot();
+  const w = d.workouts[0],
+    we = d.workoutExercises[0];
+  assert.equal(w.templateName, "A · Hombro");
+  assert.equal(we.sets, 4);
+  await repo.execute({
+    action: "updateWorkoutExercise",
+    workoutExerciseId: we.id,
+    exercise: { ...plan[0], sets: 5, repMax: 12 },
+  });
+  await repo.execute({
+    action: "addWorkoutExercise",
+    workoutId: w.id,
+    exercise: { ...plan[0], sets: 2 },
+  });
+  d = await repo.snapshot();
+  assert.equal(
+    d.workoutExercises.filter((e) => e.workoutId === w.id).length,
+    2,
+  );
+  assert.equal(d.workoutExercises.find((e) => e.id === we.id)?.repMax, 12);
+  await repo.execute({
+    action: "removeWorkoutExercise",
+    workoutExerciseId: d.workoutExercises.find(
+      (e) => e.workoutId === w.id && e.id !== we.id,
+    )!.id,
+  });
+  assert.equal(
+    (await repo.snapshot()).workoutExercises.filter((e) => e.workoutId === w.id)
+      .length,
+    1,
   );
   sql.close();
 });

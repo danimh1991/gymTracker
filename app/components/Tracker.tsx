@@ -9,7 +9,7 @@ import {
   Menu,
   RefreshCw,
 } from "lucide-react";
-import type { DayKey } from "../domain/types";
+import type { DayKey, PlanExercise } from "../domain/types";
 import { completedWorkouts, getNextRoutineDay } from "../services/training";
 import { useTraining } from "./useTraining";
 import { Home } from "./Home";
@@ -52,12 +52,17 @@ export default function Tracker() {
     setSummary("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
-  async function start() {
+  async function start(plan: PlanExercise[], templateName: string) {
     if (active) {
       navigate("train");
       return;
     }
-    const result = await execute({ action: "start", dayId: selected });
+    const result = await execute({
+      action: "start",
+      dayId: selected,
+      templateName,
+      exercises: plan,
+    });
     if (result) navigate("train");
   }
   return (
@@ -172,7 +177,8 @@ export default function Tracker() {
                   data={data}
                   selected={selected}
                   onSelect={setSelected}
-                  onStart={() => void start()}
+                  onStart={(plan, name) => void start(plan, name)}
+                  execute={execute}
                   busy={busy}
                 />
               )}{" "}

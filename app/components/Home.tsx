@@ -1,10 +1,14 @@
-import { Clock3, Dumbbell, Play, Target } from "lucide-react";
-import type { DayKey, Snapshot } from "../domain/types";
+"use client";
+import { useEffect, useState } from "react";
+import { Clock3, Dumbbell, Play, Save, Target } from "lucide-react";
+import type { DayKey, PlanExercise, Snapshot } from "../domain/types";
 import {
   completedWorkouts,
   previousSets,
   getNextRoutineDay,
 } from "../services/training";
+import type { Execute } from "./Training";
+import { PlanEditor } from "./PlanEditor";
 export const dateLabel = (date: string) =>
   new Date(date).toLocaleDateString("es-ES", {
     day: "numeric",
@@ -40,25 +44,66 @@ export function Home({
   selected,
   onSelect,
   onStart,
+  execute,
   busy,
 }: {
   data: Snapshot;
   selected: DayKey;
   onSelect: (d: DayKey) => void;
-  onStart: () => void;
+  onStart: (plan: PlanExercise[], templateName: string) => void;
+  execute: Execute;
   busy: boolean;
 }) {
   const done = completedWorkouts(data),
     last = done[0],
     active = data.workouts.find((w) => w.status === "active"),
     day = data.days.find((d) => d.id === selected)!,
-    rows = data.routine.filter((r) => r.dayId === selected),
+    templates = data.templates.filter((t) => t.dayId === selected),
     recent = done.filter(
       (w) => Date.parse(w.startedAt) > Date.now() - 30 * 86400000,
     ),
     since = last
       ? Math.floor((Date.now() - Date.parse(last.finishedAt!)) / 86400000)
       : null;
+  const [templateId, setTemplateId] = useState(""),
+    [plan, setPlan] = useState<PlanExercise[]>([]),
+    [editing, setEditing] = useState(false),
+    [saveName, setSaveName] = useState("");
+  useEffect(() => {
+    const template = templates.find((t) => t.id === templateId) ?? templates[0];
+    if (!template) return;
+    setTemplateId(template.id);
+    setSaveName(template.name);
+    setPlan(
+      data.templateExercises
+        .filter((e) => e.templateId === template.id)
+        .sort((a, b) => a.position - b.position)
+        .map(
+          ({
+            exerciseId,
+            sets,
+            repMin,
+            repMax,
+            rir,
+            optional,
+            notes,
+            priority,
+          }) => ({
+            exerciseId,
+            sets,
+            repMin,
+            repMax,
+            rir,
+            optional,
+            notes,
+            priority,
+          }),
+        ),
+    );
+    setEditing(false);
+  }, [selected, templateId, data.templates.length]);
+  const chosen = templates.find((t) => t.id === templateId),
+    rows = plan;
   return (
     <>
       <div className="page-heading">
@@ -87,7 +132,7 @@ export function Home({
             <span className="tag lime">GIMNASIO → CALISTENIA</span>
             <span className="hero-number">0{day.position + 1}</span>
           </div>
-          <h2>{day.title}</h2>
+          <h2>{chosen?.name ?? day.title}</h2>
           <p>
             {rows.length} ejercicios <span>·</span>{" "}
             {rows.reduce((n, r) => n + r.sets, 0)} series{" "}
@@ -97,7 +142,11 @@ export function Home({
             <Target size={18} />
             <span>Repeticiones de calidad. Mantén RIR 1–2.</span>
           </div>
-          <button className="primary start" onClick={onStart} disabled={busy}>
+          <button
+            className="primary start"
+            onClick={() => onStart(plan, chosen?.name ?? `Día ${selected}`)}
+            disabled={busy || !plan.length}
+          >
             <Play size={19} fill="currentColor" />
             {active ? "Continuar entrenamiento" : "Empezar entrenamiento"}
           </button>
@@ -152,58 +201,121 @@ export function Home({
           disabled={!!active}
         />
       </div>
+      {!active && (
+        <div className="template-toolbar">
+          <label>
+            Plantilla
+            <select
+              value={templateId}
+              onChange={(e) => setTemplateId(e.target.value)}
+            >
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button className="secondary" onClick={() => setEditing(!editing)}>
+            {editing ? "Cerrar edición" : "Editar antes de empezar"}
+          </button>
+        </div>
+      )}
       {selected !== getNextRoutineDay(last?.dayId) && !active && (
         <p className="notice">
           Has elegido el Día {selected}. Según tu última sesión, el recomendado
           es el Día {getNextRoutineDay(last?.dayId)}.
         </p>
       )}
-      <div className="routine-list">
-        {rows.map((r, i) => {
-          const e = data.exercises.find((e) => e.id === r.exerciseId)!;
-          const prev = previousSets(data, e.id);
-          return (
-            <article className="exercise-preview" key={r.id}>
-              <span className="exercise-index">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <div className="exercise-info">
-                <h3>
-                  {e.name}{" "}
-                  {r.optional ? (
-                    <span className="tag">Opcional</span>
-                  ) : r.priority === "Principal" ? (
-                    <span className="tag principal">Principal</span>
-                  ) : null}
-                </h3>
-                <p>
-                  {e.type === "calisthenics" ? "Calistenia" : "Gimnasio"} ·{" "}
-                  {r.rir === "Técnica" ? "Práctica técnica" : `RIR ${r.rir}`}
-                  {["bulgarian", "lunge"].includes(e.id) ? " · por pierna" : ""}
-                </p>
-              </div>
-              <div className="prescription">
-                <strong>
-                  {r.sets} <span>×</span> {r.repMin}–{r.repMax}
-                </strong>
-                <small>
-                  {e.metricType === "time" ? "segundos" : "repeticiones"}
-                </small>
-              </div>
-              <div className="previous">
-                <span>ÚLTIMA VEZ</span>
-                <strong>
-                  {prev.length
-                    ? prev
-                        .map((s) => s.reps ?? `${s.durationSeconds}s`)
-                        .join(" / ")
-                    : "Sin registros todavía"}
-                </strong>
-              </div>
-            </article>
-          );
-        })}
-      </div>
+      {editing && !active ? (
+        <>
+          <PlanEditor
+            plan={plan}
+            exercises={data.exercises}
+            onChange={setPlan}
+          />
+          <div className="save-template">
+            <label>
+              Nombre de la plantilla
+              <input
+                value={saveName}
+                onChange={(e) => setSaveName(e.target.value)}
+              />
+            </label>
+            <button
+              className="secondary"
+              disabled={busy || saveName.trim().length < 2}
+              onClick={() =>
+                void execute({
+                  action: "saveTemplate",
+                  dayId: selected,
+                  name: saveName,
+                  description: "",
+                  exercises: plan,
+                })
+              }
+            >
+              <Save size={17} />
+              Guardar como plantilla nueva
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="routine-list">
+          {rows.map((r, i) => {
+            const e = data.exercises.find((e) => e.id === r.exerciseId)!;
+            const prev = previousSets(data, e.id);
+            return (
+              <article
+                className="exercise-preview"
+                key={`${r.exerciseId}-${i}`}
+              >
+                <span className="exercise-index">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <div className="exercise-info">
+                  <h3>
+                    {e.name}{" "}
+                    {r.optional ? (
+                      <span className="tag">Opcional</span>
+                    ) : r.priority === "Principal" ? (
+                      <span className="tag principal">Principal</span>
+                    ) : null}
+                  </h3>
+                  <p>
+                    {e.type === "calisthenics" ? "Calistenia" : "Gimnasio"} ·{" "}
+                    {r.rir === "Técnica" ? "Práctica técnica" : `RIR ${r.rir}`}
+                    {["bulgarian", "lunge"].includes(e.id)
+                      ? " · por pierna"
+                      : ""}
+                  </p>
+                </div>
+                <div className="prescription">
+                  <strong>
+                    {r.sets} <span>×</span> {r.repMin}–{r.repMax}
+                  </strong>
+                  <small>
+                    {e.metricType === "time" ? "segundos" : "repeticiones"}
+                  </small>
+                </div>
+                <div className="previous">
+                  <span>ÚLTIMA VEZ</span>
+                  <strong>
+                    {prev.length
+                      ? prev
+                          .map(
+                            (s) =>
+                              `${s.reps ?? `${s.durationSeconds}s`} · ${s.assistanceWeight ? `BW − ${s.assistanceWeight} kg` : s.addedWeight ? `BW + ${s.addedWeight} kg` : s.weight !== null ? `${s.weight} kg` : "BW"}`,
+                          )
+                          .join(" / ")
+                      : "Sin registros todavía"}
+                  </strong>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
       <div className="footer-note">
         <Dumbbell size={17} />
         <p>La secuencia sigue tu ritmo: A → B → C. El calendario no decide.</p>
