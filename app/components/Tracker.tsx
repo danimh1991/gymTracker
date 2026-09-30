@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { DayKey, PlanExercise } from "../domain/types";
 import { completedWorkouts, getNextRoutineDay } from "../services/training";
+import { appPath } from "../lib/base-path";
 import { useTraining } from "./useTraining";
 import { Home } from "./Home";
 import { Training } from "./Training";
@@ -68,7 +69,7 @@ export default function Tracker() {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <a className="brand" href="/" aria-label="Gym Tracker inicio">
+        <a className="brand" href={appPath("/")} aria-label="Gym Tracker inicio">
           <span className="brand-mark">
             <Activity size={25} />
           </span>
@@ -152,7 +153,10 @@ export default function Tracker() {
                   ? "No se pudo cargar tu entrenamiento"
                   : "Preparando tu entrenamiento…"}
               </h2>
-              <a href="/signin-with-chatgpt?return_to=/" target="_top">
+              <a
+                href={`${appPath("/signin-with-chatgpt")}?return_to=${encodeURIComponent(appPath("/"))}`}
+                target="_top"
+              >
                 Iniciar sesión
               </a>
             </div>

@@ -2,11 +2,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Snapshot } from "../domain/types";
 import type { Command } from "../services/validation";
+import { appPath } from "../lib/base-path";
 export function useTraining(demo: boolean) {
   const [data, setData] = useState<Snapshot | null>(null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
-  const url = `/api/training${demo ? "?demo=1" : ""}`;
+  const url = `${appPath("/api/training")}${demo ? "?demo=1" : ""}`;
   const currentUrl = useRef(url);
   currentUrl.current = url;
   const refresh = useCallback(async () => {

@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { appPath } from "../lib/base-path";
 
 export type ChatGPTUser = {
   userId: string;
@@ -50,12 +51,12 @@ export async function requireChatGPTUser(
 
 export function chatGPTSignInPath(returnTo: string): string {
   const safeReturnTo = safeRelativeReturnPath(returnTo);
-  return `${SIGN_IN_PATH}?return_to=${encodeURIComponent(safeReturnTo)}`;
+  return `${appPath(SIGN_IN_PATH)}?return_to=${encodeURIComponent(safeReturnTo)}`;
 }
 
-export function chatGPTSignOutPath(returnTo = "/"): string {
+export function chatGPTSignOutPath(returnTo = appPath("/")): string {
   const safeReturnTo = safeRelativeReturnPath(returnTo);
-  return `${SIGN_OUT_PATH}?return_to=${encodeURIComponent(safeReturnTo)}`;
+  return `${appPath(SIGN_OUT_PATH)}?return_to=${encodeURIComponent(safeReturnTo)}`;
 }
 
 function safeRelativeReturnPath(value: string): string {

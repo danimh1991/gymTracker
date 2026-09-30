@@ -41,7 +41,19 @@ La exportación de la propia aplicación es el formato recomendado para volver a
 
 ## Cloudflare Workers
 
-El build genera un Worker ESM en `dist/server/index.js` y `dist/server/wrangler.json`. D1 se declara como `DB` en `.openai/hosting.json`; las migraciones incrementales están en `drizzle/`. El acceso a D1 queda detrás de `TrainingRepository`, y la autenticación usa las cabeceras verificadas que inyecta Sites. Para desplegar fuera de Sites hay que proporcionar un mecanismo de identidad equivalente en el borde.
+El build genera un Worker ESM en `dist/server/index.js`. Sites compila la aplicación en `/`; el comando específico de Cloudflare la compila con `basePath=/gymtracker`, corrige enlaces, API y favicon, y genera `dist/server/wrangler.cloudflare.json` con la ruta `danieta.com/gymtracker*`.
+
+Cloudflare necesita una D1 independiente llamada `gym-tracker-db`. Créala una sola vez y conserva el `database_id` que devuelve Wrangler:
+
+```powershell
+npx wrangler d1 create gym-tracker-db
+$env:CLOUDFLARE_D1_DATABASE_ID="ID_DEVUELTO_POR_WRANGLER"
+npm run deploy:cloudflare
+```
+
+El despliegue aplica las migraciones de `drizzle/` antes de publicar. La aplicación espera el binding `DB`; Sites administra su propia D1 a partir de `.openai/hosting.json`, por lo que ambas instalaciones quedan separadas.
+
+Protege `danieta.com/gymtracker*` con Cloudflare Access y permite tu correo. El Worker obtiene la identidad verificada mediante `ctx.access` y la adapta al mismo contrato que usa Sites. `workers.dev` queda desactivado en el despliegue de Cloudflare para evitar una entrada alternativa sin Access.
 
 ## Limitaciones explícitas
 

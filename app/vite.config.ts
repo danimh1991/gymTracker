@@ -19,8 +19,6 @@ const { d1, r2 } = hostingConfig;
  * Local/Codex Sites:
  *   APP_BASE_PATH is normally undefined, so the app remains mounted at "/".
  */
-const APP_BASE_PATH = (process.env.APP_BASE_PATH ?? "").replace(/\/+$/, "");
-
 // macOS Seatbelt blocks FSEvents, so Codex previews need polling for HMR.
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
 const managedLinux = readExecutionProfile() === "managed-linux";
@@ -81,11 +79,7 @@ export default defineConfig(async ({ command }) => {
     },
 
     plugins: [
-      vinext({
-        nextConfig: {
-          basePath: APP_BASE_PATH,
-        },
-      }),
+      vinext(),
 
       sites({
         mockAuth: !managedLinux,

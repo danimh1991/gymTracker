@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { appPath } from "../lib/base-path";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -8,8 +9,8 @@ export const metadata: Metadata = {
     "codex-preview": "development",
   },
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
+    icon: appPath("/favicon.svg"),
+    shortcut: appPath("/favicon.svg"),
   },
 };
 
