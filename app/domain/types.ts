@@ -1,4 +1,4 @@
-export type DayKey = "A" | "B" | "C";
+export type DayKey = "A" | "B" | "C" | "D" | "E" | "F" | "G";
 export type Metric = "reps" | "time";
 export interface Exercise {
   id: string;
@@ -109,6 +109,9 @@ export interface Goal {
   target: number;
 }
 export interface Snapshot {
+  settings: {
+    trainingDays: number;
+  };
   routines: { id: string; name: string }[];
   skills: { id: string; name: string }[];
   skillProgressions: {

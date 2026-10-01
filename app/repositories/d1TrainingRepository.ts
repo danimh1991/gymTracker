@@ -67,24 +67,33 @@ export class D1TrainingRepository implements TrainingRepository {
           ),
         ),
       ]);
-    await this.db.batch(
-      initialGoals.map((g) =>
+    await this.db.batch([
+      ...initialDays.map((d) =>
+        this.insert("days", { ...d, routineId: "abc" }, true),
+      ),
+      this.insert(
+        "userSettings",
+        { ownerId: this.ownerId, trainingDays: 3 },
+        true,
+      ),
+      ...initialGoals.map((g) =>
         this.insert(
           "goals",
           { ...g, id: `${this.ownerId}:${g.id}`, ownerId: this.ownerId },
           true,
         ),
       ),
-    );
+    ]);
     for (const day of initialDays) {
       const templateId = `${this.ownerId}:default-${day.id}`;
+      const rows = initialRoutine.filter((r) => r.dayId === day.id);
       if (
+        rows.length &&
         !(await this.query(
           "SELECT id FROM workoutTemplates WHERE id=?",
           templateId,
         ).first())
       ) {
-        const rows = initialRoutine.filter((r) => r.dayId === day.id);
         await this.db.batch([
           this.insert("workoutTemplates", {
             id: templateId,
@@ -133,7 +142,10 @@ export class D1TrainingRepository implements TrainingRepository {
         "SELECT * FROM exercises WHERE ownerId IS NULL OR ownerId=? ORDER BY name",
         this.ownerId,
       ),
-      this.query("SELECT * FROM days ORDER BY position"),
+      this.query(
+        "SELECT * FROM days WHERE position < (SELECT trainingDays FROM userSettings WHERE ownerId=?) ORDER BY position",
+        this.ownerId,
+      ),
       this.query("SELECT * FROM routineExercises ORDER BY position"),
       this.query(
         "SELECT * FROM workouts WHERE ownerId = ? ORDER BY startedAt DESC",
@@ -165,8 +177,12 @@ export class D1TrainingRepository implements TrainingRepository {
         "SELECT e.* FROM templateExercises e JOIN workoutTemplates t ON t.id=e.templateId WHERE t.ownerId=? ORDER BY e.position",
         this.ownerId,
       ),
+      this.query(
+        "SELECT trainingDays FROM userSettings WHERE ownerId=?",
+        this.ownerId,
+      ),
     ]);
-    return Object.fromEntries(
+    const snapshot = Object.fromEntries(
       [
         "exercises",
         "days",
@@ -185,6 +201,12 @@ export class D1TrainingRepository implements TrainingRepository {
         "templateExercises",
       ].map((key, i) => [key, result[i].results]),
     ) as unknown as Snapshot;
+    snapshot.settings = {
+      trainingDays:
+        (result[15].results[0] as { trainingDays?: number } | undefined)
+          ?.trainingDays ?? 3,
+    };
+    return snapshot;
   }
   private async active(id: string) {
     const w = await this.query(
@@ -198,7 +220,49 @@ export class D1TrainingRepository implements TrainingRepository {
   }
   async execute(c: Command): Promise<void> {
     await this.seed();
+    if (c.action === "setTrainingDays") {
+      const active = await this.query(
+        "SELECT d.position FROM workouts w JOIN days d ON d.id=w.dayId WHERE w.ownerId=? AND w.status='active'",
+        this.ownerId,
+      ).first<{ position: number }>();
+      if (active && active.position >= c.trainingDays)
+        throw new Error(
+          "Termina o cancela la sesión activa antes de quitar ese día.",
+        );
+      await this.query(
+        "UPDATE userSettings SET trainingDays=? WHERE ownerId=?",
+        c.trainingDays,
+        this.ownerId,
+      ).run();
+      return;
+    }
+    if (c.action === "deleteTemplate") {
+      const template = await this.query(
+        "SELECT id FROM workoutTemplates WHERE id=? AND ownerId=?",
+        c.templateId,
+        this.ownerId,
+      ).first();
+      if (!template) throw new Error("Plantilla no encontrada.");
+      await this.db.batch([
+        this.query(
+          "DELETE FROM templateExercises WHERE templateId=?",
+          c.templateId,
+        ),
+        this.query(
+          "DELETE FROM workoutTemplates WHERE id=? AND ownerId=?",
+          c.templateId,
+          this.ownerId,
+        ),
+      ]);
+      return;
+    }
     if (c.action === "start") {
+      const enabledDay = await this.query(
+        "SELECT d.id FROM days d JOIN userSettings s ON d.position < s.trainingDays WHERE d.id=? AND s.ownerId=?",
+        c.dayId,
+        this.ownerId,
+      ).first();
+      if (!enabledDay) throw new Error("Ese día no está activo en tu rutina.");
       if (
         await this.query(
           "SELECT id FROM workouts WHERE ownerId=? AND status='active'",

@@ -383,7 +383,7 @@ main {
 }
 .day-counts {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(76px, 1fr));
   gap: 12px;
   margin-bottom: 22px;
 }
@@ -1092,7 +1092,7 @@ textarea {
     left: 0;
     right: 0;
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     background: white;
     border-top: 1px solid var(--line);
     z-index: 40;
@@ -1631,6 +1631,133 @@ textarea {
 .quick-add .primary {
   margin-top: 10px;
 }
+.days-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.days-setting p {
+  margin-top: 10px;
+  max-width: 670px;
+}
+.day-stepper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.day-stepper .secondary {
+  min-width: 48px;
+  padding: 8px 14px;
+  font-size: 21px;
+}
+.day-stepper strong {
+  font-size: 28px;
+  line-height: 1;
+}
+.day-stepper span {
+  color: var(--muted);
+  min-width: 34px;
+}
+.template-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+.template-editor-card {
+  border-color: #cbd9b8;
+  box-shadow: 0 10px 35px #3144190d;
+}
+.compact {
+  min-height: 38px;
+  padding: 7px 14px;
+}
+.template-fields {
+  display: grid;
+  grid-template-columns: 130px minmax(220px, 1fr) minmax(280px, 1.4fr);
+  gap: 12px;
+  margin: 20px 0 16px;
+}
+.template-fields .field {
+  min-width: 0;
+}
+.template-fields input,
+.template-fields select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  padding: 8px 10px;
+}
+.template-save-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 18px;
+  margin-top: 18px;
+}
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.template-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 260px;
+  padding: 23px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+}
+.template-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.template-card h2 {
+  margin-bottom: 8px;
+}
+.template-card > p {
+  font-size: 13px;
+}
+.template-metrics {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 20px 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.template-metrics strong {
+  color: var(--ink);
+  font-size: 19px;
+}
+.template-card-actions {
+  display: flex;
+  gap: 9px;
+  margin-top: auto;
+}
+.template-card-actions .secondary,
+.danger-button {
+  min-height: 42px;
+  padding: 9px 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 650;
+}
+.danger-button {
+  color: #a13c31;
+  border: 1px solid #efd2ce;
+  background: #fff8f7;
+}
 @media (max-width: 760px) {
   .plan-row {
     grid-template-columns: 1fr;
@@ -1673,6 +1800,9 @@ textarea {
   .goals-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .template-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 @media (max-width: 600px) {
   .settings-grid {
@@ -1706,5 +1836,22 @@ textarea {
   }
   .demo-card .button-row {
     width: 100%;
+  }
+  .days-setting {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .template-actions,
+  .template-save-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .template-fields,
+  .template-grid {
+    grid-template-columns: 1fr;
+  }
+  .day-picker {
+    max-width: 100%;
+    overflow-x: auto;
   }
 }

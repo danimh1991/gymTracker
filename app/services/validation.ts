@@ -1,5 +1,6 @@
 import { z } from "zod";
 const positive = z.number().finite().min(0).max(2000).nullable();
+const dayKey = z.enum(["A", "B", "C", "D", "E", "F", "G"]);
 export const planExercise = z
   .object({
     exerciseId: z.string().min(1),
@@ -53,7 +54,7 @@ export const setInput = z
 export const commandSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("start"),
-    dayId: z.enum(["A", "B", "C"]),
+    dayId: dayKey,
     templateName: z.string().min(1).max(100),
     exercises: z.array(planExercise).min(1).max(40),
   }),
@@ -96,7 +97,7 @@ export const commandSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("saveTemplate"),
     id: z.string().optional(),
-    dayId: z.enum(["A", "B", "C"]),
+    dayId: dayKey,
     name: z.string().trim().min(2).max(100),
     description: z.string().max(500),
     exercises: z.array(planExercise).min(1).max(40),
@@ -106,7 +107,7 @@ export const commandSchema = z.discriminatedUnion("action", [
     templates: z
       .array(
         z.object({
-          dayId: z.enum(["A", "B", "C"]),
+          dayId: dayKey,
           name: z.string().trim().min(2).max(100),
           description: z.string().max(500).default(""),
           exercises: z.array(planExercise).min(1).max(40),
@@ -116,6 +117,14 @@ export const commandSchema = z.discriminatedUnion("action", [
       .max(100),
   }),
   z.object({ action: z.literal("addExercise"), exercise: exerciseInput }),
+  z.object({
+    action: z.literal("deleteTemplate"),
+    templateId: z.string().min(1),
+  }),
+  z.object({
+    action: z.literal("setTrainingDays"),
+    trainingDays: z.number().int().min(1).max(7),
+  }),
   z.object({
     action: z.literal("importExercises"),
     exercises: z.array(exerciseInput).min(1).max(500),

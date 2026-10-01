@@ -41,6 +41,8 @@ test("secuencia A → B → C → A y primera sesión A", () => {
   assert.equal(getNextRoutineDay("A"), "B");
   assert.equal(getNextRoutineDay("B"), "C");
   assert.equal(getNextRoutineDay("C"), "A");
+  assert.equal(getNextRoutineDay("C", ["A", "B", "C", "D"]), "D");
+  assert.equal(getNextRoutineDay("D", ["A", "B", "C", "D"]), "A");
 });
 test("dominadas estrictas 4×3, luego 4×4; no basta un parcial", () => {
   assert.match(
@@ -432,6 +434,74 @@ test("plantillas, ejercicios propios y edición de sesión quedan persistidos", 
     (await repo.snapshot()).workoutExercises.filter((e) => e.workoutId === w.id)
       .length,
     1,
+  );
+  sql.close();
+});
+test("los días configurables y el borrado de plantillas son persistentes", async () => {
+  const { db, sql } = database(),
+    repo = new D1TrainingRepository(db, "days:real");
+  let data = await repo.snapshot();
+  assert.equal(data.settings.trainingDays, 3);
+  assert.deepEqual(
+    data.days.map((day) => day.id),
+    ["A", "B", "C"],
+  );
+  await assert.rejects(
+    () =>
+      repo.execute({
+        action: "start",
+        dayId: "D",
+        templateName: "No disponible",
+        exercises: [
+          {
+            exerciseId: "pushup",
+            sets: 3,
+            repMin: 8,
+            repMax: 12,
+            rir: "2",
+            optional: 0,
+            notes: "",
+            priority: "Principal",
+          },
+        ],
+      }),
+    /no está activo/,
+  );
+  await repo.execute({ action: "setTrainingDays", trainingDays: 4 });
+  data = await repo.snapshot();
+  assert.equal(data.settings.trainingDays, 4);
+  assert.deepEqual(
+    data.days.map((day) => day.id),
+    ["A", "B", "C", "D"],
+  );
+  await repo.execute({
+    action: "saveTemplate",
+    dayId: "D",
+    name: "D · Personal",
+    description: "Cuarto día",
+    exercises: [
+      {
+        exerciseId: "pushup",
+        sets: 3,
+        repMin: 8,
+        repMax: 12,
+        rir: "2",
+        optional: 0,
+        notes: "",
+        priority: "Principal",
+      },
+    ],
+  });
+  data = await repo.snapshot();
+  const template = data.templates.find((row) => row.name === "D · Personal")!;
+  assert.ok(template);
+  await repo.execute({ action: "setTrainingDays", trainingDays: 3 });
+  data = await repo.snapshot();
+  assert.equal(data.days.length, 3);
+  assert.ok(data.templates.some((row) => row.id === template.id));
+  await repo.execute({ action: "deleteTemplate", templateId: template.id });
+  assert.ok(
+    !(await repo.snapshot()).templates.some((row) => row.id === template.id),
   );
   sql.close();
 });

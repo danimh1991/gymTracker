@@ -1,13 +1,12 @@
 "use client";
-import { useEffect, useState } from "react";
-import { Clock3, Dumbbell, Play, Save, Target } from "lucide-react";
+import { Fragment, useEffect, useState } from "react";
+import { Clock3, Dumbbell, Play, Target } from "lucide-react";
 import type { DayKey, PlanExercise, Snapshot } from "../domain/types";
 import {
   completedWorkouts,
   previousSets,
   getNextRoutineDay,
 } from "../services/training";
-import type { Execute } from "./Training";
 import { PlanEditor } from "./PlanEditor";
 export const dateLabel = (date: string) =>
   new Date(date).toLocaleDateString("es-ES", {
@@ -18,15 +17,17 @@ export const dateLabel = (date: string) =>
 export function DayPicker({
   selected,
   onSelect,
+  days,
   disabled = false,
 }: {
   selected: DayKey;
   onSelect: (d: DayKey) => void;
+  days: { id: DayKey }[];
   disabled?: boolean;
 }) {
   return (
     <div className="day-picker" aria-label="Elegir entrenamiento">
-      {(["A", "B", "C"] as const).map((d) => (
+      {days.map(({ id: d }) => (
         <button
           key={d}
           disabled={disabled}
@@ -44,14 +45,12 @@ export function Home({
   selected,
   onSelect,
   onStart,
-  execute,
   busy,
 }: {
   data: Snapshot;
   selected: DayKey;
   onSelect: (d: DayKey) => void;
   onStart: (plan: PlanExercise[], templateName: string) => void;
-  execute: Execute;
   busy: boolean;
 }) {
   const done = completedWorkouts(data),
@@ -67,13 +66,16 @@ export function Home({
       : null;
   const [templateId, setTemplateId] = useState(""),
     [plan, setPlan] = useState<PlanExercise[]>([]),
-    [editing, setEditing] = useState(false),
-    [saveName, setSaveName] = useState("");
+    [editing, setEditing] = useState(false);
   useEffect(() => {
     const template = templates.find((t) => t.id === templateId) ?? templates[0];
-    if (!template) return;
+    if (!template) {
+      setTemplateId("");
+      setPlan([]);
+      setEditing(false);
+      return;
+    }
     setTemplateId(template.id);
-    setSaveName(template.name);
     setPlan(
       data.templateExercises
         .filter((e) => e.templateId === template.id)
@@ -101,7 +103,12 @@ export function Home({
         ),
     );
     setEditing(false);
-  }, [selected, templateId, data.templates.length]);
+  }, [
+    selected,
+    templateId,
+    data.templates.length,
+    data.templateExercises.length,
+  ]);
   const chosen = templates.find((t) => t.id === templateId),
     rows = plan;
   return (
@@ -119,11 +126,14 @@ export function Home({
           </p>
         </div>
         <div className="sequence">
-          <span className={selected === "A" ? "current" : ""}>A</span>
-          <i />
-          <span className={selected === "B" ? "current" : ""}>B</span>
-          <i />
-          <span className={selected === "C" ? "current" : ""}>C</span>
+          {data.days.map((routineDay, index) => (
+            <Fragment key={routineDay.id}>
+              <span className={selected === routineDay.id ? "current" : ""}>
+                {routineDay.id}
+              </span>
+              {index < data.days.length - 1 && <i />}
+            </Fragment>
+          ))}
         </div>
       </div>
       <div className="home-grid">
@@ -132,11 +142,10 @@ export function Home({
             <span className="tag lime">GIMNASIO → CALISTENIA</span>
             <span className="hero-number">0{day.position + 1}</span>
           </div>
-          <h2>{chosen?.name ?? day.title}</h2>
+          <h2>{chosen?.name ?? day?.title ?? `Día ${selected}`}</h2>
           <p>
             {rows.length} ejercicios <span>·</span>{" "}
             {rows.reduce((n, r) => n + r.sets, 0)} series{" "}
-            {selected === "C" ? "(2 opcionales)" : ""}
           </p>
           <div className="hero-focus">
             <Target size={18} />
@@ -150,6 +159,12 @@ export function Home({
             <Play size={19} fill="currentColor" />
             {active ? "Continuar entrenamiento" : "Empezar entrenamiento"}
           </button>
+          {!plan.length && !active && (
+            <p className="resume-note">
+              Este día todavía no tiene plantillas. Créala desde la sección
+              Plantillas.
+            </p>
+          )}
           {active && (
             <p className="resume-note">
               Tienes un entrenamiento en curso: Día {active.dayId}.
@@ -198,6 +213,7 @@ export function Home({
         <DayPicker
           selected={selected}
           onSelect={onSelect}
+          days={data.days}
           disabled={!!active}
         />
       </div>
@@ -221,45 +237,24 @@ export function Home({
           </button>
         </div>
       )}
-      {selected !== getNextRoutineDay(last?.dayId) && !active && (
-        <p className="notice">
-          Has elegido el Día {selected}. Según tu última sesión, el recomendado
-          es el Día {getNextRoutineDay(last?.dayId)}.
-        </p>
-      )}
+      {selected !==
+        getNextRoutineDay(
+          last?.dayId,
+          data.days.map((d) => d.id),
+        ) &&
+        !active && (
+          <p className="notice">
+            Has elegido el Día {selected}. Según tu última sesión, el
+            recomendado es el Día{" "}
+            {getNextRoutineDay(
+              last?.dayId,
+              data.days.map((d) => d.id),
+            )}
+            .
+          </p>
+        )}
       {editing && !active ? (
-        <>
-          <PlanEditor
-            plan={plan}
-            exercises={data.exercises}
-            onChange={setPlan}
-          />
-          <div className="save-template">
-            <label>
-              Nombre de la plantilla
-              <input
-                value={saveName}
-                onChange={(e) => setSaveName(e.target.value)}
-              />
-            </label>
-            <button
-              className="secondary"
-              disabled={busy || saveName.trim().length < 2}
-              onClick={() =>
-                void execute({
-                  action: "saveTemplate",
-                  dayId: selected,
-                  name: saveName,
-                  description: "",
-                  exercises: plan,
-                })
-              }
-            >
-              <Save size={17} />
-              Guardar como plantilla nueva
-            </button>
-          </div>
-        </>
+        <PlanEditor plan={plan} exercises={data.exercises} onChange={setPlan} />
       ) : (
         <div className="routine-list">
           {rows.map((r, i) => {
@@ -318,7 +313,10 @@ export function Home({
       )}
       <div className="footer-note">
         <Dumbbell size={17} />
-        <p>La secuencia sigue tu ritmo: A → B → C. El calendario no decide.</p>
+        <p>
+          La secuencia sigue tu ritmo: {data.days.map((d) => d.id).join(" → ")}.
+          El calendario no decide.
+        </p>
       </div>
     </>
   );

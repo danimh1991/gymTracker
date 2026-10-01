@@ -65,6 +65,10 @@ export const routines = sqliteTable("routines", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
 });
+export const userSettings = sqliteTable("userSettings", {
+  ownerId: text("ownerId").primaryKey(),
+  trainingDays: integer("trainingDays").notNull().default(3),
+});
 export const days = sqliteTable("days", {
   id: text("id").primaryKey(),
   routineId: text("routineId")

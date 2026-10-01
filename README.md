@@ -2,7 +2,7 @@
 
 El proyecto está en `app/`. Consulta `app/README.md` para iniciar la aplicación y `app/ARCHITECTURE.md` para las decisiones de diseño.
 
-Incluye rutina A/B/C, plantillas múltiples editables, registro y clonación de series, cambios durante la sesión, sesiones persistentes, histórico, resumen y avance automático. También incorpora una biblioteca ampliable, peso corporal, estadísticas básicas, demo aislada e importación/exportación.
+Incluye ciclos configurables de 1 a 7 días, una sección propia para gestionar plantillas, registro y clonación de series, cambios durante la sesión, sesiones persistentes, histórico, resumen y avance automático. También incorpora una biblioteca ampliable, peso corporal, estadísticas básicas, demo aislada e importación/exportación.
 
 Vista previa local: http://127.0.0.1:5173/ (mientras el servidor esté iniciado).
 

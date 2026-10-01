@@ -2,7 +2,7 @@
 
 ## Alcance
 
-Primera entrega: Fase 1 completa (inicio, rutina A/B/C, sesión recuperable, series, referencia anterior, finalización e histórico). Se añaden las funciones puras de progresión y sus pruebas, peso corporal y exportación JSON por su utilidad inmediata. El resto se mantiene en el plan, sin simular funciones terminadas.
+Primera entrega: Fase 1 completa (inicio, ciclo de entrenamiento configurable, sesión recuperable, series, referencia anterior, finalización e histórico). Se añaden las funciones puras de progresión y sus pruebas, peso corporal, gestión de plantillas y exportación JSON por su utilidad inmediata. El resto se mantiene en el plan, sin simular funciones terminadas.
 
 ## Arquitectura
 
@@ -16,6 +16,7 @@ Exercise: identidad, nombre corto, tipo, patrón, músculos, equipo, métrica, c
 Routine → RoutineDay → RoutineExercise: secuencia, orden, ejercicio, series, rangos, RIR, opcional, notas.
 Workout → WorkoutExercise → WorkoutSet: estado, inicio/fin, copia de prescripción y nombre; serie con reps, peso, peso corporal, asistencia, lastre, RIR/RPE, segundos, distancia, notas, completed y timestamp.
 BodyWeight: fecha y kg. Skill → SkillProgression → SkillLog. Goal: métrica y meta. PersonalRecord: ejercicio, métrica, valor, fecha y serie.
+UserSettings: preferencias por usuario, incluido el número de días activos del ciclo.
 
 Cada tabla de usuario se separa por `ownerId`; demo usa un espacio distinto. Una restricción única impide dos sesiones activas por espacio. Inicio y finalización son transacciones por batch. Solo finalizar una sesión con series guardadas avanza la secuencia; iniciar, abandonar y recargar no la avanzan. Se conserva el día realmente elegido. Editar rutinas no altera las sesiones ya iniciadas.
 

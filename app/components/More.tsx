@@ -5,6 +5,7 @@ import {
   FlaskConical,
   Scale,
   BookOpen,
+  CalendarDays,
   Plus,
   Upload,
 } from "lucide-react";
@@ -43,21 +44,14 @@ export function More({
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
-  const importJson = async (
-    file: File | undefined,
-    kind: "templates" | "exercises",
-  ) => {
+  const importJson = async (file: File | undefined) => {
     if (!file) return;
     try {
       const value = JSON.parse(await file.text());
-      const rows = Array.isArray(value) ? value : value[kind];
+      const rows = Array.isArray(value) ? value : value.exercises;
       if (!Array.isArray(rows))
         throw new Error("El JSON no contiene una lista válida.");
-      await execute(
-        kind === "templates"
-          ? { action: "importTemplates", templates: rows }
-          : { action: "importExercises", exercises: rows },
-      );
+      await execute({ action: "importExercises", exercises: rows });
     } catch (e) {
       alert(e instanceof Error ? e.message : "No se pudo leer el archivo.");
     }
@@ -67,12 +61,56 @@ export function More({
       <div className="page-heading">
         <div>
           <p className="eyebrow">A TU MEDIDA</p>
-          <h1>Tu espacio.</h1>
+          <h1>Preferencias.</h1>
           <p className="muted">
             Peso corporal, biblioteca y una copia de tus datos.
           </p>
         </div>
       </div>
+      <section className="settings-card days-setting">
+        <div>
+          <h2>
+            <CalendarDays size={21} /> Días de entrenamiento
+          </h2>
+          <p className="muted">
+            Decide cuántos días forman tu ciclo. Las plantillas de los días que
+            quites se conservan por si vuelves a añadirlos.
+          </p>
+        </div>
+        <div
+          className="day-stepper"
+          aria-label="Número de días de entrenamiento"
+        >
+          <button
+            className="secondary"
+            aria-label="Quitar un día"
+            disabled={busy || data.settings.trainingDays <= 1}
+            onClick={() =>
+              void execute({
+                action: "setTrainingDays",
+                trainingDays: data.settings.trainingDays - 1,
+              })
+            }
+          >
+            −
+          </button>
+          <strong>{data.settings.trainingDays}</strong>
+          <span>{data.settings.trainingDays === 1 ? "día" : "días"}</span>
+          <button
+            className="secondary"
+            aria-label="Añadir un día"
+            disabled={busy || data.settings.trainingDays >= 7}
+            onClick={() =>
+              void execute({
+                action: "setTrainingDays",
+                trainingDays: data.settings.trainingDays + 1,
+              })
+            }
+          >
+            +
+          </button>
+        </div>
+      </section>
       <div className="settings-grid">
         <section className="settings-card">
           <h2>
@@ -272,9 +310,7 @@ export function More({
             <input
               type="file"
               accept="application/json,.json"
-              onChange={(e) =>
-                void importJson(e.target.files?.[0], "exercises")
-              }
+              onChange={(e) => void importJson(e.target.files?.[0])}
             />
           </label>
         </div>
@@ -328,69 +364,6 @@ export function More({
           </form>
         )}
       </section>
-      <section className="settings-card">
-        <h2>
-          <Download size={21} /> Plantillas
-        </h2>
-        <p className="muted">
-          Importa o exporta grupos completos de plantillas A/B/C. Los ejercicios
-          referenciados deben existir en tu biblioteca.
-        </p>
-        <div className="library-actions">
-          <button
-            className="secondary"
-            onClick={() =>
-              downloadJson("gym-tracker-plantillas.json", {
-                version: 1,
-                templates: data.templates.map((t) => ({
-                  ...t,
-                  exercises: data.templateExercises
-                    .filter((e) => e.templateId === t.id)
-                    .map(
-                      ({
-                        exerciseId,
-                        sets,
-                        repMin,
-                        repMax,
-                        rir,
-                        optional,
-                        notes,
-                        priority,
-                      }) => ({
-                        exerciseId,
-                        sets,
-                        repMin,
-                        repMax,
-                        rir,
-                        optional,
-                        notes,
-                        priority,
-                      }),
-                    ),
-                })),
-              })
-            }
-          >
-            <Download size={17} />
-            Exportar plantillas
-          </button>
-          <label className="secondary file-button">
-            <Upload size={17} />
-            Importar plantillas
-            <input
-              type="file"
-              accept="application/json,.json"
-              onChange={(e) =>
-                void importJson(e.target.files?.[0], "templates")
-              }
-            />
-          </label>
-        </div>
-      </section>
-      <p className="notice">
-        Primera versión: registro, histórico y persistencia. El editor de rutina
-        y biblioteca, skills, importación y modo offline están pendientes.
-      </p>
     </>
   );
 }

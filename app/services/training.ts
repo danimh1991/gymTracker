@@ -9,6 +9,7 @@ export function getNextRoutineDay(
   last?: DayKey | null,
   days: DayKey[] = ["A", "B", "C"],
 ): DayKey {
+  if (!days.length) return "A";
   return days[(days.indexOf(last as DayKey) + 1) % days.length] ?? "A";
 }
 export function completedWorkouts(data: Snapshot): Workout[] {

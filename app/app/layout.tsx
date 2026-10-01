@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Gym Tracker · Tu camino a la calistenia",
-  description: "Tu rutina A/B/C, cada serie y tu evolución en calistenia.",
+  description: "Tu rutina, cada serie y tu evolución en calistenia.",
   other: {
     "codex-preview": "development",
   },

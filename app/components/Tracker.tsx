@@ -6,8 +6,9 @@ import {
   Dumbbell,
   History as HistoryIcon,
   House,
-  Menu,
+  LayoutTemplate,
   RefreshCw,
+  Settings,
 } from "lucide-react";
 import type { DayKey, PlanExercise } from "../domain/types";
 import { completedWorkouts, getNextRoutineDay } from "../services/training";
@@ -18,13 +19,15 @@ import { Training } from "./Training";
 import { More } from "./More";
 import { Progress } from "./Progress";
 import { History, WorkoutDetail } from "./History";
-type Page = "home" | "train" | "history" | "progress" | "more";
+import { Templates } from "./Templates";
+type Page = "home" | "train" | "history" | "progress" | "templates" | "more";
 const navigation = [
   { id: "home", name: "Inicio", icon: House },
   { id: "train", name: "Entrenar", icon: Dumbbell },
   { id: "history", name: "Histórico", icon: HistoryIcon },
   { id: "progress", name: "Progreso", icon: ChartNoAxesCombined },
-  { id: "more", name: "Más", icon: Menu },
+  { id: "templates", name: "Plantillas", icon: LayoutTemplate },
+  { id: "more", name: "Preferencias", icon: Settings },
 ] as const;
 export default function Tracker() {
   const [demo, updateDemo] = useState(false),
@@ -46,8 +49,15 @@ export default function Tracker() {
     active = data?.workouts.find((w) => w.status === "active"),
     last = data ? completedWorkouts(data)[0] : undefined;
   useEffect(() => {
-    setSelected(active?.dayId ?? getNextRoutineDay(last?.dayId));
-  }, [last?.id, active?.id, demo]);
+    if (!data?.days.length) return;
+    setSelected(
+      active?.dayId ??
+        getNextRoutineDay(
+          last?.dayId,
+          data.days.map((day) => day.id),
+        ),
+    );
+  }, [last?.id, active?.id, demo, data?.settings.trainingDays]);
   const navigate = (p: Page) => {
     setPage(p);
     setSummary("");
@@ -69,7 +79,11 @@ export default function Tracker() {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <a className="brand" href={appPath("/")} aria-label="Gym Tracker inicio">
+        <a
+          className="brand"
+          href={appPath("/")}
+          aria-label="Gym Tracker inicio"
+        >
           <span className="brand-mark">
             <Activity size={25} />
           </span>
@@ -93,7 +107,9 @@ export default function Tracker() {
           ))}
         </nav>
         <div className="sidebar-bottom">
-          <span className="tag">TU RUTINA · A / B / C</span>
+          <span className="tag">
+            TU RUTINA · {data?.days.map((day) => day.id).join(" / ") ?? "…"}
+          </span>
           <p>
             Más control.
             <br />
@@ -171,6 +187,7 @@ export default function Tracker() {
                 Ver próximo entrenamiento · Día{" "}
                 {getNextRoutineDay(
                   data.workouts.find((w) => w.id === summary)?.dayId,
+                  data.days.map((day) => day.id),
                 )}
               </button>
             </>
@@ -182,7 +199,6 @@ export default function Tracker() {
                   selected={selected}
                   onSelect={setSelected}
                   onStart={(plan, name) => void start(plan, name)}
-                  execute={execute}
                   busy={busy}
                 />
               )}{" "}
@@ -202,6 +218,9 @@ export default function Tracker() {
               )}
               {page === "history" && <History data={data} />}{" "}
               {page === "progress" && <Progress data={data} />}
+              {page === "templates" && (
+                <Templates data={data} busy={busy} execute={execute} />
+              )}
               {page === "more" && (
                 <More
                   data={data}

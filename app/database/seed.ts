@@ -151,9 +151,13 @@ export const initialDays: RoutineDay[] = [
   { id: "A", title: "Dominada + fondos", position: 0 },
   { id: "B", title: "Empuje vertical + espalda", position: 1 },
   { id: "C", title: "Dominadas volumen + habilidad", position: 2 },
+  { id: "D", title: "Entrenamiento D", position: 3 },
+  { id: "E", title: "Entrenamiento E", position: 4 },
+  { id: "F", title: "Entrenamiento F", position: 5 },
+  { id: "G", title: "Entrenamiento G", position: 6 },
 ];
 type Item = [string, number, number, number, string?, boolean?];
-const prescriptions: Record<DayKey, Item[]> = {
+const prescriptions: Partial<Record<DayKey, Item[]>> = {
   A: [
     ["pullup", 4, 2, 3],
     ["dip", 3, 5, 10],
@@ -181,7 +185,7 @@ const prescriptions: Record<DayKey, Item[]> = {
   ],
 };
 export const initialRoutine: RoutineExercise[] = initialDays.flatMap((d) =>
-  prescriptions[d.id].map(
+  (prescriptions[d.id] ?? []).map(
     (
       [exerciseId, sets, repMin, repMax, rir = "1–2", optional = false],
       position,

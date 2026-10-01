@@ -4,14 +4,14 @@ Aplicación personal de gimnasio hacia calistenia. Primera entrega centrada en l
 
 ## Incluido
 
-- Rutina A/B/C completa, secuencia basada exclusivamente en sesiones terminadas y selección manual.
+- Ciclo configurable de 1 a 7 días, secuencia basada exclusivamente en sesiones terminadas y selección manual.
 - Inicio idempotente, registro por serie, RIR, reps o segundos, peso, lastre y asistencia separados.
 - Recuperación de sesiones tras cerrar/recargar. Borrador local de campos sin enviar; la base de datos es la fuente del histórico.
 - Referencias anteriores, copiar únicamente cargas, temporizador opcional y edición de series activas.
 - Finalización parcial explícita, resumen, comparación, histórico con filtros.
 - Primeras recomendaciones de progresión, métricas básicas, objetivos iniciales, peso corporal.
 - Exportación JSON y CSV. Demo aislada con reinicio.
-- Plantillas múltiples por día con selector, edición previa, importación y exportación JSON.
+- Sección propia de plantillas con alta, edición, borrado, importación y exportación JSON.
 - Edición de ejercicios y objetivos durante una sesión; añadir, sustituir o quitar ejercicios aún no realizados.
 - Clonar una serie en la siguiente posición, abriéndola para revisión antes de guardarla.
 - Biblioteca ampliable con alta individual e importación/exportación masiva.
@@ -63,6 +63,6 @@ Requiere conexión para confirmar cada serie. Si falla una escritura, muestra er
 
 ## Validación
 
-`npm test`: 10 pruebas de dominio e integración con SQLite real: secuencia, dominadas, 3×10/3×12, fondos/RIR, récords, excepción histórica, validación de datos y CSV, inicio/guardado idempotentes, recuperación, cierre parcial, aislamiento por usuario y reinicio demo. Revisión del navegador: guardar serie, recargar y continuar, terminar Día A y comprobar recomendación B. TypeScript estricto y build de producción.
+`npm test`: 12 pruebas de dominio e integración con SQLite real: secuencia dinámica, dominadas, 3×10/3×12, fondos/RIR, récords, excepción histórica, validación de datos y CSV, inicio/guardado idempotentes, recuperación, cierre parcial, aislamiento por usuario, reinicio demo, días configurables y gestión de plantillas. Revisión del navegador: guardar serie, recargar y continuar, terminar Día A y comprobar recomendación B. TypeScript estricto y build de producción.
 
 Consulta `ARCHITECTURE.md` para decisiones, esquema y estructura de carpetas.
