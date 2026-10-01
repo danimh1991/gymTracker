@@ -1,5 +1,7 @@
+import type { SportKey } from "./sports";
 export type DayKey = "A" | "B" | "C" | "D" | "E" | "F" | "G";
 export type Metric = "reps" | "time";
+export type ActivityIntensity = "easy" | "moderate" | "hard";
 export interface Exercise {
   id: string;
   name: string;
@@ -108,6 +110,18 @@ export interface Goal {
   metric: string;
   target: number;
 }
+export interface ExternalActivity {
+  id: string;
+  sport: SportKey;
+  date: string;
+  durationMinutes: number;
+  distanceKm: number | null;
+  laps: number | null;
+  elevationGainM: number | null;
+  intensity: ActivityIntensity;
+  notes: string;
+  createdAt: string;
+}
 export interface Snapshot {
   settings: {
     trainingDays: number;
@@ -146,4 +160,5 @@ export interface Snapshot {
   goals: Goal[];
   templates: Template[];
   templateExercises: TemplateExercise[];
+  externalActivities: ExternalActivity[];
 }

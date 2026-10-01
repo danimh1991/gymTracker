@@ -1,0 +1,111 @@
+export const SPORTS = [
+  { id: "padel", name: "Pádel", emoji: "🎾", group: "Raqueta" },
+  { id: "tennis", name: "Tenis", emoji: "🎾", group: "Raqueta" },
+  { id: "badminton", name: "Bádminton", emoji: "🏸", group: "Raqueta" },
+  { id: "squash", name: "Squash", emoji: "🎾", group: "Raqueta" },
+  { id: "football", name: "Fútbol", emoji: "⚽", group: "Equipo" },
+  { id: "futsal", name: "Fútbol sala", emoji: "⚽", group: "Equipo" },
+  { id: "basketball", name: "Baloncesto", emoji: "🏀", group: "Equipo" },
+  { id: "handball", name: "Balonmano", emoji: "🤾", group: "Equipo" },
+  { id: "volleyball", name: "Voleibol", emoji: "🏐", group: "Equipo" },
+  { id: "swimming", name: "Natación", emoji: "🏊", group: "Agua", laps: true },
+  { id: "surfing", name: "Surf", emoji: "🏄", group: "Agua" },
+  {
+    id: "kayaking",
+    name: "Kayak / piragua",
+    emoji: "🛶",
+    group: "Agua",
+    distance: true,
+  },
+  {
+    id: "rowing",
+    name: "Remo",
+    emoji: "🚣",
+    group: "Agua",
+    distance: true,
+  },
+  {
+    id: "running",
+    name: "Running",
+    emoji: "🏃",
+    group: "Resistencia",
+    distance: true,
+  },
+  {
+    id: "trail_running",
+    name: "Trail running",
+    emoji: "🏃",
+    group: "Montaña",
+    distance: true,
+    elevation: true,
+  },
+  {
+    id: "hiking",
+    name: "Senderismo",
+    emoji: "🥾",
+    group: "Montaña",
+    distance: true,
+    elevation: true,
+  },
+  {
+    id: "walking",
+    name: "Caminar",
+    emoji: "🚶",
+    group: "Resistencia",
+    distance: true,
+  },
+  {
+    id: "cycling",
+    name: "Ciclismo",
+    emoji: "🚴",
+    group: "Resistencia",
+    distance: true,
+    elevation: true,
+  },
+  {
+    id: "mountain_biking",
+    name: "BTT / MTB",
+    emoji: "🚵",
+    group: "Montaña",
+    distance: true,
+    elevation: true,
+  },
+  {
+    id: "skating",
+    name: "Patinaje",
+    emoji: "🛼",
+    group: "Resistencia",
+    distance: true,
+  },
+  {
+    id: "skiing",
+    name: "Esquí",
+    emoji: "⛷️",
+    group: "Montaña",
+    distance: true,
+    elevation: true,
+  },
+  { id: "climbing", name: "Escalada", emoji: "🧗", group: "Fuerza" },
+  { id: "boxing", name: "Boxeo", emoji: "🥊", group: "Combate" },
+  {
+    id: "martial_arts",
+    name: "Artes marciales",
+    emoji: "🥋",
+    group: "Combate",
+  },
+  { id: "crossfit", name: "CrossFit", emoji: "🏋️", group: "Fuerza" },
+  { id: "dance", name: "Baile", emoji: "💃", group: "Movilidad" },
+  { id: "yoga", name: "Yoga", emoji: "🧘", group: "Movilidad" },
+  { id: "pilates", name: "Pilates", emoji: "🧘", group: "Movilidad" },
+  { id: "other", name: "Otro deporte", emoji: "🏅", group: "Otros" },
+] as const;
+
+export const SPORT_KEYS = SPORTS.map((sport) => sport.id) as [
+  (typeof SPORTS)[number]["id"],
+  ...(typeof SPORTS)[number]["id"][],
+];
+
+export type SportKey = (typeof SPORTS)[number]["id"];
+
+export const sportDefinition = (id: SportKey) =>
+  SPORTS.find((sport) => sport.id === id) ?? SPORTS[SPORTS.length - 1];

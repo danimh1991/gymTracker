@@ -12,6 +12,7 @@ Aplicación personal de gimnasio hacia calistenia. Primera entrega centrada en l
 - Primeras recomendaciones de progresión, métricas básicas, objetivos iniciales, peso corporal.
 - Exportación JSON y CSV. Demo aislada con reinicio.
 - Sección propia de plantillas con alta, edición, borrado, importación y exportación JSON.
+- Registro de deportes externos con métricas específicas por disciplina y calendario unificado con las sesiones de gimnasio.
 - Edición de ejercicios y objetivos durante una sesión; añadir, sustituir o quitar ejercicios aún no realizados.
 - Clonar una serie en la siguiente posición, abriéndola para revisión antes de guardarla.
 - Biblioteca ampliable con alta individual e importación/exportación masiva.
@@ -63,6 +64,6 @@ Requiere conexión para confirmar cada serie. Si falla una escritura, muestra er
 
 ## Validación
 
-`npm test`: 12 pruebas de dominio e integración con SQLite real: secuencia dinámica, dominadas, 3×10/3×12, fondos/RIR, récords, excepción histórica, validación de datos y CSV, inicio/guardado idempotentes, recuperación, cierre parcial, aislamiento por usuario, reinicio demo, días configurables y gestión de plantillas. Revisión del navegador: guardar serie, recargar y continuar, terminar Día A y comprobar recomendación B. TypeScript estricto y build de producción.
+`npm test`: 13 pruebas de dominio e integración con SQLite real: secuencia dinámica, dominadas, 3×10/3×12, fondos/RIR, récords, excepción histórica, validación de datos y CSV, inicio/guardado idempotentes, recuperación, cierre parcial, aislamiento por usuario, reinicio demo, días configurables, gestión de plantillas y deportes externos. TypeScript estricto, revisión visual y build de producción.
 
 Consulta `ARCHITECTURE.md` para decisiones, esquema y estructura de carpetas.

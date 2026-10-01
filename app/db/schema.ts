@@ -69,6 +69,25 @@ export const userSettings = sqliteTable("userSettings", {
   ownerId: text("ownerId").primaryKey(),
   trainingDays: integer("trainingDays").notNull().default(3),
 });
+export const externalActivities = sqliteTable(
+  "externalActivities",
+  {
+    id: text("id").primaryKey(),
+    ownerId: owner(),
+    sport: text("sport").notNull(),
+    date: text("date").notNull(),
+    durationMinutes: integer("durationMinutes").notNull(),
+    distanceKm: real("distanceKm"),
+    laps: integer("laps"),
+    elevationGainM: integer("elevationGainM"),
+    intensity: text("intensity").notNull(),
+    notes: text("notes").notNull(),
+    createdAt: text("createdAt").notNull(),
+  },
+  (table) => [
+    index("external_activities_owner_date").on(table.ownerId, table.date),
+  ],
+);
 export const days = sqliteTable("days", {
   id: text("id").primaryKey(),
   routineId: text("routineId")

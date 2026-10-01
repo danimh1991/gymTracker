@@ -199,6 +199,7 @@ export default function Tracker() {
                   selected={selected}
                   onSelect={setSelected}
                   onStart={(plan, name) => void start(plan, name)}
+                  execute={execute}
                   busy={busy}
                 />
               )}{" "}
@@ -216,7 +217,9 @@ export default function Tracker() {
                   }}
                 />
               )}
-              {page === "history" && <History data={data} />}{" "}
+              {page === "history" && (
+                <History data={data} busy={busy} execute={execute} />
+              )}{" "}
               {page === "progress" && <Progress data={data} />}
               {page === "templates" && (
                 <Templates data={data} busy={busy} execute={execute} />

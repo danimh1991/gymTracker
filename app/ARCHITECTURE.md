@@ -17,6 +17,7 @@ Routine → RoutineDay → RoutineExercise: secuencia, orden, ejercicio, series,
 Workout → WorkoutExercise → WorkoutSet: estado, inicio/fin, copia de prescripción y nombre; serie con reps, peso, peso corporal, asistencia, lastre, RIR/RPE, segundos, distancia, notas, completed y timestamp.
 BodyWeight: fecha y kg. Skill → SkillProgression → SkillLog. Goal: métrica y meta. PersonalRecord: ejercicio, métrica, valor, fecha y serie.
 UserSettings: preferencias por usuario, incluido el número de días activos del ciclo.
+ExternalActivity: deporte, fecha, duración, distancia, largos, desnivel, intensidad y notas; las métricas opcionales se validan según la disciplina.
 
 Cada tabla de usuario se separa por `ownerId`; demo usa un espacio distinto. Una restricción única impide dos sesiones activas por espacio. Inicio y finalización son transacciones por batch. Solo finalizar una sesión con series guardadas avanza la secuencia; iniciar, abandonar y recargar no la avanzan. Se conserva el día realmente elegido. Editar rutinas no altera las sesiones ya iniciadas.
 

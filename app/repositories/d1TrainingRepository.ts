@@ -1,6 +1,7 @@
 import type { TrainingRepository } from "./trainingRepository";
 import type { Snapshot, Workout, WorkoutExercise } from "../domain/types";
 import type { Command } from "../services/validation";
+import { sportDefinition } from "../domain/sports";
 import {
   initialDays,
   initialExercises,
@@ -181,6 +182,10 @@ export class D1TrainingRepository implements TrainingRepository {
         "SELECT trainingDays FROM userSettings WHERE ownerId=?",
         this.ownerId,
       ),
+      this.query(
+        "SELECT id,sport,date,durationMinutes,distanceKm,laps,elevationGainM,intensity,notes,createdAt FROM externalActivities WHERE ownerId=? ORDER BY date DESC,createdAt DESC",
+        this.ownerId,
+      ),
     ]);
     const snapshot = Object.fromEntries(
       [
@@ -206,6 +211,8 @@ export class D1TrainingRepository implements TrainingRepository {
         (result[15].results[0] as { trainingDays?: number } | undefined)
           ?.trainingDays ?? 3,
     };
+    snapshot.externalActivities = result[16]
+      .results as unknown as Snapshot["externalActivities"];
     return snapshot;
   }
   private async active(id: string) {
@@ -220,6 +227,35 @@ export class D1TrainingRepository implements TrainingRepository {
   }
   async execute(c: Command): Promise<void> {
     await this.seed();
+    if (c.action === "addExternalActivity") {
+      if (c.activity.date > new Date().toISOString().slice(0, 10))
+        throw new Error("La fecha no puede ser futura.");
+      const sport = sportDefinition(c.activity.sport);
+      if (
+        "distance" in sport &&
+        sport.distance &&
+        c.activity.distanceKm === null
+      )
+        throw new Error("Indica la distancia de este deporte.");
+      if ("laps" in sport && sport.laps && c.activity.laps === null)
+        throw new Error("Indica el número de largos.");
+      await this.insert("externalActivities", {
+        id: crypto.randomUUID(),
+        ownerId: this.ownerId,
+        ...c.activity,
+        createdAt: new Date().toISOString(),
+      }).run();
+      return;
+    }
+    if (c.action === "deleteExternalActivity") {
+      const result = await this.query(
+        "DELETE FROM externalActivities WHERE id=? AND ownerId=?",
+        c.activityId,
+        this.ownerId,
+      ).run();
+      if (!result.meta.changes) throw new Error("Actividad no encontrada.");
+      return;
+    }
     if (c.action === "setTrainingDays") {
       const active = await this.query(
         "SELECT d.position FROM workouts w JOIN days d ON d.id=w.dayId WHERE w.ownerId=? AND w.status='active'",
@@ -647,6 +683,10 @@ export class D1TrainingRepository implements TrainingRepository {
         ),
         this.query("DELETE FROM workouts WHERE ownerId=?", this.ownerId),
         this.query("DELETE FROM bodyWeights WHERE ownerId=?", this.ownerId),
+        this.query(
+          "DELETE FROM externalActivities WHERE ownerId=?",
+          this.ownerId,
+        ),
       ]);
       for (const [i, dayId] of (["A", "B", "C"] as const).entries()) {
         const plan = initialRoutine

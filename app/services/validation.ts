@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SPORT_KEYS } from "../domain/sports";
 const positive = z.number().finite().min(0).max(2000).nullable();
 const dayKey = z.enum(["A", "B", "C", "D", "E", "F", "G"]);
 export const planExercise = z
@@ -124,6 +125,26 @@ export const commandSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("setTrainingDays"),
     trainingDays: z.number().int().min(1).max(7),
+  }),
+  z.object({
+    action: z.literal("addExternalActivity"),
+    activity: z.object({
+      sport: z.enum(SPORT_KEYS),
+      date: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .refine((value) => !Number.isNaN(Date.parse(value))),
+      durationMinutes: z.number().int().min(1).max(1440),
+      distanceKm: z.number().finite().positive().max(1000).nullable(),
+      laps: z.number().int().positive().max(10000).nullable(),
+      elevationGainM: z.number().int().min(0).max(20000).nullable(),
+      intensity: z.enum(["easy", "moderate", "hard"]),
+      notes: z.string().max(2000),
+    }),
+  }),
+  z.object({
+    action: z.literal("deleteExternalActivity"),
+    activityId: z.string().min(1),
   }),
   z.object({
     action: z.literal("importExercises"),

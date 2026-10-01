@@ -1,7 +1,20 @@
 "use client";
 import { useState } from "react";
-import { CalendarDays, Check, Trophy } from "lucide-react";
+import {
+  CalendarDays,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
+  Dumbbell,
+  Mountain,
+  Route,
+  Trash2,
+  Trophy,
+  Waves,
+} from "lucide-react";
 import type { Snapshot, Workout } from "../domain/types";
+import { sportDefinition } from "../domain/sports";
 import {
   completedWorkouts,
   stats,
@@ -12,6 +25,7 @@ import {
   evaluateDoubleProgression,
 } from "../services/training";
 import { dateLabel } from "./Home";
+import type { Execute } from "./Training";
 export function WorkoutDetail({
   data,
   workout,
@@ -155,123 +169,249 @@ export function WorkoutDetail({
     </div>
   );
 }
-export function History({ data }: { data: Snapshot }) {
-  const [day, setDay] = useState(""),
-    [date, setDate] = useState(""),
-    [exercise, setExercise] = useState(""),
-    [type, setType] = useState(""),
-    [category, setCategory] = useState(""),
-    [open, setOpen] = useState("");
-  const matches = completedWorkouts(data).filter(
-    (w) =>
-      (!day || w.dayId === day) &&
-      (!date || new Date(w.startedAt).toLocaleDateString("sv-SE") === date) &&
-      data.workoutExercises.some((e) => {
-        const lib = data.exercises.find((x) => x.id === e.exerciseId);
-        return (
-          e.workoutId === w.id &&
-          (!exercise ||
-            e.name.toLowerCase().includes(exercise.toLowerCase())) &&
-          (!type || lib?.type === type) &&
-          (!category || lib?.movementPattern === category)
-        );
-      }),
+const localDateKey = (iso: string) => new Date(iso).toLocaleDateString("sv-SE");
+
+const monthLabel = (date: Date) => {
+  const label = date.toLocaleDateString("es-ES", {
+    month: "long",
+    year: "numeric",
+  });
+  return label.charAt(0).toUpperCase() + label.slice(1);
+};
+
+const intensityLabel = {
+  easy: "Suave",
+  moderate: "Moderada",
+  hard: "Intensa",
+} as const;
+
+export function History({
+  data,
+  busy,
+  execute,
+}: {
+  data: Snapshot;
+  busy: boolean;
+  execute: Execute;
+}) {
+  const completed = completedWorkouts(data);
+  const activityDates = [
+    ...completed.map((workout) => localDateKey(workout.startedAt)),
+    ...data.externalActivities.map((activity) => activity.date),
+  ].sort((a, b) => b.localeCompare(a));
+  const initialDate =
+    activityDates[0] ?? new Date().toLocaleDateString("sv-SE");
+  const [selectedDate, setSelectedDate] = useState(initialDate);
+  const [month, setMonth] = useState(initialDate.slice(0, 7));
+  const [open, setOpen] = useState("");
+  const [year, monthNumber] = month.split("-").map(Number);
+  const firstDay = new Date(year, monthNumber - 1, 1);
+  const calendarOffset = (firstDay.getDay() + 6) % 7;
+  const daysInMonth = new Date(year, monthNumber, 0).getDate();
+  const monthCells = [
+    ...Array.from({ length: calendarOffset }, () => null),
+    ...Array.from({ length: daysInMonth }, (_, index) => index + 1),
+  ];
+  const selectedWorkouts = completed.filter(
+    (workout) => localDateKey(workout.startedAt) === selectedDate,
   );
+  const selectedActivities = data.externalActivities.filter(
+    (activity) => activity.date === selectedDate,
+  );
+  const moveMonth = (delta: number) => {
+    const next = new Date(year, monthNumber - 1 + delta, 1);
+    setMonth(
+      `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`,
+    );
+  };
   return (
     <>
       <div className="page-heading">
         <div>
           <p className="eyebrow">CADA SESIÓN CUENTA</p>
           <h1>Tu histórico.</h1>
-          <p className="muted">El trabajo que ya has hecho.</p>
+          <p className="muted">Gimnasio y deporte, día a día.</p>
         </div>
         <CalendarDays size={30} />
       </div>
-      <div className="filters">
-        <label>
-          Fecha
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-          />
-        </label>
-        <label>
-          Entrenamiento
-          <select value={day} onChange={(e) => setDay(e.target.value)}>
-            <option value="">Todos los días</option>
-            {["A", "B", "C"].map((d) => (
-              <option key={d}>{d}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Ejercicio
-          <input
-            placeholder="Buscar ejercicio…"
-            value={exercise}
-            onChange={(e) => setExercise(e.target.value)}
-          />
-        </label>
-        <label>
-          Tipo
-          <select value={type} onChange={(e) => setType(e.target.value)}>
-            <option value="">Todos</option>
-            <option value="calisthenics">Calistenia</option>
-            <option value="gym">Gimnasio</option>
-          </select>
-        </label>
-        <label>
-          Categoría
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
+      <section className="activity-calendar">
+        <div className="calendar-toolbar">
+          <button
+            className="icon-button"
+            aria-label="Mes anterior"
+            onClick={() => moveMonth(-1)}
           >
-            <option value="">Todas</option>
-            {[...new Set(data.exercises.map((e) => e.movementPattern))].map(
-              (p) => (
-                <option key={p}>{p}</option>
-              ),
-            )}
-          </select>
-        </label>
-      </div>
-      {matches.length ? (
-        matches.map((w) => {
-          const s = stats(data.sets.filter((s) => s.workoutId === w.id));
-          return (
-            <section className="history-card" key={w.id}>
+            <ChevronLeft size={19} />
+          </button>
+          <h2>{monthLabel(firstDay)}</h2>
+          <button
+            className="icon-button"
+            aria-label="Mes siguiente"
+            onClick={() => moveMonth(1)}
+          >
+            <ChevronRight size={19} />
+          </button>
+        </div>
+        <div className="calendar-weekdays">
+          {["L", "M", "X", "J", "V", "S", "D"].map((weekday) => (
+            <span key={weekday}>{weekday}</span>
+          ))}
+        </div>
+        <div className="calendar-grid">
+          {monthCells.map((dayNumber, index) => {
+            if (dayNumber === null)
+              return <span className="calendar-empty" key={`empty-${index}`} />;
+            const key = `${month}-${String(dayNumber).padStart(2, "0")}`;
+            const hasWorkout = completed.some(
+              (workout) => localDateKey(workout.startedAt) === key,
+            );
+            const hasSport = data.externalActivities.some(
+              (activity) => activity.date === key,
+            );
+            return (
               <button
-                className="history-header"
-                onClick={() => setOpen(open === w.id ? "" : w.id)}
+                key={key}
+                className={
+                  selectedDate === key
+                    ? "calendar-day selected"
+                    : "calendar-day"
+                }
+                aria-label={`${dayNumber}${hasWorkout ? ", entrenamiento" : ""}${hasSport ? ", deporte" : ""}`}
+                onClick={() => {
+                  setSelectedDate(key);
+                  setOpen("");
+                }}
               >
-                <span className="day-badge">{w.dayId}</span>
-                <div>
-                  <h2>{dateLabel(w.startedAt)}</h2>
-                  <p>{data.days.find((d) => d.id === w.dayId)?.title}</p>
-                </div>
-                <span className="history-meta">
-                  {s.sets} series · {s.reps} reps{" "}
-                  <span className="tag">
-                    {open === w.id ? "Cerrar" : "Ver sesión"}
-                  </span>
+                <span>{dayNumber}</span>
+                <span className="calendar-markers">
+                  {hasWorkout && <i className="workout-marker" />}
+                  {hasSport && <i className="sport-marker" />}
                 </span>
               </button>
-              {open === w.id && <WorkoutDetail data={data} workout={w} />}
-            </section>
-          );
-        })
-      ) : (
+            );
+          })}
+        </div>
+        <div className="calendar-legend">
+          <span>
+            <i className="workout-marker" /> Gimnasio
+          </span>
+          <span>
+            <i className="sport-marker" /> Otro deporte
+          </span>
+        </div>
+      </section>
+
+      <div className="history-day-heading">
+        <div>
+          <p className="eyebrow">ACTIVIDAD DEL DÍA</p>
+          <h2>{dateLabel(`${selectedDate}T12:00:00`)}</h2>
+        </div>
+        <span className="tag">
+          {selectedWorkouts.length + selectedActivities.length}{" "}
+          {selectedWorkouts.length + selectedActivities.length === 1
+            ? "actividad"
+            : "actividades"}
+        </span>
+      </div>
+
+      {selectedActivities.map((activity) => {
+        const sport = sportDefinition(activity.sport);
+        return (
+          <article className="external-history-card" key={activity.id}>
+            <span className="sport-emoji" aria-hidden="true">
+              {sport.emoji}
+            </span>
+            <div className="external-history-main">
+              <div className="section-title">
+                <div>
+                  <span className="tag sport-tag">DEPORTE</span>
+                  <h2>{sport.name}</h2>
+                </div>
+                <button
+                  className="delete-activity"
+                  aria-label={`Eliminar ${sport.name}`}
+                  disabled={busy}
+                  onClick={() => {
+                    if (confirm(`¿Eliminar la actividad “${sport.name}”?`))
+                      void execute({
+                        action: "deleteExternalActivity",
+                        activityId: activity.id,
+                      });
+                  }}
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+              <div className="external-metrics">
+                <span>
+                  <Clock3 size={16} />
+                  <strong>{activity.durationMinutes}</strong> min
+                </span>
+                {activity.distanceKm !== null && (
+                  <span>
+                    <Route size={16} />
+                    <strong>{activity.distanceKm}</strong> km
+                  </span>
+                )}
+                {activity.laps !== null && (
+                  <span>
+                    <Waves size={16} />
+                    <strong>{activity.laps}</strong> largos
+                  </span>
+                )}
+                {activity.elevationGainM !== null && (
+                  <span>
+                    <Mountain size={16} />
+                    <strong>{activity.elevationGainM}</strong> m+
+                  </span>
+                )}
+                <span className={`intensity ${activity.intensity}`}>
+                  {intensityLabel[activity.intensity]}
+                </span>
+              </div>
+              {activity.notes && (
+                <p className="muted small">{activity.notes}</p>
+              )}
+            </div>
+          </article>
+        );
+      })}
+
+      {selectedWorkouts.map((w) => {
+        const s = stats(data.sets.filter((s) => s.workoutId === w.id));
+        return (
+          <section className="history-card" key={w.id}>
+            <button
+              className="history-header"
+              onClick={() => setOpen(open === w.id ? "" : w.id)}
+            >
+              <span className="day-badge">
+                <Dumbbell size={17} />
+                {w.dayId}
+              </span>
+              <div>
+                <h2>{dateLabel(w.startedAt)}</h2>
+                <p>{data.days.find((d) => d.id === w.dayId)?.title}</p>
+              </div>
+              <span className="history-meta">
+                {s.sets} series · {s.reps} reps{" "}
+                <span className="tag">
+                  {open === w.id ? "Cerrar" : "Ver sesión"}
+                </span>
+              </span>
+            </button>
+            {open === w.id && <WorkoutDetail data={data} workout={w} />}
+          </section>
+        );
+      })}
+
+      {!selectedWorkouts.length && !selectedActivities.length && (
         <div className="empty-state">
           <CalendarDays size={36} />
-          <h2>
-            {data.workouts.some((w) => w.status === "completed")
-              ? "No hay sesiones con estos filtros"
-              : "Tu primera sesión irá aquí"}
-          </h2>
+          <h2>No hay actividad este día</h2>
           <p>
-            Al terminar un entrenamiento, podrás consultar aquí cada serie y
-            compararla con la anterior.
+            Selecciona otro día del calendario o registra un deporte desde
+            Inicio.
           </p>
         </div>
       )}

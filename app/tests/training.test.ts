@@ -505,3 +505,58 @@ test("los días configurables y el borrado de plantillas son persistentes", asyn
   );
   sql.close();
 });
+test("los deportes externos validan sus métricas, se aíslan y se pueden borrar", async () => {
+  const { db, sql } = database(),
+    repo = new D1TrainingRepository(db, "sports:real"),
+    other = new D1TrainingRepository(db, "other:real");
+  await assert.rejects(
+    () =>
+      repo.execute({
+        action: "addExternalActivity",
+        activity: {
+          sport: "swimming",
+          date: "2026-09-30",
+          durationMinutes: 40,
+          distanceKm: null,
+          laps: null,
+          elevationGainM: null,
+          intensity: "moderate",
+          notes: "",
+        },
+      }),
+    /número de largos/,
+  );
+  await repo.execute({
+    action: "addExternalActivity",
+    activity: {
+      sport: "running",
+      date: "2026-09-30",
+      durationMinutes: 32,
+      distanceKm: 5.25,
+      laps: null,
+      elevationGainM: null,
+      intensity: "hard",
+      notes: "Parque",
+    },
+  });
+  let data = await repo.snapshot();
+  assert.equal(data.externalActivities.length, 1);
+  assert.equal(data.externalActivities[0].distanceKm, 5.25);
+  assert.equal(data.externalActivities[0].notes, "Parque");
+  assert.equal((await other.snapshot()).externalActivities.length, 0);
+  await assert.rejects(
+    () =>
+      other.execute({
+        action: "deleteExternalActivity",
+        activityId: data.externalActivities[0].id,
+      }),
+    /no encontrada/,
+  );
+  await repo.execute({
+    action: "deleteExternalActivity",
+    activityId: data.externalActivities[0].id,
+  });
+  data = await repo.snapshot();
+  assert.equal(data.externalActivities.length, 0);
+  sql.close();
+});

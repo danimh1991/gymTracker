@@ -909,6 +909,242 @@ textarea {
 .history-meta .tag {
   margin-left: 10px;
 }
+.external-activity-panel {
+  margin: 24px 0 0;
+  padding: 22px 24px;
+  background: #eef3e9;
+  border: 1px solid #dce5d2;
+  border-radius: 12px;
+}
+.external-activity-panel.is-open {
+  background: #fff;
+}
+.external-activity-intro {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.external-activity-intro > div {
+  flex: 1;
+}
+.external-activity-intro h2 {
+  margin: 3px 0 4px;
+}
+.external-activity-intro .muted {
+  font-size: 13px;
+}
+.external-activity-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: var(--deep);
+  color: var(--lime);
+}
+.external-activity-form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0 12px;
+  padding-top: 16px;
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.external-activity-form .field {
+  margin: 7px 0;
+}
+.external-activity-form input,
+.external-activity-form select {
+  width: 100%;
+}
+.external-activity-form .sport-field,
+.external-activity-form .activity-notes {
+  grid-column: span 2;
+}
+.activity-submit {
+  align-self: end;
+  margin: 7px 0;
+}
+.activity-calendar {
+  max-width: 780px;
+  padding: 24px;
+  margin: 0 auto 32px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+}
+.calendar-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.calendar-weekdays,
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+.calendar-weekdays {
+  margin-bottom: 6px;
+}
+.calendar-weekdays span {
+  padding: 5px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+.calendar-empty,
+.calendar-day {
+  min-height: 65px;
+  border-radius: 8px;
+}
+.calendar-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  font-size: 14px;
+}
+.calendar-day:hover {
+  background: #f2f5ed;
+}
+.calendar-day.selected {
+  background: var(--deep);
+  color: #fff;
+}
+.calendar-markers {
+  display: flex;
+  min-height: 7px;
+  gap: 4px;
+}
+.calendar-markers i,
+.calendar-legend i {
+  width: 7px;
+  height: 7px;
+  display: inline-block;
+  border-radius: 50%;
+}
+.workout-marker {
+  background: #84b63e;
+}
+.sport-marker {
+  background: #3896b4;
+}
+.calendar-day.selected .workout-marker {
+  background: var(--lime);
+}
+.calendar-day.selected .sport-marker {
+  background: #74d7ef;
+}
+.calendar-legend {
+  display: flex;
+  justify-content: center;
+  gap: 22px;
+  padding-top: 17px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.calendar-legend span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.history-day-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 17px;
+}
+.history-day-heading h2 {
+  margin-top: 4px;
+  font-size: 25px;
+}
+.external-history-card {
+  display: flex;
+  gap: 18px;
+  padding: 22px;
+  margin-bottom: 16px;
+  background: #fff;
+  border: 1px solid #d7e7ec;
+  border-left: 4px solid #3896b4;
+  border-radius: 10px;
+}
+.sport-emoji {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: #e8f5f8;
+  border-radius: 9px;
+  font-size: 25px;
+}
+.external-history-main {
+  flex: 1;
+  min-width: 0;
+}
+.external-history-main h2 {
+  margin-top: 6px;
+}
+.sport-tag {
+  color: #277a91;
+  background: #e8f5f8;
+}
+.delete-activity {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  color: #a45342;
+  border-radius: 50%;
+}
+.delete-activity:hover {
+  background: #fff0ed;
+}
+.external-metrics {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin: 17px 0 10px;
+}
+.external-metrics > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.external-metrics strong {
+  color: var(--ink);
+  font-size: 16px;
+}
+.external-metrics .intensity {
+  padding: 4px 8px;
+  border-radius: 5px;
+  font-weight: 650;
+}
+.intensity.easy {
+  color: #52782d;
+  background: #eef6df;
+}
+.intensity.moderate {
+  color: #84621e;
+  background: #fff4d7;
+}
+.intensity.hard {
+  color: #a04437;
+  background: #fff0ed;
+}
+.day-badge svg {
+  width: 15px;
+  height: 15px;
+}
 .workout-detail {
   padding: 26px;
   background: white;
@@ -1759,6 +1995,9 @@ textarea {
   background: #fff8f7;
 }
 @media (max-width: 760px) {
+  .external-activity-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .plan-row {
     grid-template-columns: 1fr;
   }
@@ -1853,5 +2092,51 @@ textarea {
   .day-picker {
     max-width: 100%;
     overflow-x: auto;
+  }
+  .external-activity-panel {
+    padding: 18px 15px;
+  }
+  .external-activity-intro {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .external-activity-intro > div {
+    min-width: calc(100% - 70px);
+  }
+  .external-activity-intro > button {
+    width: 100%;
+  }
+  .external-activity-intro > .icon-button {
+    width: 42px;
+    margin-left: auto;
+  }
+  .external-activity-form {
+    grid-template-columns: 1fr;
+  }
+  .external-activity-form .sport-field,
+  .external-activity-form .activity-notes {
+    grid-column: auto;
+  }
+  .activity-calendar {
+    padding: 16px 10px;
+  }
+  .calendar-weekdays,
+  .calendar-grid {
+    gap: 2px;
+  }
+  .calendar-empty,
+  .calendar-day {
+    min-height: 49px;
+  }
+  .calendar-legend {
+    gap: 14px;
+  }
+  .external-history-card {
+    padding: 17px 13px;
+    gap: 12px;
+  }
+  .sport-emoji {
+    width: 42px;
+    height: 42px;
   }
 }

@@ -8,6 +8,8 @@ import {
   getNextRoutineDay,
 } from "../services/training";
 import { PlanEditor } from "./PlanEditor";
+import { ExternalActivityForm } from "./ExternalActivityForm";
+import type { Execute } from "./Training";
 export const dateLabel = (date: string) =>
   new Date(date).toLocaleDateString("es-ES", {
     day: "numeric",
@@ -45,12 +47,14 @@ export function Home({
   selected,
   onSelect,
   onStart,
+  execute,
   busy,
 }: {
   data: Snapshot;
   selected: DayKey;
   onSelect: (d: DayKey) => void;
   onStart: (plan: PlanExercise[], templateName: string) => void;
+  execute: Execute;
   busy: boolean;
 }) {
   const done = completedWorkouts(data),
@@ -205,6 +209,7 @@ export function Home({
           </div>
         </aside>
       </div>
+      <ExternalActivityForm busy={busy} execute={execute} />
       <div className="section-title routine-heading">
         <div>
           <p className="eyebrow">TU TABLA</p>

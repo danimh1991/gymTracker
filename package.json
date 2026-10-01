@@ -3,6 +3,6 @@
   "private": true,
   "scripts": {
     "build": "npm --prefix app ci && npm --prefix app run build:cloudflare",
-    "deploy": "npx wrangler deploy --config wrangler.jsonc"
+    "deploy": "npx wrangler d1 migrations apply gym-tracker-db --remote --config wrangler.jsonc && npx wrangler deploy --config wrangler.jsonc"
   }
 }
