@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { BookOpen, Download, Plus, Upload } from "lucide-react";
+import { useRef, useState } from "react";
+import { BookOpen, Download, Pencil, Plus, Upload, X } from "lucide-react";
 import type { Exercise, Snapshot } from "../domain/types";
 import type { Execute } from "./Training";
 import { downloadJson } from "../services/export";
@@ -36,6 +36,45 @@ export function Exercises({
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [draft, setDraft] = useState(emptyExercise);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const showForm = () =>
+    requestAnimationFrame(() =>
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
+  const beginNew = () => {
+    setDraft(emptyExercise);
+    setEditingId(null);
+    setShowAdd(true);
+    showForm();
+  };
+  const beginEdit = (exercise: Exercise) => {
+    const loadMode: LoadMode = exercise.bodyweightExercise
+      ? exercise.supportsAssistance
+        ? "assisted"
+        : exercise.supportsAddedWeight
+          ? "added"
+          : "bodyweight"
+      : "external";
+    setDraft({
+      name: exercise.name,
+      type: exercise.type as ExerciseType,
+      movementPattern: exercise.movementPattern,
+      primaryMuscles: exercise.primaryMuscles,
+      secondaryMuscles: exercise.secondaryMuscles,
+      equipment: exercise.equipment,
+      metricType: exercise.metricType,
+      loadMode,
+      defaultRepMin: exercise.defaultRepMin,
+      defaultRepMax: exercise.defaultRepMax,
+      defaultRIR: exercise.defaultRIR,
+      notes: exercise.notes,
+    });
+    setEditingId(exercise.id);
+    setShowAdd(true);
+    showForm();
+  };
 
   const importJson = async (file: File | undefined) => {
     if (!file) return;
@@ -62,12 +101,8 @@ export function Exercises({
             Configura la métrica y el tipo de carga antes de usar un ejercicio.
           </p>
         </div>
-        <button
-          type="button"
-          className="primary"
-          onClick={() => setShowAdd(!showAdd)}
-        >
-          <Plus size={18} /> {showAdd ? "Cerrar formulario" : "Nuevo ejercicio"}
+        <button type="button" className="primary" onClick={beginNew}>
+          <Plus size={18} /> Nuevo ejercicio
         </button>
       </div>
 
@@ -102,42 +137,64 @@ export function Exercises({
 
       {showAdd && (
         <form
+          ref={formRef}
           className="settings-card exercise-form"
           onSubmit={async (event) => {
             event.preventDefault();
             const bodyweightExercise = draft.loadMode === "external" ? 0 : 1;
-            const result = await execute({
-              action: "addExercise",
-              exercise: {
-                name: draft.name,
-                shortName: draft.name.slice(0, 80),
-                type: draft.type,
-                movementPattern: draft.movementPattern,
-                primaryMuscles: draft.primaryMuscles,
-                secondaryMuscles: draft.secondaryMuscles,
-                equipment: draft.equipment,
-                metricType: draft.metricType,
-                bodyweightExercise,
-                supportsAssistance: draft.loadMode === "assisted" ? 1 : 0,
-                supportsAddedWeight: draft.loadMode === "added" ? 1 : 0,
-                defaultRepMin: draft.defaultRepMin,
-                defaultRepMax: draft.defaultRepMax,
-                defaultRIR: draft.defaultRIR,
-                notes: draft.notes,
-                enabled: 1,
-              },
-            });
+            const exercise = {
+              name: draft.name,
+              shortName: draft.name.slice(0, 80),
+              type: draft.type,
+              movementPattern: draft.movementPattern,
+              primaryMuscles: draft.primaryMuscles,
+              secondaryMuscles: draft.secondaryMuscles,
+              equipment: draft.equipment,
+              metricType: draft.metricType,
+              bodyweightExercise,
+              supportsAssistance: draft.loadMode === "assisted" ? 1 : 0,
+              supportsAddedWeight: draft.loadMode === "added" ? 1 : 0,
+              defaultRepMin: draft.defaultRepMin,
+              defaultRepMax: draft.defaultRepMax,
+              defaultRIR: draft.defaultRIR,
+              notes: draft.notes,
+              enabled: 1,
+            };
+            const result = await execute(
+              editingId
+                ? { action: "updateExercise", exerciseId: editingId, exercise }
+                : { action: "addExercise", exercise },
+            );
             if (result) {
               setDraft(emptyExercise);
+              setEditingId(null);
               setShowAdd(false);
             }
           }}
         >
           <div className="section-title">
             <div>
-              <p className="eyebrow">NUEVO EJERCICIO</p>
-              <h2>Define cómo se registra</h2>
+              <p className="eyebrow">
+                {editingId ? "EDITAR EJERCICIO" : "NUEVO EJERCICIO"}
+              </p>
+              <h2>
+                {editingId
+                  ? "Actualiza su configuración"
+                  : "Define cómo se registra"}
+              </h2>
             </div>
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="Cerrar formulario"
+              onClick={() => {
+                setShowAdd(false);
+                setEditingId(null);
+                setDraft(emptyExercise);
+              }}
+            >
+              <X size={18} />
+            </button>
           </div>
           <div className="exercise-form-grid">
             <label className="field wide-field">
@@ -258,7 +315,10 @@ export function Exercises({
                 max="1000"
                 value={draft.defaultRepMin}
                 onChange={(event) =>
-                  setDraft({ ...draft, defaultRepMin: Number(event.target.value) })
+                  setDraft({
+                    ...draft,
+                    defaultRepMin: Number(event.target.value),
+                  })
                 }
               />
             </label>
@@ -270,7 +330,10 @@ export function Exercises({
                 max="1000"
                 value={draft.defaultRepMax}
                 onChange={(event) =>
-                  setDraft({ ...draft, defaultRepMax: Number(event.target.value) })
+                  setDraft({
+                    ...draft,
+                    defaultRepMax: Number(event.target.value),
+                  })
                 }
               />
             </label>
@@ -303,7 +366,7 @@ export function Exercises({
               draft.defaultRepMax < draft.defaultRepMin
             }
           >
-            Guardar ejercicio
+            {editingId ? "Guardar cambios" : "Guardar ejercicio"}
           </button>
         </form>
       )}
@@ -331,26 +394,35 @@ export function Exercises({
                 .includes(search.toLocaleLowerCase("es")),
             )
             .map((exercise) => (
-              <details key={exercise.id}>
-                <summary>
-                  {exercise.name}
-                  <span>
-                    {exercise.metricType === "time" ? "Tiempo" : "Reps"} ·{" "}
-                    {exercise.bodyweightExercise
-                      ? exercise.supportsAssistance
-                        ? "Con asistencia"
-                        : exercise.supportsAddedWeight
-                          ? "Con lastre"
-                          : "Peso corporal"
-                      : "Peso externo"}
-                  </span>
-                </summary>
-                <p>
-                  {exercise.primaryMuscles || "Músculos sin especificar"} ·{" "}
-                  {exercise.equipment || "Sin equipo especificado"}
-                </p>
-                <p>{exercise.notes || "Sin notas permanentes."}</p>
-              </details>
+              <div className="library-item" key={exercise.id}>
+                <details>
+                  <summary>
+                    {exercise.name}
+                    <span>
+                      {exercise.metricType === "time" ? "Tiempo" : "Reps"} ·{" "}
+                      {exercise.bodyweightExercise
+                        ? exercise.supportsAssistance
+                          ? "Con asistencia"
+                          : exercise.supportsAddedWeight
+                            ? "Con lastre"
+                            : "Peso corporal"
+                        : "Peso externo"}
+                    </span>
+                  </summary>
+                  <p>
+                    {exercise.primaryMuscles || "Músculos sin especificar"} ·{" "}
+                    {exercise.equipment || "Sin equipo especificado"}
+                  </p>
+                  <p>{exercise.notes || "Sin notas permanentes."}</p>
+                </details>
+                <button
+                  type="button"
+                  className="secondary compact"
+                  onClick={() => beginEdit(exercise)}
+                >
+                  <Pencil size={15} /> Editar
+                </button>
+              </div>
             ))}
         </div>
       </section>

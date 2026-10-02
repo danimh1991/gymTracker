@@ -7,16 +7,169 @@ import {
   CopyPlus,
   Edit3,
   Plus,
+  Save,
   Scale,
   Timer,
   Trash2,
   X,
 } from "lucide-react";
-import type { Snapshot, Workout, WorkoutSet } from "../domain/types";
+import type {
+  Snapshot,
+  Workout,
+  WorkoutExercise,
+  WorkoutSet,
+} from "../domain/types";
 import type { Command } from "../services/validation";
 import { previousSets, loadLabel, stats } from "../services/training";
 import { SetEditor } from "./SetEditor";
 export type Execute = (command: Command) => Promise<Snapshot | null>;
+
+function WorkoutExerciseEditor({
+  data,
+  exercise,
+  doneCount,
+  busy,
+  execute,
+  onClose,
+}: {
+  data: Snapshot;
+  exercise: WorkoutExercise;
+  doneCount: number;
+  busy: boolean;
+  execute: Execute;
+  onClose: () => void;
+}) {
+  const [draft, setDraft] = useState({
+    exerciseId: exercise.exerciseId,
+    sets: String(exercise.sets),
+    repMin: String(exercise.repMin),
+    repMax: String(exercise.repMax),
+    rir: exercise.rir,
+  });
+  const sets = Number(draft.sets),
+    repMin = Number(draft.repMin),
+    repMax = Number(draft.repMax),
+    invalid =
+      !draft.sets ||
+      !draft.repMin ||
+      !draft.repMax ||
+      !draft.rir.trim() ||
+      sets < Math.max(1, doneCount) ||
+      repMin < 0 ||
+      repMax < repMin;
+  return (
+    <div className="active-exercise-editor">
+      <label>
+        Ejercicio
+        <select
+          value={draft.exerciseId}
+          onChange={(event) =>
+            setDraft({ ...draft, exerciseId: event.target.value })
+          }
+        >
+          {data.exercises
+            .filter((item) => item.enabled)
+            .map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+        </select>
+      </label>
+      <label>
+        Series
+        <input
+          type="number"
+          min={Math.max(1, doneCount)}
+          max="30"
+          value={draft.sets}
+          onChange={(event) => setDraft({ ...draft, sets: event.target.value })}
+        />
+      </label>
+      <label>
+        Mín.
+        <input
+          type="number"
+          min="0"
+          max="1000"
+          value={draft.repMin}
+          onChange={(event) =>
+            setDraft({ ...draft, repMin: event.target.value })
+          }
+        />
+      </label>
+      <label>
+        Máx.
+        <input
+          type="number"
+          min={Math.max(0, repMin)}
+          max="1000"
+          value={draft.repMax}
+          onChange={(event) =>
+            setDraft({ ...draft, repMax: event.target.value })
+          }
+        />
+      </label>
+      <label>
+        RIR
+        <input
+          maxLength={20}
+          value={draft.rir}
+          onChange={(event) => setDraft({ ...draft, rir: event.target.value })}
+        />
+      </label>
+      <div className="exercise-edit-actions">
+        <button
+          type="button"
+          className="secondary compact"
+          disabled={busy || invalid}
+          onClick={async () => {
+            const result = await execute({
+              action: "updateWorkoutExercise",
+              workoutExerciseId: exercise.id,
+              exercise: {
+                exerciseId: draft.exerciseId,
+                sets,
+                repMin,
+                repMax,
+                rir: draft.rir,
+                optional: exercise.optional,
+                notes: exercise.notes,
+                priority: exercise.priority,
+              },
+            });
+            if (result) onClose();
+          }}
+        >
+          <Save size={16} /> Guardar
+        </button>
+        <button
+          type="button"
+          className="icon-button danger"
+          disabled={busy || doneCount > 0}
+          title="Quitar ejercicio"
+          onClick={() =>
+            void execute({
+              action: "removeWorkoutExercise",
+              workoutExerciseId: exercise.id,
+            })
+          }
+        >
+          <Trash2 size={17} />
+        </button>
+        <button
+          type="button"
+          className="icon-button"
+          aria-label="Cerrar edición"
+          onClick={onClose}
+        >
+          <X size={17} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function Training({
   data,
   workout,
@@ -48,7 +201,7 @@ export function Training({
     [seconds, setSeconds] = useState(150),
     [autoRest, setAutoRest] = useState(true),
     [end, setEnd] = useState<number | null>(null),
-    [now, setNow] = useState(Date.now()),
+    [now, setNow] = useState(() => Date.now()),
     [confirm, setConfirm] = useState<"finish" | "cancel" | null>(null),
     [bodyweightPrompt, setBodyweightPrompt] = useState(false),
     [bodyweightHandled, setBodyweightHandled] = useState(false),
@@ -247,121 +400,18 @@ export function Training({
               {open === e.id && (
                 <div className="exercise-body">
                   {(editSession || editingExercise === e.id) && (
-                    <div className="active-exercise-editor">
-                      <label>
-                        Ejercicio
-                        <select
-                          value={e.exerciseId}
-                          onChange={(ev) =>
-                            void execute({
-                              action: "updateWorkoutExercise",
-                              workoutExerciseId: e.id,
-                              exercise: {
-                                exerciseId: ev.target.value,
-                                sets: e.sets,
-                                repMin: e.repMin,
-                                repMax: e.repMax,
-                                rir: e.rir,
-                                optional: e.optional,
-                                notes: e.notes,
-                                priority: e.priority,
-                              },
-                            })
-                          }
-                        >
-                          {data.exercises.map((x) => (
-                            <option key={x.id} value={x.id}>
-                              {x.name}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        Series
-                        <input
-                          type="number"
-                          min={Math.max(1, done.length)}
-                          value={e.sets}
-                          onChange={(ev) =>
-                            void execute({
-                              action: "updateWorkoutExercise",
-                              workoutExerciseId: e.id,
-                              exercise: {
-                                exerciseId: e.exerciseId,
-                                sets: Number(ev.target.value),
-                                repMin: e.repMin,
-                                repMax: e.repMax,
-                                rir: e.rir,
-                                optional: e.optional,
-                                notes: e.notes,
-                                priority: e.priority,
-                              },
-                            })
-                          }
-                        />
-                      </label>
-                      <label>
-                        Mín.
-                        <input
-                          type="number"
-                          min="0"
-                          value={e.repMin}
-                          onChange={(ev) =>
-                            void execute({
-                              action: "updateWorkoutExercise",
-                              workoutExerciseId: e.id,
-                              exercise: {
-                                exerciseId: e.exerciseId,
-                                sets: e.sets,
-                                repMin: Number(ev.target.value),
-                                repMax: e.repMax,
-                                rir: e.rir,
-                                optional: e.optional,
-                                notes: e.notes,
-                                priority: e.priority,
-                              },
-                            })
-                          }
-                        />
-                      </label>
-                      <label>
-                        Máx.
-                        <input
-                          type="number"
-                          min={e.repMin}
-                          value={e.repMax}
-                          onChange={(ev) =>
-                            void execute({
-                              action: "updateWorkoutExercise",
-                              workoutExerciseId: e.id,
-                              exercise: {
-                                exerciseId: e.exerciseId,
-                                sets: e.sets,
-                                repMin: e.repMin,
-                                repMax: Number(ev.target.value),
-                                rir: e.rir,
-                                optional: e.optional,
-                                notes: e.notes,
-                                priority: e.priority,
-                              },
-                            })
-                          }
-                        />
-                      </label>
-                      <button
-                        className="icon-button danger"
-                        disabled={done.length > 0}
-                        title="Quitar ejercicio"
-                        onClick={() =>
-                          void execute({
-                            action: "removeWorkoutExercise",
-                            workoutExerciseId: e.id,
-                          })
-                        }
-                      >
-                        <Trash2 size={17} />
-                      </button>
-                    </div>
+                    <WorkoutExerciseEditor
+                      key={`${e.id}:${e.exerciseId}:${e.sets}:${e.repMin}:${e.repMax}:${e.rir}`}
+                      data={data}
+                      exercise={e}
+                      doneCount={done.length}
+                      busy={busy}
+                      execute={execute}
+                      onClose={() => {
+                        setEditingExercise("");
+                        if (editSession) setEditSession(false);
+                      }}
+                    />
                   )}
                   {(e.notes || library?.notes) && (
                     <p className="technique">

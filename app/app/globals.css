@@ -1705,9 +1705,19 @@ textarea {
   flex-shrink: 0;
   margin: 0;
 }
-.library-list details {
+.library-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 15px 0;
   border-bottom: 1px solid var(--line);
+}
+.library-item details {
+  flex: 1;
+  min-width: 0;
+}
+.library-item > button {
+  flex-shrink: 0;
 }
 .library-list summary {
   cursor: pointer;
@@ -1874,7 +1884,7 @@ textarea {
 }
 .active-exercise-editor {
   display: grid;
-  grid-template-columns: minmax(170px, 1fr) repeat(3, 72px) 42px;
+  grid-template-columns: minmax(170px, 1fr) repeat(4, 72px) auto;
   gap: 8px;
   align-items: end;
   margin-bottom: 18px;
@@ -1886,6 +1896,11 @@ textarea {
   display: grid;
   gap: 5px;
   font-size: 11px;
+}
+.exercise-edit-actions {
+  display: flex;
+  align-items: end;
+  gap: 6px;
 }
 .saved-set-wrap {
   display: flex;
@@ -2117,10 +2132,14 @@ textarea {
     min-width: 56px;
   }
   .active-exercise-editor {
-    grid-template-columns: 1fr repeat(3, 62px) 42px;
+    grid-template-columns: repeat(4, minmax(62px, 1fr));
   }
   .active-exercise-editor label:first-child {
     grid-column: 1/-1;
+  }
+  .active-exercise-editor .exercise-edit-actions {
+    grid-column: 1/-1;
+    justify-content: flex-end;
   }
   .template-toolbar > * {
     width: 100%;
@@ -2180,6 +2199,13 @@ textarea {
   }
   .library-list summary span {
     display: none;
+  }
+  .library-item {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .library-item > button {
+    width: 100%;
   }
   .demo-card .button-row {
     width: 100%;

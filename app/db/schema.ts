@@ -28,6 +28,20 @@ export const exercises = sqliteTable("exercises", {
   enabled: integer("enabled").notNull(),
   ownerId: text("ownerId"),
 });
+export const exerciseOverrides = sqliteTable(
+  "exerciseOverrides",
+  {
+    id: text("id").primaryKey(),
+    ownerId: owner(),
+    exerciseId: text("exerciseId")
+      .notNull()
+      .references(() => exercises.id),
+    data: text("data").notNull(),
+  },
+  (t) => [
+    uniqueIndex("exercise_override_owner_exercise").on(t.ownerId, t.exerciseId),
+  ],
+);
 export const workoutTemplates = sqliteTable(
   "workoutTemplates",
   {

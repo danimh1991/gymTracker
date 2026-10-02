@@ -649,3 +649,56 @@ test("las importaciones de plantillas y ejercicios omiten duplicados naturales",
   );
   sql.close();
 });
+test("los ejercicios de biblioteca se editan por usuario sin alterar el catálogo global", async () => {
+  const { db, sql } = database();
+  const alice = new D1TrainingRepository(db, "exercise-editor:alice");
+  const bob = new D1TrainingRepository(db, "exercise-editor:bob");
+  let data = await alice.snapshot();
+  const original = data.exercises.find((exercise) => exercise.id === "pushup")!;
+  await alice.execute({
+    action: "updateExercise",
+    exerciseId: original.id,
+    exercise: {
+      ...original,
+      type: original.type as "calisthenics" | "gym" | "mobility" | "skill",
+      name: "Flexiones personalizadas",
+      defaultRepMin: 10,
+      defaultRepMax: 15,
+    },
+  });
+  data = await alice.snapshot();
+  assert.equal(
+    data.exercises.find((exercise) => exercise.id === "pushup")?.name,
+    "Flexiones personalizadas",
+  );
+  assert.equal(
+    data.exercises.find((exercise) => exercise.id === "pushup")?.defaultRepMax,
+    15,
+  );
+  assert.equal(
+    (await bob.snapshot()).exercises.find(
+      (exercise) => exercise.id === "pushup",
+    )?.name,
+    original.name,
+  );
+  await alice.execute({
+    action: "start",
+    dayId: "A",
+    templateName: "Edición individual",
+    exercises: [
+      {
+        exerciseId: "pushup",
+        sets: 3,
+        repMin: 10,
+        repMax: 15,
+        rir: "2",
+        optional: 0,
+        notes: "",
+        priority: "Principal",
+      },
+    ],
+  });
+  data = await alice.snapshot();
+  assert.equal(data.workoutExercises[0].name, "Flexiones personalizadas");
+  sql.close();
+});

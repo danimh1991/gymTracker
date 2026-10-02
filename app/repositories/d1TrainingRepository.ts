@@ -1,5 +1,10 @@
 import type { TrainingRepository } from "./trainingRepository";
-import type { Snapshot, Workout, WorkoutExercise } from "../domain/types";
+import type {
+  Exercise,
+  Snapshot,
+  Workout,
+  WorkoutExercise,
+} from "../domain/types";
 import type { Command } from "../services/validation";
 import { sportDefinition } from "../domain/sports";
 import {
@@ -186,6 +191,10 @@ export class D1TrainingRepository implements TrainingRepository {
         "SELECT id,sport,date,durationMinutes,distanceKm,laps,elevationGainM,intensity,notes,createdAt FROM externalActivities WHERE ownerId=? ORDER BY date DESC,createdAt DESC",
         this.ownerId,
       ),
+      this.query(
+        "SELECT exerciseId,data FROM exerciseOverrides WHERE ownerId=?",
+        this.ownerId,
+      ),
     ]);
     const snapshot = Object.fromEntries(
       [
@@ -213,6 +222,24 @@ export class D1TrainingRepository implements TrainingRepository {
     };
     snapshot.externalActivities = result[16]
       .results as unknown as Snapshot["externalActivities"];
+    const overrides = new Map(
+      (
+        result[17].results as unknown as Array<{
+          exerciseId: string;
+          data: string;
+        }>
+      ).map((row) => {
+        try {
+          return [row.exerciseId, JSON.parse(row.data) as Partial<Exercise>];
+        } catch {
+          return [row.exerciseId, {}];
+        }
+      }),
+    );
+    snapshot.exercises = snapshot.exercises.map((exercise) => ({
+      ...exercise,
+      ...(overrides.get(exercise.id) ?? {}),
+    }));
     return snapshot;
   }
   private async active(id: string) {
@@ -224,6 +251,28 @@ export class D1TrainingRepository implements TrainingRepository {
     if (!w)
       throw new Error("La sesión ya no está activa. Actualiza la página.");
     return w;
+  }
+  private async libraryExercise(id: string): Promise<Exercise | null> {
+    const exercise = await this.query(
+      "SELECT * FROM exercises WHERE id=? AND (ownerId IS NULL OR ownerId=?)",
+      id,
+      this.ownerId,
+    ).first<Exercise>();
+    if (!exercise) return null;
+    const override = await this.query(
+      "SELECT data FROM exerciseOverrides WHERE ownerId=? AND exerciseId=?",
+      this.ownerId,
+      id,
+    ).first<{ data: string }>();
+    if (!override) return exercise;
+    try {
+      return {
+        ...exercise,
+        ...(JSON.parse(override.data) as Partial<Exercise>),
+      };
+    } catch {
+      return exercise;
+    }
   }
   async execute(c: Command): Promise<void> {
     await this.seed();
@@ -263,7 +312,11 @@ export class D1TrainingRepository implements TrainingRepository {
         "SELECT startedAt,finishedAt,status FROM workouts WHERE id=? AND ownerId=?",
         c.workoutId,
         this.ownerId,
-      ).first<{ startedAt: string; finishedAt: string | null; status: string }>();
+      ).first<{
+        startedAt: string;
+        finishedAt: string | null;
+        status: string;
+      }>();
       if (!workout) throw new Error("Sesión no encontrada.");
       if (workout.status === "active")
         throw new Error("Termina la sesión antes de cambiar su fecha.");
@@ -371,11 +424,7 @@ export class D1TrainingRepository implements TrainingRepository {
         now = new Date().toISOString();
       const rows = [] as WorkoutExercise[];
       for (const [position, plan] of c.exercises.entries()) {
-        const exercise = await this.query(
-          "SELECT * FROM exercises WHERE id=? AND (ownerId IS NULL OR ownerId=?)",
-          plan.exerciseId,
-          this.ownerId,
-        ).first<WorkoutExercise>();
+        const exercise = await this.libraryExercise(plan.exerciseId);
         if (!exercise)
           throw new Error("Uno de los ejercicios ya no está disponible.");
         rows.push({
@@ -490,11 +539,54 @@ export class D1TrainingRepository implements TrainingRepository {
       }
       return;
     }
+    if (c.action === "updateExercise") {
+      const existing = await this.query(
+        "SELECT id,ownerId FROM exercises WHERE id=? AND (ownerId IS NULL OR ownerId=?)",
+        c.exerciseId,
+        this.ownerId,
+      ).first<{ id: string; ownerId: string | null }>();
+      if (!existing) throw new Error("Ejercicio no encontrado.");
+      if (existing.ownerId === this.ownerId) {
+        const e = c.exercise;
+        await this.query(
+          "UPDATE exercises SET name=?,shortName=?,type=?,movementPattern=?,primaryMuscles=?,secondaryMuscles=?,equipment=?,metricType=?,bodyweightExercise=?,supportsAssistance=?,supportsAddedWeight=?,defaultRepMin=?,defaultRepMax=?,defaultRIR=?,notes=?,enabled=? WHERE id=? AND ownerId=?",
+          e.name,
+          e.shortName,
+          e.type,
+          e.movementPattern,
+          e.primaryMuscles,
+          e.secondaryMuscles,
+          e.equipment,
+          e.metricType,
+          e.bodyweightExercise,
+          e.supportsAssistance,
+          e.supportsAddedWeight,
+          e.defaultRepMin,
+          e.defaultRepMax,
+          e.defaultRIR,
+          e.notes,
+          e.enabled,
+          c.exerciseId,
+          this.ownerId,
+        ).run();
+      } else {
+        await this.query(
+          "INSERT INTO exerciseOverrides (id,ownerId,exerciseId,data) VALUES (?,?,?,?) ON CONFLICT(ownerId,exerciseId) DO UPDATE SET data=excluded.data",
+          `${this.ownerId}:${c.exerciseId}`,
+          this.ownerId,
+          c.exerciseId,
+          JSON.stringify(c.exercise),
+        ).run();
+      }
+      return;
+    }
     if (c.action === "addExercise" || c.action === "importExercises") {
       const exercises = c.action === "addExercise" ? [c.exercise] : c.exercises;
       for (const e of exercises) {
         const id = e.id?.trim() || `custom-${crypto.randomUUID()}`;
-        if (await this.query("SELECT id FROM exercises WHERE id=?", id).first()) {
+        if (
+          await this.query("SELECT id FROM exercises WHERE id=?", id).first()
+        ) {
           if (c.action === "importExercises") continue;
           throw new Error(`Ya existe un ejercicio con id ${id}.`);
         }
@@ -670,11 +762,7 @@ export class D1TrainingRepository implements TrainingRepository {
         await this.query("DELETE FROM workoutExercises WHERE id=?", e.id).run();
         return;
       }
-      const lib = await this.query(
-        "SELECT * FROM exercises WHERE id=? AND (ownerId IS NULL OR ownerId=?)",
-        c.exercise.exerciseId,
-        this.ownerId,
-      ).first<WorkoutExercise>();
+      const lib = await this.libraryExercise(c.exercise.exerciseId);
       if (!lib) throw new Error("Ejercicio no disponible.");
       const count = await this.query(
         "SELECT COUNT(*) count FROM workoutSets WHERE workoutExerciseId=?",
@@ -705,11 +793,7 @@ export class D1TrainingRepository implements TrainingRepository {
     }
     if (c.action === "addWorkoutExercise") {
       const w = await this.active(c.workoutId);
-      const lib = await this.query(
-        "SELECT * FROM exercises WHERE id=? AND (ownerId IS NULL OR ownerId=?)",
-        c.exercise.exerciseId,
-        this.ownerId,
-      ).first<WorkoutExercise>();
+      const lib = await this.libraryExercise(c.exercise.exerciseId);
       if (!lib) throw new Error("Ejercicio no disponible.");
       const pos = await this.query(
         "SELECT COALESCE(MAX(position),-1)+1 position FROM workoutExercises WHERE workoutId=?",

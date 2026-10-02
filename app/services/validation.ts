@@ -70,15 +70,17 @@ const importedSet = z.object({
   notes: z.string().max(2000).default(""),
   timestamp: z.string().datetime().optional(),
 });
-const importedWorkoutExercise = planExercise.and(z.object({
-  name: z.string().trim().min(1).max(120),
-  metricType: z.enum(["reps", "time"]),
-  bodyweightExercise: z.number().int().min(0).max(1),
-  supportsAssistance: z.number().int().min(0).max(1),
-  supportsAddedWeight: z.number().int().min(0).max(1),
-  variant: z.string().max(100).default(""),
-  setsDone: z.array(importedSet).max(30),
-}));
+const importedWorkoutExercise = planExercise.and(
+  z.object({
+    name: z.string().trim().min(1).max(120),
+    metricType: z.enum(["reps", "time"]),
+    bodyweightExercise: z.number().int().min(0).max(1),
+    supportsAssistance: z.number().int().min(0).max(1),
+    supportsAddedWeight: z.number().int().min(0).max(1),
+    variant: z.string().max(100).default(""),
+    setsDone: z.array(importedSet).max(30),
+  }),
+);
 const importedWorkout = z.object({
   sourceId: z.string().max(200).optional(),
   dayId: dayKey,
@@ -169,6 +171,11 @@ export const commandSchema = z.discriminatedUnion("action", [
       .max(100),
   }),
   z.object({ action: z.literal("addExercise"), exercise: exerciseInput }),
+  z.object({
+    action: z.literal("updateExercise"),
+    exerciseId: z.string().min(1),
+    exercise: exerciseInput.omit({ id: true }),
+  }),
   z.object({
     action: z.literal("deleteTemplate"),
     templateId: z.string().min(1),
