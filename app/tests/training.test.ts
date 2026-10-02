@@ -116,11 +116,12 @@ test("validación rechaza cargas negativas y asistencia con lastre", () => {
 });
 
 // Real SQLite execution of the same prepared SQL used by D1; batch rolls back atomically.
-function database() {
+function database(maxMigration = Number.POSITIVE_INFINITY) {
   const sql = new DatabaseSync(":memory:");
   sql.exec("PRAGMA foreign_keys=ON");
   for (const file of readdirSync("drizzle")
     .filter((f) => f.endsWith(".sql"))
+    .filter((f) => Number(f.slice(0, 4)) <= maxMigration)
     .sort())
     sql.exec(readFileSync(`drizzle/${file}`, "utf8"));
   class Statement {
@@ -700,5 +701,32 @@ test("los ejercicios de biblioteca se editan por usuario sin alterar el catálog
   });
   data = await alice.snapshot();
   assert.equal(data.workoutExercises[0].name, "Flexiones personalizadas");
+  sql.close();
+});
+test("una migración de personalizaciones pendiente no bloquea la aplicación", async () => {
+  const { db, sql } = database(3);
+  const repo = new D1TrainingRepository(db, "legacy-schema:real");
+  let data = await repo.snapshot();
+  assert.ok(data.exercises.some((exercise) => exercise.id === "pushup"));
+  await repo.execute({
+    action: "start",
+    dayId: "A",
+    templateName: "Esquema anterior",
+    exercises: [
+      {
+        exerciseId: "pushup",
+        sets: 3,
+        repMin: 8,
+        repMax: 12,
+        rir: "2",
+        optional: 0,
+        notes: "",
+        priority: "Principal",
+      },
+    ],
+  });
+  data = await repo.snapshot();
+  assert.equal(data.workouts.length, 1);
+  assert.equal(data.workoutExercises[0].name, "Flexiones");
   sql.close();
 });

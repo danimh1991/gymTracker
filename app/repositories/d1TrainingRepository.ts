@@ -191,10 +191,6 @@ export class D1TrainingRepository implements TrainingRepository {
         "SELECT id,sport,date,durationMinutes,distanceKm,laps,elevationGainM,intensity,notes,createdAt FROM externalActivities WHERE ownerId=? ORDER BY date DESC,createdAt DESC",
         this.ownerId,
       ),
-      this.query(
-        "SELECT exerciseId,data FROM exerciseOverrides WHERE ownerId=?",
-        this.ownerId,
-      ),
     ]);
     const snapshot = Object.fromEntries(
       [
@@ -222,13 +218,18 @@ export class D1TrainingRepository implements TrainingRepository {
     };
     snapshot.externalActivities = result[16]
       .results as unknown as Snapshot["externalActivities"];
+    let overrideRows: Array<{ exerciseId: string; data: string }> = [];
+    try {
+      const overridesResult = await this.query(
+        "SELECT exerciseId,data FROM exerciseOverrides WHERE ownerId=?",
+        this.ownerId,
+      ).all<{ exerciseId: string; data: string }>();
+      overrideRows = overridesResult.results;
+    } catch {
+      // A pending migration must not prevent the rest of the app from loading.
+    }
     const overrides = new Map(
-      (
-        result[17].results as unknown as Array<{
-          exerciseId: string;
-          data: string;
-        }>
-      ).map((row) => {
+      overrideRows.map((row) => {
         try {
           return [row.exerciseId, JSON.parse(row.data) as Partial<Exercise>];
         } catch {
@@ -259,11 +260,16 @@ export class D1TrainingRepository implements TrainingRepository {
       this.ownerId,
     ).first<Exercise>();
     if (!exercise) return null;
-    const override = await this.query(
-      "SELECT data FROM exerciseOverrides WHERE ownerId=? AND exerciseId=?",
-      this.ownerId,
-      id,
-    ).first<{ data: string }>();
+    let override: { data: string } | null = null;
+    try {
+      override = await this.query(
+        "SELECT data FROM exerciseOverrides WHERE ownerId=? AND exerciseId=?",
+        this.ownerId,
+        id,
+      ).first<{ data: string }>();
+    } catch {
+      // Keep training available while a deployment is waiting for its migration.
+    }
     if (!override) return exercise;
     try {
       return {
