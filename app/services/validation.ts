@@ -93,6 +93,14 @@ const importedWorkout = z.object({
 });
 export const commandSchema = z.discriminatedUnion("action", [
   z.object({
+    action: z.literal("addUser"),
+    name: z.string().trim().min(2).max(60),
+  }),
+  z.object({
+    action: z.literal("deleteUser"),
+    userId: z.string().min(1).max(100),
+  }),
+  z.object({
     action: z.literal("start"),
     dayId: dayKey,
     templateName: z.string().min(1).max(100),

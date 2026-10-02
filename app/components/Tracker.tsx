@@ -41,21 +41,31 @@ const navigation = [
 ] as const;
 export default function Tracker() {
   const [demo, updateDemo] = useState(false),
+    [userId, setUserId] = useState(""),
     [page, setPage] = useState<Page>("home"),
     [selected, setSelected] = useState<DayKey>("A"),
     [summary, setSummary] = useState("");
   useEffect(() => {
     try {
       updateDemo(sessionStorage.getItem("gym-demo") === "1");
+      setUserId(localStorage.getItem("gym-user") ?? "");
     } catch {}
   }, []);
+  const selectUser = (value: string) => {
+    setUserId(value);
+    setPage("home");
+    setSummary("");
+    try {
+      localStorage.setItem("gym-user", value);
+    } catch {}
+  };
   const setDemo = (value: boolean) => {
     updateDemo(value);
     try {
       sessionStorage.setItem("gym-demo", value ? "1" : "0");
     } catch {}
   };
-  const { data, error, busy, execute, refresh } = useTraining(demo),
+  const { data, error, busy, execute, refresh } = useTraining(demo, userId),
     active = data?.workouts.find((w) => w.status === "active"),
     last = data ? completedWorkouts(data)[0] : undefined;
   useEffect(() => {
@@ -139,7 +149,10 @@ export default function Tracker() {
           </span>
           <div className="topbar-right">
             <span className={demo ? "demo-label" : "private-label"}>
-              {demo ? "ESPACIO DEMO" : "PERSONAL"}
+              {demo
+                ? "ESPACIO DEMO"
+                : (data?.users.find((user) => user.id === data.activeUserId)
+                    ?.name ?? "USUARIO")}
             </span>
             <button
               className="icon-button"
@@ -179,12 +192,9 @@ export default function Tracker() {
                   ? "No se pudo cargar tu entrenamiento"
                   : "Preparando tu entrenamiento…"}
               </h2>
-              <a
-                href={`${appPath("/signin-with-chatgpt")}?return_to=${encodeURIComponent(appPath("/"))}`}
-                target="_top"
-              >
-                Iniciar sesión
-              </a>
+              {error && (
+                <button onClick={() => void refresh()}>Reintentar</button>
+              )}
             </div>
           ) : summary ? (
             <>
@@ -206,6 +216,7 @@ export default function Tracker() {
               {(page === "home" || (page === "train" && !active)) && (
                 <Home
                   data={data}
+                  onUserSelect={selectUser}
                   selected={selected}
                   onSelect={setSelected}
                   onStart={(plan, name) => void start(plan, name)}

@@ -197,6 +197,70 @@ a {
 .bottom-nav {
   display: none;
 }
+.profile-switcher {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 24px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  position: relative;
+}
+.profile-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--lime);
+  background: var(--deep);
+  flex: 0 0 auto;
+}
+.profile-copy {
+  display: grid;
+  min-width: 130px;
+}
+.profile-copy span {
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.profile-copy strong {
+  font-size: 16px;
+}
+.profile-select {
+  flex: 1;
+}
+.profile-select select,
+.profile-add-form input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #d8ddd3;
+  border-radius: 8px;
+  padding: 8px 11px;
+  background: #fafbf8;
+  color: var(--ink);
+}
+.profile-delete {
+  color: #9b3129;
+}
+.profile-add-form {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(360px, 100%);
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 12px 34px #1f2c191c;
+}
 main {
   max-width: 1260px;
   margin: auto;
@@ -1417,6 +1481,30 @@ textarea {
   }
   .topbar-right {
     gap: 8px;
+  }
+  .private-label,
+  .demo-label {
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .profile-switcher {
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 12px;
+  }
+  .profile-copy {
+    flex: 1;
+  }
+  .profile-select {
+    flex-basis: calc(100% - 52px);
+    order: 5;
+  }
+  .profile-add-form {
+    position: static;
+    order: 6;
+    width: 100%;
   }
   .page-heading {
     gap: 10px;

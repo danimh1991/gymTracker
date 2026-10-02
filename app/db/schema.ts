@@ -8,6 +8,11 @@ import {
 } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 const owner = () => text("ownerId").notNull();
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  createdAt: text("createdAt").notNull(),
+});
 export const exercises = sqliteTable("exercises", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),

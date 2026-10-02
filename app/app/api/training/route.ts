@@ -1,18 +1,15 @@
-import { getChatGPTUser } from "../../chatgpt-auth";
 import { repository } from "../../../database/connection";
 import { commandSchema } from "../../../services/validation";
 export const dynamic = "force-dynamic";
+function profileId(request: Request) {
+  const value = new URL(request.url).searchParams.get("user") ?? "default-user";
+  return /^[a-zA-Z0-9:_-]{1,100}$/.test(value) ? value : "default-user";
+}
 export async function GET(request: Request) {
-  const user = await getChatGPTUser();
-  if (!user)
-    return Response.json(
-      { error: "Inicia sesión para acceder a tus entrenamientos." },
-      { status: 401 },
-    );
   try {
     return Response.json(
       await repository(
-        user.userId,
+        profileId(request),
         new URL(request.url).searchParams.get("demo") === "1",
       ).snapshot(),
       { headers: { "Cache-Control": "no-store" } },
@@ -31,12 +28,6 @@ export async function POST(request: Request) {
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin)
     return Response.json({ error: "Origen no permitido." }, { status: 403 });
-  const user = await getChatGPTUser();
-  if (!user)
-    return Response.json(
-      { error: "Tu sesión ha caducado. Vuelve a iniciar sesión." },
-      { status: 401 },
-    );
   try {
     if (Number(request.headers.get("content-length") ?? 0) > 20000)
       return Response.json(
@@ -50,7 +41,7 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     const repo = repository(
-      user.userId,
+      profileId(request),
       new URL(request.url).searchParams.get("demo") === "1",
     );
     await repo.execute(parsed.data);

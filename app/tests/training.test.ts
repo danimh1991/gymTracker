@@ -650,7 +650,7 @@ test("las importaciones de plantillas y ejercicios omiten duplicados naturales",
   );
   sql.close();
 });
-test("los ejercicios de biblioteca se editan por usuario sin alterar el catálogo global", async () => {
+test("los ejercicios de biblioteca se comparten entre usuarios", async () => {
   const { db, sql } = database();
   const alice = new D1TrainingRepository(db, "exercise-editor:alice");
   const bob = new D1TrainingRepository(db, "exercise-editor:bob");
@@ -680,7 +680,7 @@ test("los ejercicios de biblioteca se editan por usuario sin alterar el catálog
     (await bob.snapshot()).exercises.find(
       (exercise) => exercise.id === "pushup",
     )?.name,
-    original.name,
+    "Flexiones personalizadas",
   );
   await alice.execute({
     action: "start",
@@ -701,6 +701,95 @@ test("los ejercicios de biblioteca se editan por usuario sin alterar el catálog
   });
   data = await alice.snapshot();
   assert.equal(data.workoutExercises[0].name, "Flexiones personalizadas");
+  sql.close();
+});
+test("los perfiles locales comparten catálogo pero aíslan sesiones e histórico", async () => {
+  const { db, sql } = database();
+  const first = new D1TrainingRepository(
+    db,
+    "default-user:real",
+    false,
+    "default-user",
+  );
+  let data = await first.snapshot();
+  assert.equal(data.users.length, 1);
+  await first.execute({ action: "addUser", name: "Álex" });
+  data = await first.snapshot();
+  const alex = data.users.find((user) => user.name === "Álex")!;
+  assert.ok(alex);
+  await first.execute({
+    action: "addExercise",
+    exercise: {
+      name: "Ejercicio compartido",
+      shortName: "Compartido",
+      type: "gym",
+      movementPattern: "push",
+      primaryMuscles: "Pecho",
+      secondaryMuscles: "",
+      equipment: "Máquina",
+      metricType: "reps",
+      bodyweightExercise: 0,
+      supportsAssistance: 0,
+      supportsAddedWeight: 0,
+      defaultRepMin: 8,
+      defaultRepMax: 12,
+      defaultRIR: "2",
+      notes: "",
+      enabled: 1,
+    },
+  });
+  const plan = [
+    {
+      exerciseId: "pushup",
+      sets: 3,
+      repMin: 8,
+      repMax: 12,
+      rir: "2",
+      optional: 0,
+      notes: "",
+      priority: "Principal",
+    },
+  ];
+  await first.execute({
+    action: "saveTemplate",
+    dayId: "A",
+    name: "Plantilla compartida",
+    description: "Visible para todos",
+    exercises: plan,
+  });
+  await first.execute({
+    action: "start",
+    dayId: "A",
+    templateName: "Sesión privada",
+    exercises: plan,
+  });
+  const second = new D1TrainingRepository(
+    db,
+    `${alex.id}:real`,
+    false,
+    alex.id,
+  );
+  const alexData = await second.snapshot();
+  assert.equal(alexData.workouts.length, 0);
+  assert.ok(
+    alexData.exercises.some(
+      (exercise) => exercise.name === "Ejercicio compartido",
+    ),
+  );
+  assert.ok(
+    alexData.templates.some(
+      (template) => template.name === "Plantilla compartida",
+    ),
+  );
+  await first.execute({ action: "deleteUser", userId: "default-user" });
+  const afterDelete = await first.snapshot();
+  assert.equal(afterDelete.activeUserId, alex.id);
+  assert.equal(afterDelete.workouts.length, 0);
+  assert.ok(
+    afterDelete.templates.some(
+      (template) => template.name === "Plantilla compartida",
+    ),
+  );
   sql.close();
 });
 test("una migración de personalizaciones pendiente no bloquea la aplicación", async () => {

@@ -11,7 +11,8 @@ Aplicación personal de gimnasio hacia calistenia. Primera entrega centrada en l
 - Finalización parcial explícita, resumen, comparación, histórico con filtros.
 - Primeras recomendaciones de progresión, métricas básicas, objetivos iniciales, peso corporal.
 - Exportación JSON y CSV. Demo aislada con reinicio.
-- Sección propia de plantillas con alta, edición, borrado, importación y exportación JSON.
+- Perfiles locales sin login, seleccionables desde Inicio, con sesiones e histórico independientes.
+- Ejercicios y plantillas compartidos entre perfiles, con alta, edición, borrado, importación y exportación JSON.
 - Registro de deportes externos con métricas específicas por disciplina y calendario unificado con las sesiones de gimnasio.
 - Edición de ejercicios y objetivos durante una sesión; añadir, sustituir o quitar ejercicios aún no realizados.
 - Clonar una serie en la siguiente posición, abriéndola para revisión antes de guardarla.
@@ -32,7 +33,7 @@ npm run dev
 
 Aplicar la migración solo la primera vez en una base local nueva. `npm run db:generate` genera futuras migraciones. La vista local usa SQLite persistente bajo `.wrangler/state` y es independiente de producción. No borrar esa carpeta si contiene registros que quieras conservar.
 
-Vista local: `http://127.0.0.1:5173/`. El inicio de sesión simulado solo existe en desarrollo local. En producción el acceso privado lo gestiona Sites y la API exige identidad autenticada. No exponer el servidor de desarrollo en Internet.
+Vista local: `http://127.0.0.1:5173/`. La aplicación no requiere login: el perfil activo se elige desde Inicio. No exponer el servidor de desarrollo en Internet.
 
 Publicación mediante Sites: `.openai/hosting.json` identifica el sitio y declara D1. El adaptador `database/connection.ts` es el único que importa el binding; servicios y contrato del repositorio no dependen de Cloudflare. Para otro despliegue Workers hay que configurar identidad confiable y D1; no basta copiar cabeceras desde clientes públicos.
 
@@ -64,6 +65,6 @@ Requiere conexión para confirmar cada serie. Si falla una escritura, muestra er
 
 ## Validación
 
-`npm test`: 13 pruebas de dominio e integración con SQLite real: secuencia dinámica, dominadas, 3×10/3×12, fondos/RIR, récords, excepción histórica, validación de datos y CSV, inicio/guardado idempotentes, recuperación, cierre parcial, aislamiento por usuario, reinicio demo, días configurables, gestión de plantillas y deportes externos. TypeScript estricto, revisión visual y build de producción.
+`npm test`: 18 pruebas de dominio e integración con SQLite real: secuencia dinámica, progresiones, validación de datos, persistencia, aislamiento de sesiones por perfil, catálogo compartido, alta y borrado de perfiles, demo, plantillas, importaciones y deportes externos. TypeScript estricto, revisión visual y build de producción.
 
 Consulta `ARCHITECTURE.md` para decisiones, esquema y estructura de carpetas.

@@ -20,6 +20,7 @@ export class D1TrainingRepository implements TrainingRepository {
     private db: D1Database,
     private ownerId: string,
     private demo = false,
+    private profileId?: string,
   ) {}
   private query(sql: string, ...values: unknown[]) {
     return this.db.prepare(sql).bind(...values);
@@ -31,7 +32,33 @@ export class D1TrainingRepository implements TrainingRepository {
       ...entries.map(([, v]) => v),
     );
   }
+  private async resolveProfile() {
+    if (this.profileId === undefined) return;
+    const count = await this.query("SELECT COUNT(*) count FROM users").first<{
+      count: number;
+    }>();
+    if (!count?.count)
+      await this.insert("users", {
+        id: "default-user",
+        name: "Usuario 1",
+        createdAt: new Date().toISOString(),
+      }).run();
+    const selected =
+      (await this.query(
+        "SELECT id FROM users WHERE id=?",
+        this.profileId,
+      ).first<{
+        id: string;
+      }>()) ??
+      (await this.query(
+        "SELECT id FROM users ORDER BY createdAt,id LIMIT 1",
+      ).first<{ id: string }>());
+    if (!selected) throw new Error("No hay ningún usuario disponible.");
+    this.profileId = selected.id;
+    this.ownerId = `${selected.id}:${this.demo ? "demo" : "real"}`;
+  }
   async seed() {
+    await this.resolveProfile();
     // Seeds are idempotent; schema is owned exclusively by migrations.
     const found = await this.query(
       "SELECT id FROM routines WHERE id = ?",
@@ -91,21 +118,24 @@ export class D1TrainingRepository implements TrainingRepository {
       ),
     ]);
     for (const day of initialDays) {
-      const templateId = `${this.ownerId}:default-${day.id}`;
+      const templateId = `default-${day.id}`;
+      const templateName = `${day.title} · Base`;
       const rows = initialRoutine.filter((r) => r.dayId === day.id);
       if (
         rows.length &&
         !(await this.query(
-          "SELECT id FROM workoutTemplates WHERE id=?",
+          "SELECT id FROM workoutTemplates WHERE id=? OR (dayId=? AND LOWER(TRIM(name))=LOWER(TRIM(?))) LIMIT 1",
           templateId,
+          day.id,
+          templateName,
         ).first())
       ) {
         await this.db.batch([
           this.insert("workoutTemplates", {
             id: templateId,
-            ownerId: this.ownerId,
+            ownerId: "shared",
             dayId: day.id,
-            name: `${day.title} · Base`,
+            name: templateName,
             description: "Plantilla inicial editable",
             createdAt: new Date().toISOString(),
           }),
@@ -144,10 +174,7 @@ export class D1TrainingRepository implements TrainingRepository {
   async snapshot(): Promise<Snapshot> {
     await this.seed();
     const result = await this.db.batch([
-      this.query(
-        "SELECT * FROM exercises WHERE ownerId IS NULL OR ownerId=? ORDER BY name",
-        this.ownerId,
-      ),
+      this.query("SELECT * FROM exercises ORDER BY name"),
       this.query(
         "SELECT * FROM days WHERE position < (SELECT trainingDays FROM userSettings WHERE ownerId=?) ORDER BY position",
         this.ownerId,
@@ -176,12 +203,10 @@ export class D1TrainingRepository implements TrainingRepository {
       this.query("SELECT * FROM skillLogs WHERE ownerId=?", this.ownerId),
       this.query("SELECT * FROM personalRecords WHERE ownerId=?", this.ownerId),
       this.query(
-        "SELECT id,dayId,name,description,createdAt FROM workoutTemplates WHERE ownerId=? ORDER BY dayId,createdAt",
-        this.ownerId,
+        "SELECT id,dayId,name,description,createdAt FROM workoutTemplates t WHERE t.id=(SELECT t2.id FROM workoutTemplates t2 WHERE t2.dayId=t.dayId AND LOWER(TRIM(t2.name))=LOWER(TRIM(t.name)) ORDER BY t2.createdAt,t2.id LIMIT 1) ORDER BY dayId,createdAt",
       ),
       this.query(
-        "SELECT e.* FROM templateExercises e JOIN workoutTemplates t ON t.id=e.templateId WHERE t.ownerId=? ORDER BY e.position",
-        this.ownerId,
+        "SELECT e.* FROM templateExercises e JOIN workoutTemplates t ON t.id=e.templateId WHERE t.id=(SELECT t2.id FROM workoutTemplates t2 WHERE t2.dayId=t.dayId AND LOWER(TRIM(t2.name))=LOWER(TRIM(t.name)) ORDER BY t2.createdAt,t2.id LIMIT 1) ORDER BY e.position",
       ),
       this.query(
         "SELECT trainingDays FROM userSettings WHERE ownerId=?",
@@ -218,29 +243,21 @@ export class D1TrainingRepository implements TrainingRepository {
     };
     snapshot.externalActivities = result[16]
       .results as unknown as Snapshot["externalActivities"];
-    let overrideRows: Array<{ exerciseId: string; data: string }> = [];
-    try {
-      const overridesResult = await this.query(
-        "SELECT exerciseId,data FROM exerciseOverrides WHERE ownerId=?",
-        this.ownerId,
-      ).all<{ exerciseId: string; data: string }>();
-      overrideRows = overridesResult.results;
-    } catch {
-      // A pending migration must not prevent the rest of the app from loading.
-    }
-    const overrides = new Map(
-      overrideRows.map((row) => {
-        try {
-          return [row.exerciseId, JSON.parse(row.data) as Partial<Exercise>];
-        } catch {
-          return [row.exerciseId, {}];
-        }
-      }),
-    );
-    snapshot.exercises = snapshot.exercises.map((exercise) => ({
-      ...exercise,
-      ...(overrides.get(exercise.id) ?? {}),
-    }));
+    snapshot.users =
+      this.profileId === undefined
+        ? [
+            {
+              id: this.ownerId,
+              name: "Usuario",
+              createdAt: "",
+            },
+          ]
+        : ((
+            await this.query(
+              "SELECT id,name,createdAt FROM users ORDER BY createdAt,id",
+            ).all()
+          ).results as unknown as Snapshot["users"]);
+    snapshot.activeUserId = this.profileId ?? this.ownerId;
     return snapshot;
   }
   private async active(id: string) {
@@ -254,34 +271,110 @@ export class D1TrainingRepository implements TrainingRepository {
     return w;
   }
   private async libraryExercise(id: string): Promise<Exercise | null> {
-    const exercise = await this.query(
-      "SELECT * FROM exercises WHERE id=? AND (ownerId IS NULL OR ownerId=?)",
+    return this.query(
+      "SELECT * FROM exercises WHERE id=?",
       id,
-      this.ownerId,
     ).first<Exercise>();
-    if (!exercise) return null;
-    let override: { data: string } | null = null;
-    try {
-      override = await this.query(
-        "SELECT data FROM exerciseOverrides WHERE ownerId=? AND exerciseId=?",
-        this.ownerId,
-        id,
-      ).first<{ data: string }>();
-    } catch {
-      // Keep training available while a deployment is waiting for its migration.
-    }
-    if (!override) return exercise;
-    try {
-      return {
-        ...exercise,
-        ...(JSON.parse(override.data) as Partial<Exercise>),
-      };
-    } catch {
-      return exercise;
-    }
   }
   async execute(c: Command): Promise<void> {
     await this.seed();
+    if (c.action === "addUser") {
+      if (this.profileId === undefined)
+        throw new Error("La gestión de usuarios no está disponible aquí.");
+      if (
+        await this.query(
+          "SELECT id FROM users WHERE LOWER(TRIM(name))=LOWER(TRIM(?))",
+          c.name,
+        ).first()
+      )
+        throw new Error("Ya existe un usuario con ese nombre.");
+      await this.insert("users", {
+        id: crypto.randomUUID(),
+        name: c.name.trim(),
+        createdAt: new Date().toISOString(),
+      }).run();
+      return;
+    }
+    if (c.action === "deleteUser") {
+      if (this.profileId === undefined)
+        throw new Error("La gestión de usuarios no está disponible aquí.");
+      const count = await this.query("SELECT COUNT(*) count FROM users").first<{
+        count: number;
+      }>();
+      if ((count?.count ?? 0) <= 1)
+        throw new Error("Debe quedar al menos un usuario.");
+      const found = await this.query(
+        "SELECT id FROM users WHERE id=?",
+        c.userId,
+      ).first();
+      if (!found) throw new Error("Usuario no encontrado.");
+      const realOwner = `${c.userId}:real`;
+      const demoOwner = `${c.userId}:demo`;
+      await this.db.batch([
+        this.query(
+          "DELETE FROM personalRecords WHERE ownerId IN (?,?)",
+          realOwner,
+          demoOwner,
+        ),
+        this.query(
+          "DELETE FROM workoutSets WHERE workoutId IN (SELECT id FROM workouts WHERE ownerId IN (?,?))",
+          realOwner,
+          demoOwner,
+        ),
+        this.query(
+          "DELETE FROM workoutExercises WHERE workoutId IN (SELECT id FROM workouts WHERE ownerId IN (?,?))",
+          realOwner,
+          demoOwner,
+        ),
+        this.query(
+          "DELETE FROM workouts WHERE ownerId IN (?,?)",
+          realOwner,
+          demoOwner,
+        ),
+        this.query(
+          "DELETE FROM bodyWeights WHERE ownerId IN (?,?)",
+          realOwner,
+          demoOwner,
+        ),
+        this.query(
+          "DELETE FROM goals WHERE ownerId IN (?,?)",
+          realOwner,
+          demoOwner,
+        ),
+        this.query(
+          "DELETE FROM skillLogs WHERE ownerId IN (?,?)",
+          realOwner,
+          demoOwner,
+        ),
+        this.query(
+          "DELETE FROM externalActivities WHERE ownerId IN (?,?)",
+          realOwner,
+          demoOwner,
+        ),
+        this.query(
+          "DELETE FROM exerciseOverrides WHERE ownerId IN (?,?)",
+          realOwner,
+          demoOwner,
+        ),
+        this.query(
+          "DELETE FROM userSettings WHERE ownerId IN (?,?)",
+          realOwner,
+          demoOwner,
+        ),
+        this.query(
+          "UPDATE workoutTemplates SET ownerId='shared' WHERE ownerId IN (?,?)",
+          realOwner,
+          demoOwner,
+        ),
+        this.query(
+          "UPDATE exercises SET ownerId=NULL WHERE ownerId IN (?,?)",
+          realOwner,
+          demoOwner,
+        ),
+        this.query("DELETE FROM users WHERE id=?", c.userId),
+      ]);
+      return;
+    }
     if (c.action === "addExternalActivity") {
       if (c.activity.date > new Date().toISOString().slice(0, 10))
         throw new Error("La fecha no puede ser futura.");
@@ -394,20 +487,20 @@ export class D1TrainingRepository implements TrainingRepository {
     }
     if (c.action === "deleteTemplate") {
       const template = await this.query(
-        "SELECT id FROM workoutTemplates WHERE id=? AND ownerId=?",
+        "SELECT id,dayId,name FROM workoutTemplates WHERE id=?",
         c.templateId,
-        this.ownerId,
-      ).first();
+      ).first<{ id: string; dayId: string; name: string }>();
       if (!template) throw new Error("Plantilla no encontrada.");
       await this.db.batch([
         this.query(
-          "DELETE FROM templateExercises WHERE templateId=?",
-          c.templateId,
+          "DELETE FROM templateExercises WHERE templateId IN (SELECT id FROM workoutTemplates WHERE dayId=? AND LOWER(TRIM(name))=LOWER(TRIM(?)))",
+          template.dayId,
+          template.name,
         ),
         this.query(
-          "DELETE FROM workoutTemplates WHERE id=? AND ownerId=?",
-          c.templateId,
-          this.ownerId,
+          "DELETE FROM workoutTemplates WHERE dayId=? AND LOWER(TRIM(name))=LOWER(TRIM(?))",
+          template.dayId,
+          template.name,
         ),
       ]);
       return;
@@ -486,8 +579,7 @@ export class D1TrainingRepository implements TrainingRepository {
         if (
           c.action === "importTemplates" &&
           (await this.query(
-            "SELECT id FROM workoutTemplates WHERE ownerId=? AND dayId=? AND LOWER(TRIM(name))=LOWER(TRIM(?))",
-            this.ownerId,
+            "SELECT id FROM workoutTemplates WHERE dayId=? AND LOWER(TRIM(name))=LOWER(TRIM(?))",
             t.dayId,
             t.name,
           ).first())
@@ -495,20 +587,18 @@ export class D1TrainingRepository implements TrainingRepository {
           continue;
         const id = "id" in t && t.id ? t.id : crypto.randomUUID();
         const existing = await this.query(
-          "SELECT id FROM workoutTemplates WHERE id=? AND ownerId=?",
+          "SELECT id FROM workoutTemplates WHERE id=?",
           id,
-          this.ownerId,
         ).first();
         const statements = [] as D1PreparedStatement[];
         if (existing) {
           statements.push(
             this.query(
-              "UPDATE workoutTemplates SET dayId=?,name=?,description=? WHERE id=? AND ownerId=?",
+              "UPDATE workoutTemplates SET dayId=?,name=?,description=? WHERE id=?",
               t.dayId,
               t.name,
               t.description,
               id,
-              this.ownerId,
             ),
             this.query("DELETE FROM templateExercises WHERE templateId=?", id),
           );
@@ -526,9 +616,8 @@ export class D1TrainingRepository implements TrainingRepository {
         for (const [position, e] of t.exercises.entries()) {
           if (
             !(await this.query(
-              "SELECT id FROM exercises WHERE id=? AND (ownerId IS NULL OR ownerId=?)",
+              "SELECT id FROM exercises WHERE id=?",
               e.exerciseId,
-              this.ownerId,
             ).first())
           )
             throw new Error(`Ejercicio desconocido: ${e.exerciseId}`);
@@ -547,43 +636,35 @@ export class D1TrainingRepository implements TrainingRepository {
     }
     if (c.action === "updateExercise") {
       const existing = await this.query(
-        "SELECT id,ownerId FROM exercises WHERE id=? AND (ownerId IS NULL OR ownerId=?)",
+        "SELECT id FROM exercises WHERE id=?",
         c.exerciseId,
-        this.ownerId,
-      ).first<{ id: string; ownerId: string | null }>();
+      ).first<{ id: string }>();
       if (!existing) throw new Error("Ejercicio no encontrado.");
-      if (existing.ownerId === this.ownerId) {
-        const e = c.exercise;
-        await this.query(
-          "UPDATE exercises SET name=?,shortName=?,type=?,movementPattern=?,primaryMuscles=?,secondaryMuscles=?,equipment=?,metricType=?,bodyweightExercise=?,supportsAssistance=?,supportsAddedWeight=?,defaultRepMin=?,defaultRepMax=?,defaultRIR=?,notes=?,enabled=? WHERE id=? AND ownerId=?",
-          e.name,
-          e.shortName,
-          e.type,
-          e.movementPattern,
-          e.primaryMuscles,
-          e.secondaryMuscles,
-          e.equipment,
-          e.metricType,
-          e.bodyweightExercise,
-          e.supportsAssistance,
-          e.supportsAddedWeight,
-          e.defaultRepMin,
-          e.defaultRepMax,
-          e.defaultRIR,
-          e.notes,
-          e.enabled,
-          c.exerciseId,
-          this.ownerId,
-        ).run();
-      } else {
-        await this.query(
-          "INSERT INTO exerciseOverrides (id,ownerId,exerciseId,data) VALUES (?,?,?,?) ON CONFLICT(ownerId,exerciseId) DO UPDATE SET data=excluded.data",
-          `${this.ownerId}:${c.exerciseId}`,
-          this.ownerId,
-          c.exerciseId,
-          JSON.stringify(c.exercise),
-        ).run();
-      }
+      const e = c.exercise;
+      await this.query(
+        "UPDATE exercises SET name=?,shortName=?,type=?,movementPattern=?,primaryMuscles=?,secondaryMuscles=?,equipment=?,metricType=?,bodyweightExercise=?,supportsAssistance=?,supportsAddedWeight=?,defaultRepMin=?,defaultRepMax=?,defaultRIR=?,notes=?,enabled=? WHERE id=?",
+        e.name,
+        e.shortName,
+        e.type,
+        e.movementPattern,
+        e.primaryMuscles,
+        e.secondaryMuscles,
+        e.equipment,
+        e.metricType,
+        e.bodyweightExercise,
+        e.supportsAssistance,
+        e.supportsAddedWeight,
+        e.defaultRepMin,
+        e.defaultRepMax,
+        e.defaultRIR,
+        e.notes,
+        e.enabled,
+        c.exerciseId,
+      ).run();
+      await this.query(
+        "DELETE FROM exerciseOverrides WHERE exerciseId=?",
+        c.exerciseId,
+      ).run();
       return;
     }
     if (c.action === "addExercise" || c.action === "importExercises") {
@@ -599,8 +680,7 @@ export class D1TrainingRepository implements TrainingRepository {
         if (
           c.action === "importExercises" &&
           (await this.query(
-            "SELECT id FROM exercises WHERE (ownerId IS NULL OR ownerId=?) AND LOWER(TRIM(name))=LOWER(TRIM(?))",
-            this.ownerId,
+            "SELECT id FROM exercises WHERE LOWER(TRIM(name))=LOWER(TRIM(?))",
             e.name,
           ).first())
         )
@@ -638,14 +718,12 @@ export class D1TrainingRepository implements TrainingRepository {
               `La sesión importada contiene una serie fuera del objetivo de ${source.name}.`,
             );
           let exercise = await this.query(
-            "SELECT id FROM exercises WHERE id=? AND (ownerId IS NULL OR ownerId=?)",
+            "SELECT id FROM exercises WHERE id=?",
             source.exerciseId,
-            this.ownerId,
           ).first<{ id: string }>();
           if (!exercise)
             exercise = await this.query(
-              "SELECT id FROM exercises WHERE (ownerId IS NULL OR ownerId=?) AND LOWER(TRIM(name))=LOWER(TRIM(?)) LIMIT 1",
-              this.ownerId,
+              "SELECT id FROM exercises WHERE LOWER(TRIM(name))=LOWER(TRIM(?)) LIMIT 1",
               source.name,
             ).first<{ id: string }>();
           let exerciseId = exercise?.id;

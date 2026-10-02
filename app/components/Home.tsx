@@ -1,6 +1,14 @@
 "use client";
 import { Fragment, useEffect, useState } from "react";
-import { Clock3, Dumbbell, Play, Target } from "lucide-react";
+import {
+  Clock3,
+  Dumbbell,
+  Play,
+  Plus,
+  Target,
+  Trash2,
+  UserRound,
+} from "lucide-react";
 import type { DayKey, PlanExercise, Snapshot } from "../domain/types";
 import {
   completedWorkouts,
@@ -44,6 +52,7 @@ export function DayPicker({
 }
 export function Home({
   data,
+  onUserSelect,
   selected,
   onSelect,
   onStart,
@@ -51,6 +60,7 @@ export function Home({
   busy,
 }: {
   data: Snapshot;
+  onUserSelect: (userId: string) => void;
   selected: DayKey;
   onSelect: (d: DayKey) => void;
   onStart: (plan: PlanExercise[], templateName: string) => void;
@@ -70,7 +80,9 @@ export function Home({
       : null;
   const [templateId, setTemplateId] = useState(""),
     [plan, setPlan] = useState<PlanExercise[]>([]),
-    [editing, setEditing] = useState(false);
+    [editing, setEditing] = useState(false),
+    [addingUser, setAddingUser] = useState(false),
+    [userName, setUserName] = useState("");
   useEffect(() => {
     const template = templates.find((t) => t.id === templateId) ?? templates[0];
     if (!template) {
@@ -117,6 +129,105 @@ export function Home({
     rows = plan;
   return (
     <>
+      <section className="profile-switcher" aria-label="Usuario activo">
+        <div className="profile-icon">
+          <UserRound size={20} />
+        </div>
+        <div className="profile-copy">
+          <span>Entrenando como</span>
+          <strong>
+            {data.users.find((user) => user.id === data.activeUserId)?.name}
+          </strong>
+        </div>
+        <label className="profile-select">
+          <span className="sr-only">Seleccionar usuario</span>
+          <select
+            value={data.activeUserId}
+            disabled={busy}
+            onChange={(event) => onUserSelect(event.target.value)}
+          >
+            {data.users.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          className="secondary compact"
+          type="button"
+          onClick={() => setAddingUser((value) => !value)}
+        >
+          <Plus size={16} /> Añadir
+        </button>
+        <button
+          className="icon-button profile-delete"
+          type="button"
+          aria-label="Eliminar usuario activo"
+          title={
+            data.users.length === 1
+              ? "Debe quedar al menos un usuario"
+              : "Eliminar usuario activo"
+          }
+          disabled={busy || data.users.length === 1}
+          onClick={async () => {
+            const user = data.users.find(
+              (item) => item.id === data.activeUserId,
+            );
+            if (
+              !user ||
+              !window.confirm(
+                `¿Eliminar a ${user.name}? Se borrarán sus sesiones, progreso, pesos y actividades. Los ejercicios y plantillas compartidos se conservarán.`,
+              )
+            )
+              return;
+            const updated = await execute({
+              action: "deleteUser",
+              userId: user.id,
+            });
+            if (updated) onUserSelect(updated.activeUserId);
+          }}
+        >
+          <Trash2 size={16} />
+        </button>
+        {addingUser && (
+          <form
+            className="profile-add-form"
+            onSubmit={async (event) => {
+              event.preventDefault();
+              if (userName.trim().length < 2) return;
+              const previous = new Set(data.users.map((user) => user.id));
+              const updated = await execute({
+                action: "addUser",
+                name: userName.trim(),
+              });
+              const created = updated?.users.find(
+                (user) => !previous.has(user.id),
+              );
+              if (created) {
+                setUserName("");
+                setAddingUser(false);
+                onUserSelect(created.id);
+              }
+            }}
+          >
+            <input
+              autoFocus
+              aria-label="Nombre del nuevo usuario"
+              placeholder="Nombre"
+              maxLength={60}
+              value={userName}
+              onChange={(event) => setUserName(event.target.value)}
+            />
+            <button
+              className="primary compact"
+              disabled={busy || userName.trim().length < 2}
+            >
+              Crear usuario
+            </button>
+          </form>
+        )}
+      </section>
       <div className="page-heading">
         <div>
           <p className="eyebrow">TU PRÓXIMA SESIÓN</p>

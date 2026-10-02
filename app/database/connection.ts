@@ -1,10 +1,11 @@
 import { env } from "cloudflare:workers";
 import { D1TrainingRepository } from "../repositories/d1TrainingRepository";
-export function repository(ownerId: string, demo = false) {
+export function repository(profileId: string, demo = false) {
   if (!env.DB) throw new Error("Base de datos no disponible.");
   return new D1TrainingRepository(
     env.DB,
-    `${ownerId}:${demo ? "demo" : "real"}`,
+    `${profileId}:${demo ? "demo" : "real"}`,
     demo,
+    profileId,
   );
 }

@@ -3,11 +3,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Snapshot } from "../domain/types";
 import type { Command } from "../services/validation";
 import { appPath } from "../lib/base-path";
-export function useTraining(demo: boolean) {
+export function useTraining(demo: boolean, userId: string) {
   const [data, setData] = useState<Snapshot | null>(null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
-  const url = `${appPath("/api/training")}${demo ? "?demo=1" : ""}`;
+  const params = new URLSearchParams();
+  if (userId) params.set("user", userId);
+  if (demo) params.set("demo", "1");
+  const query = params.toString();
+  const url = `${appPath("/api/training")}${query ? `?${query}` : ""}`;
   const currentUrl = useRef(url);
   currentUrl.current = url;
   const refresh = useCallback(async () => {

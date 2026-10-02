@@ -2,6 +2,11 @@ import type { SportKey } from "./sports";
 export type DayKey = "A" | "B" | "C" | "D" | "E" | "F" | "G";
 export type Metric = "reps" | "time";
 export type ActivityIntensity = "easy" | "moderate" | "hard";
+export interface UserProfile {
+  id: string;
+  name: string;
+  createdAt: string;
+}
 export interface Exercise {
   id: string;
   name: string;
@@ -123,6 +128,8 @@ export interface ExternalActivity {
   createdAt: string;
 }
 export interface Snapshot {
+  users: UserProfile[];
+  activeUserId: string;
   settings: {
     trainingDays: number;
   };

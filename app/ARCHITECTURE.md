@@ -19,7 +19,7 @@ BodyWeight: fecha y kg. Skill → SkillProgression → SkillLog. Goal: métrica 
 UserSettings: preferencias por usuario, incluido el número de días activos del ciclo.
 ExternalActivity: deporte, fecha, duración, distancia, largos, desnivel, intensidad y notas; las métricas opcionales se validan según la disciplina.
 
-Cada tabla de usuario se separa por `ownerId`; demo usa un espacio distinto. Una restricción única impide dos sesiones activas por espacio. Inicio y finalización son transacciones por batch. Solo finalizar una sesión con series guardadas avanza la secuencia; iniciar, abandonar y recargar no la avanzan. Se conserva el día realmente elegido. Editar rutinas no altera las sesiones ya iniciadas.
+Los perfiles locales viven en `users` y no requieren autenticación. Las tablas personales se separan por `ownerId`; demo usa un espacio distinto. Ejercicios y plantillas forman un catálogo común para todos los perfiles. Una restricción única impide dos sesiones activas por espacio. Inicio y finalización son transacciones por batch. Solo finalizar una sesión con series guardadas avanza la secuencia; iniciar, abandonar y recargar no la avanzan. Se conserva el día realmente elegido. Editar rutinas no altera las sesiones ya iniciadas.
 
 ## Decisiones de datos y UX
 
@@ -27,7 +27,7 @@ Cada tabla de usuario se separa por `ownerId`; demo usa un espacio distinto. Una
 - Peso corporal opcional, copiado al iniciar; nunca inventar peso. Asistencia y lastre separados y no simultáneos.
 - Repeticiones y RIR inicialmente vacíos. Copiar anterior transfiere solamente cargas, nunca reps/RIR.
 - Finalización parcial permitida con confirmación y resumen fiel. Campos grandes, botones de RIR y descanso no bloqueante.
-- Acceso privado en Sites y validación de identidad en la API. Cambiar de dispositivo requiere usar el mismo sitio y cuenta. Preview local y producción tienen bases separadas.
+- Selección explícita de perfil en Inicio, sin login. Preview local y producción tienen bases separadas.
 - Pruebas de secuencia, progresiones, récords, conversión histórica e integración SQLite; compilación TypeScript y build.
 
 ## Entregas pendientes tras Fase 1
