@@ -5,6 +5,9 @@ import {
   FlaskConical,
   Scale,
   CalendarDays,
+  Plus,
+  Trash2,
+  UserRound,
 } from "lucide-react";
 import type { Snapshot } from "../domain/types";
 import type { Execute } from "./Training";
@@ -14,18 +17,21 @@ export function More({
   data,
   demo,
   setDemo,
+  onUserSelect,
   busy,
   execute,
 }: {
   data: Snapshot;
   demo: boolean;
   setDemo: (v: boolean) => void;
+  onUserSelect: (userId: string) => void;
   busy: boolean;
   execute: Execute;
 }) {
   const [weight, setWeight] = useState(""),
     [date, setDate] = useState(new Date().toLocaleDateString("sv-SE")),
-    [saved, setSaved] = useState(false);
+    [saved, setSaved] = useState(false),
+    [userName, setUserName] = useState("");
   return (
     <>
       <div className="page-heading">
@@ -37,6 +43,91 @@ export function More({
           </p>
         </div>
       </div>
+      <section className="settings-card user-settings">
+        <div>
+          <h2>
+            <UserRound size={21} /> Usuarios
+          </h2>
+          <p className="muted">
+            Las sesiones y el progreso son individuales. Los ejercicios y las
+            plantillas se comparten entre todos.
+          </p>
+        </div>
+        <div className="user-settings-list">
+          {data.users.map((user) => (
+            <div key={user.id}>
+              <span>
+                <strong>{user.name}</strong>
+                {user.id === data.activeUserId && (
+                  <small className="tag">Activo</small>
+                )}
+              </span>
+              <button
+                type="button"
+                className="icon-button profile-delete"
+                aria-label={`Eliminar a ${user.name}`}
+                title={
+                  data.users.length === 1
+                    ? "Debe quedar al menos un usuario"
+                    : `Eliminar a ${user.name}`
+                }
+                disabled={busy || data.users.length === 1}
+                onClick={async () => {
+                  if (
+                    !window.confirm(
+                      `¿Eliminar a ${user.name}? Se borrarán sus sesiones, progreso, pesos y actividades. Los ejercicios y plantillas compartidos se conservarán.`,
+                    )
+                  )
+                    return;
+                  const updated = await execute({
+                    action: "deleteUser",
+                    userId: user.id,
+                  });
+                  if (updated && user.id === data.activeUserId)
+                    onUserSelect(updated.activeUserId);
+                }}
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          ))}
+        </div>
+        <form
+          className="user-settings-form"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            if (userName.trim().length < 2) return;
+            const previous = new Set(data.users.map((user) => user.id));
+            const updated = await execute({
+              action: "addUser",
+              name: userName.trim(),
+            });
+            const created = updated?.users.find(
+              (user) => !previous.has(user.id),
+            );
+            if (created) {
+              setUserName("");
+              onUserSelect(created.id);
+            }
+          }}
+        >
+          <label className="field">
+            Nuevo usuario
+            <input
+              placeholder="Nombre"
+              maxLength={60}
+              value={userName}
+              onChange={(event) => setUserName(event.target.value)}
+            />
+          </label>
+          <button
+            className="primary compact"
+            disabled={busy || userName.trim().length < 2}
+          >
+            <Plus size={16} /> Añadir usuario
+          </button>
+        </form>
+      </section>
       <section className="settings-card days-setting">
         <div>
           <h2>

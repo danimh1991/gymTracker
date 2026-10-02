@@ -417,10 +417,12 @@ export function Exercises({
                 </details>
                 <button
                   type="button"
-                  className="secondary compact"
+                  className="icon-button"
+                  aria-label={`Editar ${exercise.name}`}
+                  title={`Editar ${exercise.name}`}
                   onClick={() => beginEdit(exercise)}
                 >
-                  <Pencil size={15} /> Editar
+                  <Pencil size={17} />
                 </button>
               </div>
             ))}

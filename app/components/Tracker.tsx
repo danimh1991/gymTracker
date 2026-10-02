@@ -252,6 +252,7 @@ export default function Tracker() {
                 <More
                   data={data}
                   demo={demo}
+                  onUserSelect={selectUser}
                   busy={busy}
                   execute={execute}
                   setDemo={(value) => {

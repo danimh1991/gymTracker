@@ -235,7 +235,7 @@ a {
   flex: 1;
 }
 .profile-select select,
-.profile-add-form input {
+.user-settings-form input {
   width: 100%;
   min-height: 42px;
   border: 1px solid #d8ddd3;
@@ -246,20 +246,6 @@ a {
 }
 .profile-delete {
   color: #9b3129;
-}
-.profile-add-form {
-  position: absolute;
-  z-index: 5;
-  top: calc(100% + 8px);
-  right: 0;
-  width: min(360px, 100%);
-  display: flex;
-  gap: 8px;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: #fff;
-  box-shadow: 0 12px 34px #1f2c191c;
 }
 main {
   max-width: 1260px;
@@ -1501,11 +1487,6 @@ textarea {
     flex-basis: calc(100% - 52px);
     order: 5;
   }
-  .profile-add-form {
-    position: static;
-    order: 6;
-    width: 100%;
-  }
   .page-heading {
     gap: 10px;
     margin-bottom: 24px;
@@ -1754,6 +1735,39 @@ textarea {
 .settings-card > p {
   font-size: 14px;
   margin: 15px 0;
+}
+.user-settings {
+  display: grid;
+  gap: 20px;
+}
+.user-settings > div:first-child p {
+  margin-top: 10px;
+}
+.user-settings-list {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+.user-settings-list > div {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.user-settings-list > div > span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.user-settings-form {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+  max-width: 560px;
+}
+.user-settings-form .field {
+  flex: 1;
 }
 .weight-form {
   display: flex;
@@ -2295,6 +2309,14 @@ textarea {
   .library-item > button {
     width: 100%;
   }
+  .library-item > .icon-button {
+    width: 40px;
+    align-self: flex-end;
+  }
+  .user-settings-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
   .demo-card .button-row {
     width: 100%;
   }
@@ -2320,6 +2342,9 @@ textarea {
   }
   .history-card-actions > * {
     flex: 1;
+  }
+  .history-card-actions > .icon-button {
+    flex: 0 0 40px;
   }
   .template-card-actions {
     align-items: stretch;

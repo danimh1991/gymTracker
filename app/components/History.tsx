@@ -444,7 +444,9 @@ export function History({
                   </label>
                   <button
                     type="button"
-                    className="secondary compact"
+                    className="icon-button"
+                    aria-label="Guardar fecha"
+                    title="Guardar fecha"
                     disabled={busy || !workoutDate}
                     onClick={async () => {
                       const result = await execute({
@@ -459,7 +461,7 @@ export function History({
                       }
                     }}
                   >
-                    <Save size={15} /> Guardar fecha
+                    <Save size={17} />
                   </button>
                   <button
                     type="button"
