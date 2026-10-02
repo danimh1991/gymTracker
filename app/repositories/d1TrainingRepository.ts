@@ -256,6 +256,67 @@ export class D1TrainingRepository implements TrainingRepository {
       if (!result.meta.changes) throw new Error("Actividad no encontrada.");
       return;
     }
+    if (c.action === "updateWorkoutDate") {
+      if (c.date > new Date().toISOString().slice(0, 10))
+        throw new Error("La fecha no puede ser futura.");
+      const workout = await this.query(
+        "SELECT startedAt,finishedAt,status FROM workouts WHERE id=? AND ownerId=?",
+        c.workoutId,
+        this.ownerId,
+      ).first<{ startedAt: string; finishedAt: string | null; status: string }>();
+      if (!workout) throw new Error("Sesión no encontrada.");
+      if (workout.status === "active")
+        throw new Error("Termina la sesión antes de cambiar su fecha.");
+      const oldStart = Date.parse(workout.startedAt);
+      const newStartedAt = `${c.date}${workout.startedAt.slice(10)}`;
+      const delta = Date.parse(newStartedAt) - oldStart;
+      const newFinishedAt = workout.finishedAt
+        ? new Date(Date.parse(workout.finishedAt) + delta).toISOString()
+        : null;
+      await this.db.batch([
+        this.query(
+          "UPDATE workouts SET startedAt=?,finishedAt=? WHERE id=? AND ownerId=?",
+          newStartedAt,
+          newFinishedAt,
+          c.workoutId,
+          this.ownerId,
+        ),
+        this.query(
+          "UPDATE workoutSets SET timestamp=datetime(timestamp, ?) WHERE workoutId=?",
+          `${delta / 1000} seconds`,
+          c.workoutId,
+        ),
+      ]);
+      return;
+    }
+    if (c.action === "deleteWorkout") {
+      const workout = await this.query(
+        "SELECT status FROM workouts WHERE id=? AND ownerId=?",
+        c.workoutId,
+        this.ownerId,
+      ).first<{ status: string }>();
+      if (!workout) throw new Error("Sesión no encontrada.");
+      if (workout.status === "active")
+        throw new Error("Abandona la sesión activa antes de eliminarla.");
+      await this.db.batch([
+        this.query(
+          "UPDATE personalRecords SET setId=NULL WHERE ownerId=? AND setId IN (SELECT id FROM workoutSets WHERE workoutId=?)",
+          this.ownerId,
+          c.workoutId,
+        ),
+        this.query("DELETE FROM workoutSets WHERE workoutId=?", c.workoutId),
+        this.query(
+          "DELETE FROM workoutExercises WHERE workoutId=?",
+          c.workoutId,
+        ),
+        this.query(
+          "DELETE FROM workouts WHERE id=? AND ownerId=?",
+          c.workoutId,
+          this.ownerId,
+        ),
+      ]);
+      return;
+    }
     if (c.action === "setTrainingDays") {
       const active = await this.query(
         "SELECT d.position FROM workouts w JOIN days d ON d.id=w.dayId WHERE w.ownerId=? AND w.status='active'",
@@ -308,10 +369,6 @@ export class D1TrainingRepository implements TrainingRepository {
         return;
       const id = crypto.randomUUID(),
         now = new Date().toISOString();
-      const bw = await this.query(
-        "SELECT weightKg FROM bodyWeights WHERE ownerId=? ORDER BY date DESC,rowid DESC LIMIT 1",
-        this.ownerId,
-      ).first<{ weightKg: number }>();
       const rows = [] as WorkoutExercise[];
       for (const [position, plan] of c.exercises.entries()) {
         const exercise = await this.query(
@@ -339,7 +396,7 @@ export class D1TrainingRepository implements TrainingRepository {
           status: "active",
           startedAt: now,
           finishedAt: null,
-          bodyweight: bw?.weightKg ?? null,
+          bodyweight: null,
           notes: "",
           templateName: c.templateName,
         }),
@@ -371,6 +428,16 @@ export class D1TrainingRepository implements TrainingRepository {
     if (c.action === "saveTemplate" || c.action === "importTemplates") {
       const templates = c.action === "saveTemplate" ? [c] : c.templates;
       for (const t of templates) {
+        if (
+          c.action === "importTemplates" &&
+          (await this.query(
+            "SELECT id FROM workoutTemplates WHERE ownerId=? AND dayId=? AND LOWER(TRIM(name))=LOWER(TRIM(?))",
+            this.ownerId,
+            t.dayId,
+            t.name,
+          ).first())
+        )
+          continue;
         const id = "id" in t && t.id ? t.id : crypto.randomUUID();
         const existing = await this.query(
           "SELECT id FROM workoutTemplates WHERE id=? AND ownerId=?",
@@ -427,17 +494,155 @@ export class D1TrainingRepository implements TrainingRepository {
       const exercises = c.action === "addExercise" ? [c.exercise] : c.exercises;
       for (const e of exercises) {
         const id = e.id?.trim() || `custom-${crypto.randomUUID()}`;
-        if (
-          await this.query("SELECT id FROM exercises WHERE id=?", id).first()
-        ) {
+        if (await this.query("SELECT id FROM exercises WHERE id=?", id).first()) {
           if (c.action === "importExercises") continue;
           throw new Error(`Ya existe un ejercicio con id ${id}.`);
         }
+        if (
+          c.action === "importExercises" &&
+          (await this.query(
+            "SELECT id FROM exercises WHERE (ownerId IS NULL OR ownerId=?) AND LOWER(TRIM(name))=LOWER(TRIM(?))",
+            this.ownerId,
+            e.name,
+          ).first())
+        )
+          continue;
         await this.insert("exercises", {
           ...e,
           id,
           ownerId: this.ownerId,
         }).run();
+      }
+      return;
+    }
+    if (c.action === "importWorkouts") {
+      for (const imported of c.workouts) {
+        if (
+          await this.query(
+            "SELECT id FROM workouts WHERE ownerId=? AND startedAt=? AND dayId=? AND templateName=?",
+            this.ownerId,
+            imported.startedAt,
+            imported.dayId,
+            imported.templateName,
+          ).first()
+        )
+          continue;
+        const workoutId = crypto.randomUUID();
+        const statements: D1PreparedStatement[] = [];
+        const rows: Array<{
+          id: string;
+          exerciseId: string;
+          source: (typeof imported.exercises)[number];
+        }> = [];
+        for (const source of imported.exercises) {
+          if (source.setsDone.some((set) => set.setNumber > source.sets))
+            throw new Error(
+              `La sesión importada contiene una serie fuera del objetivo de ${source.name}.`,
+            );
+          let exercise = await this.query(
+            "SELECT id FROM exercises WHERE id=? AND (ownerId IS NULL OR ownerId=?)",
+            source.exerciseId,
+            this.ownerId,
+          ).first<{ id: string }>();
+          if (!exercise)
+            exercise = await this.query(
+              "SELECT id FROM exercises WHERE (ownerId IS NULL OR ownerId=?) AND LOWER(TRIM(name))=LOWER(TRIM(?)) LIMIT 1",
+              this.ownerId,
+              source.name,
+            ).first<{ id: string }>();
+          let exerciseId = exercise?.id;
+          if (!exerciseId) {
+            exerciseId = `imported-${crypto.randomUUID()}`;
+            statements.push(
+              this.insert("exercises", {
+                id: exerciseId,
+                name: source.name,
+                shortName: source.name.slice(0, 80),
+                type: source.bodyweightExercise ? "calisthenics" : "gym",
+                movementPattern: "imported",
+                primaryMuscles: "",
+                secondaryMuscles: "",
+                equipment: "",
+                metricType: source.metricType,
+                bodyweightExercise: source.bodyweightExercise,
+                supportsAssistance: source.supportsAssistance,
+                supportsAddedWeight: source.supportsAddedWeight,
+                defaultRepMin: source.repMin,
+                defaultRepMax: source.repMax,
+                defaultRIR: source.rir,
+                notes: "Importado desde una sesión",
+                enabled: 1,
+                ownerId: this.ownerId,
+              }),
+            );
+          }
+          rows.push({
+            id: crypto.randomUUID(),
+            exerciseId,
+            source,
+          });
+        }
+        statements.unshift(
+          this.insert("workouts", {
+            id: workoutId,
+            ownerId: this.ownerId,
+            dayId: imported.dayId,
+            status: "completed",
+            startedAt: imported.startedAt,
+            finishedAt: imported.finishedAt ?? imported.startedAt,
+            bodyweight: imported.bodyweight,
+            notes: imported.notes,
+            templateName: imported.templateName,
+          }),
+        );
+        for (const [position, row] of rows.entries()) {
+          const { source } = row;
+          statements.push(
+            this.insert("workoutExercises", {
+              id: row.id,
+              workoutId,
+              dayId: imported.dayId,
+              exerciseId: row.exerciseId,
+              name: source.name,
+              position,
+              sets: source.sets,
+              repMin: source.repMin,
+              repMax: source.repMax,
+              rir: source.rir,
+              optional: source.optional,
+              notes: source.notes,
+              priority: source.priority,
+              metricType: source.metricType,
+              bodyweightExercise: source.bodyweightExercise,
+              supportsAssistance: source.supportsAssistance,
+              supportsAddedWeight: source.supportsAddedWeight,
+              variant: source.variant,
+            }),
+          );
+          for (const set of source.setsDone)
+            statements.push(
+              this.insert("workoutSets", {
+                id: crypto.randomUUID(),
+                workoutId,
+                workoutExerciseId: row.id,
+                exerciseId: row.exerciseId,
+                setNumber: set.setNumber,
+                reps: set.reps,
+                weight: set.weight,
+                bodyweight: imported.bodyweight,
+                assistanceWeight: set.assistanceWeight,
+                addedWeight: set.addedWeight,
+                RIR: set.RIR,
+                RPE: set.RPE ?? null,
+                durationSeconds: set.durationSeconds,
+                distance: set.distance ?? null,
+                notes: set.notes,
+                completed: 1,
+                timestamp: set.timestamp ?? imported.startedAt,
+              }),
+            );
+        }
+        await this.db.batch(statements);
       }
       return;
     }
@@ -581,6 +786,45 @@ export class D1TrainingRepository implements TrainingRepository {
         throw new Error(
           "La sesión se ha cerrado en otra pestaña. Actualiza antes de continuar.",
         );
+      return;
+    }
+    if (c.action === "setWorkoutBodyweight") {
+      const workout = await this.active(c.workoutId);
+      const date = workout.startedAt.slice(0, 10);
+      const existing = await this.query(
+        "SELECT id FROM bodyWeights WHERE ownerId=? AND date=? ORDER BY rowid DESC LIMIT 1",
+        this.ownerId,
+        date,
+      ).first<{ id: string }>();
+      const statements = [
+        this.query(
+          "UPDATE workouts SET bodyweight=? WHERE id=? AND ownerId=?",
+          c.weightKg,
+          workout.id,
+          this.ownerId,
+        ),
+        this.query(
+          "UPDATE workoutSets SET bodyweight=? WHERE workoutId=?",
+          c.weightKg,
+          workout.id,
+        ),
+      ];
+      statements.push(
+        existing
+          ? this.query(
+              "UPDATE bodyWeights SET weightKg=? WHERE id=? AND ownerId=?",
+              c.weightKg,
+              existing.id,
+              this.ownerId,
+            )
+          : this.insert("bodyWeights", {
+              id: crypto.randomUUID(),
+              ownerId: this.ownerId,
+              date,
+              weightKg: c.weightKg,
+            }),
+      );
+      await this.db.batch(statements);
       return;
     }
     if (c.action === "finish") {

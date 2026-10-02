@@ -2,6 +2,10 @@ import { z } from "zod";
 import { SPORT_KEYS } from "../domain/sports";
 const positive = z.number().finite().min(0).max(2000).nullable();
 const dayKey = z.enum(["A", "B", "C", "D", "E", "F", "G"]);
+const dateKey = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .refine((v) => !Number.isNaN(Date.parse(v)));
 export const planExercise = z
   .object({
     exerciseId: z.string().min(1),
@@ -52,6 +56,39 @@ export const setInput = z
     (s) => !((s.addedWeight ?? 0) > 0 && (s.assistanceWeight ?? 0) > 0),
     "No puedes combinar lastre y asistencia.",
   );
+const importedSet = z.object({
+  setNumber: z.number().int().min(1).max(30),
+  reps: z.number().int().min(0).max(1000).nullable(),
+  weight: positive,
+  bodyweight: positive.optional(),
+  assistanceWeight: positive,
+  addedWeight: positive,
+  RIR: z.number().int().min(0).max(3).nullable(),
+  RPE: z.number().finite().min(0).max(10).nullable().optional(),
+  durationSeconds: z.number().finite().min(0).max(86400).nullable(),
+  distance: positive.optional(),
+  notes: z.string().max(2000).default(""),
+  timestamp: z.string().datetime().optional(),
+});
+const importedWorkoutExercise = planExercise.and(z.object({
+  name: z.string().trim().min(1).max(120),
+  metricType: z.enum(["reps", "time"]),
+  bodyweightExercise: z.number().int().min(0).max(1),
+  supportsAssistance: z.number().int().min(0).max(1),
+  supportsAddedWeight: z.number().int().min(0).max(1),
+  variant: z.string().max(100).default(""),
+  setsDone: z.array(importedSet).max(30),
+}));
+const importedWorkout = z.object({
+  sourceId: z.string().max(200).optional(),
+  dayId: dayKey,
+  startedAt: z.string().datetime(),
+  finishedAt: z.string().datetime().nullable(),
+  bodyweight: positive,
+  notes: z.string().max(4000).default(""),
+  templateName: z.string().max(100).default("Sesión importada"),
+  exercises: z.array(importedWorkoutExercise).min(1).max(40),
+});
 export const commandSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("start"),
@@ -61,11 +98,25 @@ export const commandSchema = z.discriminatedUnion("action", [
   }),
   z.object({ action: z.literal("saveSet"), set: setInput }),
   z.object({
+    action: z.literal("setWorkoutBodyweight"),
+    workoutId: z.string().min(1),
+    weightKg: z.number().finite().min(20).max(400),
+  }),
+  z.object({
     action: z.literal("finish"),
     workoutId: z.string(),
     notes: z.string().max(4000).default(""),
   }),
   z.object({ action: z.literal("cancel"), workoutId: z.string() }),
+  z.object({
+    action: z.literal("updateWorkoutDate"),
+    workoutId: z.string().min(1),
+    date: dateKey,
+  }),
+  z.object({
+    action: z.literal("deleteWorkout"),
+    workoutId: z.string().min(1),
+  }),
   z.object({
     action: z.literal("bodyWeight"),
     weightKg: z.number().finite().min(20).max(400),
@@ -149,6 +200,10 @@ export const commandSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("importExercises"),
     exercises: z.array(exerciseInput).min(1).max(500),
+  }),
+  z.object({
+    action: z.literal("importWorkouts"),
+    workouts: z.array(importedWorkout).min(1).max(500),
   }),
 ]);
 export type Command = z.infer<typeof commandSchema>;

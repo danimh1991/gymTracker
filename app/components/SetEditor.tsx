@@ -54,6 +54,7 @@ export function SetEditor({
   previous,
   copied,
   clone,
+  lastSaved,
   busy,
   onSave,
 }: {
@@ -63,6 +64,7 @@ export function SetEditor({
   previous?: WorkoutSet;
   copied?: WorkoutSet;
   clone?: WorkoutSet;
+  lastSaved?: WorkoutSet;
   busy: boolean;
   onSave: (s: SetCommand) => Promise<boolean>;
 }) {
@@ -73,6 +75,8 @@ export function SetEditor({
         saved?.durationSeconds ??
         clone?.reps ??
         clone?.durationSeconds ??
+        lastSaved?.reps ??
+        lastSaved?.durationSeconds ??
         "",
     ),
     load: String(
@@ -80,16 +84,24 @@ export function SetEditor({
         ? (saved?.assistanceWeight ??
             clone?.assistanceWeight ??
             copied?.assistanceWeight ??
+            lastSaved?.assistanceWeight ??
             "")
-        : exercise.bodyweightExercise
+        : exercise.supportsAddedWeight
           ? (saved?.addedWeight ??
             clone?.addedWeight ??
             copied?.addedWeight ??
+            lastSaved?.addedWeight ??
             0)
-          : (saved?.weight ?? clone?.weight ?? copied?.weight ?? ""),
+          : exercise.bodyweightExercise
+            ? ""
+            : (saved?.weight ??
+              clone?.weight ??
+              copied?.weight ??
+              lastSaved?.weight ??
+              ""),
     ),
-    rir: saved?.RIR ?? clone?.RIR ?? null,
-    notes: saved?.notes ?? clone?.notes ?? "",
+    rir: saved?.RIR ?? clone?.RIR ?? lastSaved?.RIR ?? null,
+    notes: saved?.notes ?? clone?.notes ?? lastSaved?.notes ?? "",
   };
   const [draft, setDraft] = useState(base),
     [restored, setRestored] = useState(false);
@@ -121,7 +133,11 @@ export function SetEditor({
         /* Optional local draft only. */
       }
   }, [draft, key]);
-  const time = exercise.metricType === "time";
+  const time = exercise.metricType === "time",
+    showLoad =
+      !exercise.bodyweightExercise ||
+      !!exercise.supportsAssistance ||
+      !!exercise.supportsAddedWeight;
   return (
     <div className="set-editor">
       <div className="section-title">
@@ -150,12 +166,12 @@ export function SetEditor({
           value={draft.value}
           onChange={(value) => setDraft({ ...draft, value })}
         />
-        {!time || exercise.supportsAssistance ? (
+        {showLoad ? (
           <NumberControl
             label={
               exercise.supportsAssistance
                 ? "Asistencia (kg)"
-                : exercise.bodyweightExercise
+                : exercise.supportsAddedWeight
                   ? "Lastre (kg)"
                   : "Peso (kg)"
             }
@@ -205,10 +221,7 @@ export function SetEditor({
             reps: time ? null : v,
             durationSeconds: time ? v : null,
             weight: exercise.bodyweightExercise ? null : load,
-            addedWeight:
-              exercise.bodyweightExercise && !exercise.supportsAssistance
-                ? load
-                : null,
+            addedWeight: exercise.supportsAddedWeight ? load : null,
             assistanceWeight: exercise.supportsAssistance ? load : null,
             RIR: draft.rir,
             notes: draft.notes,

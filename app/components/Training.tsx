@@ -7,7 +7,7 @@ import {
   CopyPlus,
   Edit3,
   Plus,
-  Save,
+  Scale,
   Timer,
   Trash2,
   X,
@@ -41,6 +41,7 @@ export function Training({
     [editing, setEditing] = useState<number | null>(null),
     [clone, setClone] = useState<WorkoutSet | null>(null),
     [editSession, setEditSession] = useState(false),
+    [editingExercise, setEditingExercise] = useState(""),
     [newExercise, setNewExercise] = useState(data.exercises[0]?.id ?? ""),
     [copy, setCopy] = useState(false),
     [copyVersion, setCopyVersion] = useState(0),
@@ -49,6 +50,11 @@ export function Training({
     [end, setEnd] = useState<number | null>(null),
     [now, setNow] = useState(Date.now()),
     [confirm, setConfirm] = useState<"finish" | "cancel" | null>(null),
+    [bodyweightPrompt, setBodyweightPrompt] = useState(false),
+    [bodyweightHandled, setBodyweightHandled] = useState(false),
+    [bodyweightDraft, setBodyweightDraft] = useState(
+      String(workout.bodyweight ?? data.bodyWeights[0]?.weightKg ?? ""),
+    ),
     [notes, setNotes] = useState("");
   useEffect(() => {
     const tick = setInterval(() => setNow(Date.now()), 1000);
@@ -194,37 +200,53 @@ export function Training({
               className={`training-card ${open === e.id ? "expanded" : ""}`}
               key={e.id}
             >
-              <button
-                className="exercise-toggle"
-                onClick={() => {
-                  setOpen(open === e.id ? "" : e.id);
-                  setEditing(null);
-                }}
-              >
-                <span className="exercise-index">
-                  {done.length === e.sets ? (
-                    <Check size={20} />
-                  ) : (
-                    String(i + 1).padStart(2, "0")
-                  )}
-                </span>
-                <div>
-                  <h2>{e.name}</h2>
-                  <p>
-                    {e.sets} × {e.repMin}–{e.repMax}{" "}
-                    {e.metricType === "time" ? "s" : "reps"} ·{" "}
-                    {e.rir === "Técnica" ? "Técnica" : `RIR ${e.rir}`}{" "}
-                    {e.optional ? "· Opcional" : ""}
-                  </p>
-                </div>
-                <span className="set-count">
-                  {done.length}/{e.sets}
-                </span>
-                <ChevronDown size={20} />
-              </button>
+              <div className="training-card-header">
+                <button
+                  className="exercise-toggle"
+                  onClick={() => {
+                    setOpen(open === e.id ? "" : e.id);
+                    setEditing(null);
+                  }}
+                >
+                  <span className="exercise-index">
+                    {done.length === e.sets ? (
+                      <Check size={20} />
+                    ) : (
+                      String(i + 1).padStart(2, "0")
+                    )}
+                  </span>
+                  <div>
+                    <h2>{e.name}</h2>
+                    <p>
+                      {e.sets} × {e.repMin}–{e.repMax}{" "}
+                      {e.metricType === "time" ? "s" : "reps"} ·{" "}
+                      {e.rir === "Técnica" ? "Técnica" : `RIR ${e.rir}`}{" "}
+                      {e.optional ? "· Opcional" : ""}
+                    </p>
+                  </div>
+                  <span className="set-count">
+                    {done.length}/{e.sets}
+                  </span>
+                  <ChevronDown size={20} />
+                </button>
+                <button
+                  type="button"
+                  className={`exercise-edit-shortcut ${editingExercise === e.id ? "active" : ""}`}
+                  aria-label={`Editar ${e.name}`}
+                  title="Editar este ejercicio"
+                  onClick={() => {
+                    setOpen(e.id);
+                    setEditing(null);
+                    setEditingExercise(editingExercise === e.id ? "" : e.id);
+                  }}
+                >
+                  <Edit3 size={17} />
+                  <span>Editar</span>
+                </button>
+              </div>
               {open === e.id && (
                 <div className="exercise-body">
-                  {editSession && (
+                  {(editSession || editingExercise === e.id) && (
                     <div className="active-exercise-editor">
                       <label>
                         Ejercicio
@@ -451,6 +473,7 @@ export function Training({
                           : undefined
                       }
                       clone={clone ?? undefined}
+                      lastSaved={done[done.length - 1]}
                       saved={done.find((s) => s.setNumber === next)}
                       busy={busy}
                       onSave={async (set) => {
@@ -466,6 +489,7 @@ export function Training({
                           (s) => s.workoutExerciseId === e.id,
                         );
                         if (current.length === e.sets) {
+                          if (!bodyweightHandled) setBodyweightPrompt(true);
                           const following = exercises.find(
                             (x) =>
                               x.position > e.position &&
@@ -525,6 +549,83 @@ export function Training({
             <X size={20} />
           </button>
         </aside>
+      )}
+      {bodyweightPrompt && (
+        <div className="modal-backdrop">
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="bodyweight-title"
+            className="modal"
+          >
+            <h2 id="bodyweight-title">
+              <Scale size={21} /> Peso corporal de hoy
+            </h2>
+            <p>
+              Has terminado un ejercicio. Registra el peso de esta sesión para
+              que las cargas relativas queden completas.
+            </p>
+            <label className="field">
+              Peso (kg)
+              <input
+                type="number"
+                inputMode="decimal"
+                min="20"
+                max="400"
+                step="0.1"
+                value={bodyweightDraft}
+                onChange={(event) => setBodyweightDraft(event.target.value)}
+              />
+            </label>
+            {data.bodyWeights[0] && (
+              <button
+                type="button"
+                className="secondary compact"
+                onClick={() =>
+                  setBodyweightDraft(String(data.bodyWeights[0].weightKg))
+                }
+              >
+                <Copy size={16} /> Copiar último: {data.bodyWeights[0].weightKg}{" "}
+                kg
+              </button>
+            )}
+            <div className="button-row">
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => {
+                  setBodyweightPrompt(false);
+                  setBodyweightHandled(true);
+                }}
+              >
+                Ahora no
+              </button>
+              <button
+                type="button"
+                className="primary"
+                disabled={
+                  busy ||
+                  !bodyweightDraft ||
+                  Number(bodyweightDraft) < 20 ||
+                  Number(bodyweightDraft) > 400
+                }
+                onClick={async () => {
+                  const updated = await execute({
+                    action: "setWorkoutBodyweight",
+                    workoutId: workout.id,
+                    weightKg: Number(bodyweightDraft),
+                  });
+                  if (updated) {
+                    setBodyweightPrompt(false);
+                    setBodyweightHandled(true);
+                  }
+                }}
+              >
+                Guardar peso
+              </button>
+            </div>
+          </section>
+        </div>
       )}
       {confirm && (
         <div className="modal-backdrop">

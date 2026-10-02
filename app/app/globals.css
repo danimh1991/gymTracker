@@ -320,6 +320,26 @@ main {
   font-size: 13px;
   margin: 25px 0 22px;
 }
+.hero-start-row {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+}
+.hero-template-picker {
+  display: grid;
+  gap: 6px;
+  min-width: min(280px, 48%);
+  color: #c5ceb9;
+  font-size: 12px;
+}
+.hero-template-picker select {
+  min-height: 48px;
+  padding: 10px 38px 10px 12px;
+  border: 1px solid #657257;
+  border-radius: 7px;
+  background: #26321f;
+  color: #fff;
+}
 .primary,
 .secondary {
   min-height: 48px;
@@ -610,6 +630,10 @@ progress {
 .training-card.expanded {
   border-color: #a9ba91;
 }
+.training-card-header {
+  display: flex;
+  align-items: stretch;
+}
 .exercise-toggle {
   display: flex;
   text-align: left;
@@ -617,6 +641,26 @@ progress {
   gap: 17px;
   padding: 22px;
   width: 100%;
+}
+.training-card-header .exercise-toggle {
+  flex: 1;
+  width: auto;
+}
+.exercise-edit-shortcut {
+  width: 76px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-left: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+}
+.exercise-edit-shortcut:hover,
+.exercise-edit-shortcut.active {
+  background: #eef4e5;
+  color: #42621c;
 }
 .exercise-toggle > div {
   flex: 1;
@@ -1328,7 +1372,7 @@ textarea {
     left: 0;
     right: 0;
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(7, 1fr);
     background: white;
     border-top: 1px solid var(--line);
     z-index: 40;
@@ -1344,7 +1388,7 @@ textarea {
     color: #818878;
   }
   .bottom-nav button span {
-    font-size: 11px;
+    font-size: 10px;
   }
   .bottom-nav .nav-active {
     color: #42621c;
@@ -1401,6 +1445,16 @@ textarea {
   }
   .session-hero h2 {
     font-size: 28px;
+  }
+  .hero-start-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .hero-template-picker {
+    min-width: 0;
+  }
+  .hero-start-row .start {
+    width: 100%;
   }
   .hero-focus {
     margin-top: 23px;
@@ -1494,6 +1548,12 @@ textarea {
   .exercise-toggle {
     padding: 18px 14px;
     gap: 10px;
+  }
+  .exercise-edit-shortcut {
+    width: 54px;
+  }
+  .exercise-edit-shortcut span {
+    display: none;
   }
   .exercise-toggle h2 {
     font-size: 16px;
@@ -1901,6 +1961,54 @@ textarea {
   gap: 10px;
   margin-bottom: 22px;
 }
+.history-transfer-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: -8px 0 22px;
+}
+.history-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 14px 0;
+}
+.history-card-actions label {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.history-card-actions input {
+  min-height: 38px;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+}
+.exercise-form {
+  margin-bottom: 22px;
+}
+.exercise-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 13px;
+  margin: 18px 0;
+}
+.exercise-form-grid .wide-field {
+  grid-column: span 2;
+}
+.exercise-form-grid .notes-field {
+  grid-column: 1 / -1;
+}
+.exercise-form-grid input,
+.exercise-form-grid select,
+.exercise-form-grid textarea {
+  width: 100%;
+}
 .template-editor-card {
   border-color: #cbd9b8;
   box-shadow: 0 10px 35px #3144190d;
@@ -2084,6 +2192,39 @@ textarea {
   .template-save-row {
     align-items: stretch;
     flex-direction: column;
+  }
+  .history-transfer-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .history-transfer-actions > .secondary,
+  .history-transfer-actions > .file-button {
+    width: 100%;
+  }
+  .history-card-actions {
+    justify-content: stretch;
+  }
+  .history-card-actions > * {
+    flex: 1;
+  }
+  .template-card-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .template-card-actions .secondary,
+  .template-card-actions .danger-button {
+    width: 100%;
+    min-height: 48px;
+    position: relative;
+    z-index: 1;
+    touch-action: manipulation;
+  }
+  .exercise-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .exercise-form-grid .wide-field,
+  .exercise-form-grid .notes-field {
+    grid-column: auto;
   }
   .template-fields,
   .template-grid {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Download, FilePlus2, Pencil, Trash2, Upload } from "lucide-react";
 import type { DayKey, PlanExercise, Snapshot, Template } from "../domain/types";
 import type { Execute } from "./Training";
@@ -65,6 +65,15 @@ export function Templates({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [plan, setPlan] = useState<PlanExercise[]>([]);
+  const [pendingDelete, setPendingDelete] = useState<Template | null>(null);
+  const editorRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (editingId !== null)
+      requestAnimationFrame(() =>
+        editorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      );
+  }, [editingId]);
 
   const beginNew = () => {
     setEditingId("");
@@ -124,13 +133,14 @@ export function Templates({
             Crea, revisa y ajusta tus sesiones antes de entrenar.
           </p>
         </div>
-        <button className="primary" onClick={beginNew}>
+        <button type="button" className="primary" onClick={beginNew}>
           <FilePlus2 size={18} /> Nueva plantilla
         </button>
       </div>
 
       <div className="template-actions">
         <button
+          type="button"
           className="secondary"
           onClick={download}
           disabled={!data.templates.length}
@@ -148,10 +158,11 @@ export function Templates({
       </div>
 
       {editingId !== null && (
-        <section className="settings-card template-editor-card">
+        <section ref={editorRef} className="settings-card template-editor-card">
           <div className="section-title">
             <h2>{editingId ? "Editar plantilla" : "Nueva plantilla"}</h2>
             <button
+              type="button"
               className="secondary compact"
               onClick={() => setEditingId(null)}
             >
@@ -202,6 +213,7 @@ export function Templates({
           <div className="template-save-row">
             <span className="small muted">{plan.length} ejercicios</span>
             <button
+              type="button"
               className="primary"
               disabled={busy || name.trim().length < 2 || !plan.length}
               onClick={async () => {
@@ -248,24 +260,17 @@ export function Templates({
               </div>
               <div className="template-card-actions">
                 <button
+                  type="button"
                   className="secondary"
                   onClick={() => beginEdit(template)}
                 >
                   <Pencil size={16} /> Editar
                 </button>
                 <button
+                  type="button"
                   className="danger-button"
                   disabled={busy}
-                  onClick={async () => {
-                    if (confirm(`¿Eliminar la plantilla “${template.name}”?`)) {
-                      const result = await execute({
-                        action: "deleteTemplate",
-                        templateId: template.id,
-                      });
-                      if (result && editingId === template.id)
-                        setEditingId(null);
-                    }
-                  }}
+                  onClick={() => setPendingDelete(template)}
                 >
                   <Trash2 size={16} /> Eliminar
                 </button>
@@ -279,6 +284,40 @@ export function Templates({
           <FilePlus2 size={30} />
           <h2>Todavía no tienes plantillas</h2>
           <p className="muted">Crea la primera para empezar a entrenar.</p>
+        </div>
+      )}
+      {pendingDelete && (
+        <div className="modal-backdrop">
+          <section className="modal" role="dialog" aria-modal="true">
+            <h2>¿Eliminar “{pendingDelete.name}”?</h2>
+            <p>La plantilla desaparecerá, pero tus sesiones guardadas no cambian.</p>
+            <div className="button-row">
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setPendingDelete(null)}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="danger-button"
+                disabled={busy}
+                onClick={async () => {
+                  const result = await execute({
+                    action: "deleteTemplate",
+                    templateId: pendingDelete.id,
+                  });
+                  if (result) {
+                    if (editingId === pendingDelete.id) setEditingId(null);
+                    setPendingDelete(null);
+                  }
+                }}
+              >
+                <Trash2 size={16} /> Eliminar plantilla
+              </button>
+            </div>
+          </section>
         </div>
       )}
     </>

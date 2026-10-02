@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import {
   Activity,
+  BookOpen,
   ChartNoAxesCombined,
   Dumbbell,
   History as HistoryIcon,
@@ -20,14 +21,23 @@ import { More } from "./More";
 import { Progress } from "./Progress";
 import { History, WorkoutDetail } from "./History";
 import { Templates } from "./Templates";
-type Page = "home" | "train" | "history" | "progress" | "templates" | "more";
+import { Exercises } from "./Exercises";
+type Page =
+  | "home"
+  | "train"
+  | "history"
+  | "progress"
+  | "templates"
+  | "exercises"
+  | "more";
 const navigation = [
   { id: "home", name: "Inicio", icon: House },
   { id: "train", name: "Entrenar", icon: Dumbbell },
   { id: "history", name: "Histórico", icon: HistoryIcon },
   { id: "progress", name: "Progreso", icon: ChartNoAxesCombined },
   { id: "templates", name: "Plantillas", icon: LayoutTemplate },
-  { id: "more", name: "Preferencias", icon: Settings },
+  { id: "exercises", name: "Ejercicios", icon: BookOpen },
+  { id: "more", name: "Ajustes", icon: Settings },
 ] as const;
 export default function Tracker() {
   const [demo, updateDemo] = useState(false),
@@ -223,6 +233,9 @@ export default function Tracker() {
               {page === "progress" && <Progress data={data} />}
               {page === "templates" && (
                 <Templates data={data} busy={busy} execute={execute} />
+              )}
+              {page === "exercises" && (
+                <Exercises data={data} busy={busy} execute={execute} />
               )}
               {page === "more" && (
                 <More

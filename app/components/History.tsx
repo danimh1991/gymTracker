@@ -6,12 +6,17 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock3,
+  Download,
   Dumbbell,
   Mountain,
+  Pencil,
+  Save,
   Route,
   Trash2,
   Trophy,
+  Upload,
   Waves,
+  X,
 } from "lucide-react";
 import type { Snapshot, Workout } from "../domain/types";
 import { sportDefinition } from "../domain/sports";
@@ -26,6 +31,7 @@ import {
 } from "../services/training";
 import { dateLabel } from "./Home";
 import type { Execute } from "./Training";
+import { downloadJson, workoutBackup } from "../services/export";
 export function WorkoutDetail({
   data,
   workout,
@@ -204,6 +210,9 @@ export function History({
   const [selectedDate, setSelectedDate] = useState(initialDate);
   const [month, setMonth] = useState(initialDate.slice(0, 7));
   const [open, setOpen] = useState("");
+  const [editingWorkout, setEditingWorkout] = useState("");
+  const [workoutDate, setWorkoutDate] = useState("");
+  const [pendingDelete, setPendingDelete] = useState<Workout | null>(null);
   const [year, monthNumber] = month.split("-").map(Number);
   const firstDay = new Date(year, monthNumber - 1, 1);
   const calendarOffset = (firstDay.getDay() + 6) % 7;
@@ -224,6 +233,20 @@ export function History({
       `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`,
     );
   };
+  const importWorkouts = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      const value = JSON.parse(await file.text());
+      const workouts = Array.isArray(value) ? value : value.workouts;
+      if (!Array.isArray(workouts))
+        throw new Error("El JSON no contiene una lista válida de sesiones.");
+      await execute({ action: "importWorkouts", workouts });
+    } catch (error) {
+      alert(
+        error instanceof Error ? error.message : "No se pudo leer el archivo.",
+      );
+    }
+  };
   return (
     <>
       <div className="page-heading">
@@ -233,6 +256,32 @@ export function History({
           <p className="muted">Gimnasio y deporte, día a día.</p>
         </div>
         <CalendarDays size={30} />
+      </div>
+      <div className="history-transfer-actions">
+        <button
+          type="button"
+          className="secondary"
+          disabled={!completed.length}
+          onClick={() =>
+            downloadJson("gym-tracker-sesiones.json", workoutBackup(data))
+          }
+        >
+          <Download size={17} /> Exportar sesiones
+        </button>
+        <label className="secondary file-button">
+          <Upload size={17} /> Importar sesiones
+          <input
+            type="file"
+            accept="application/json,.json"
+            onChange={(event) => {
+              void importWorkouts(event.target.files?.[0]);
+              event.target.value = "";
+            }}
+          />
+        </label>
+        <span className="small muted">
+          Las sesiones ya existentes se omiten automáticamente.
+        </span>
       </div>
       <section className="activity-calendar">
         <div className="calendar-toolbar">
@@ -381,7 +430,71 @@ export function History({
         const s = stats(data.sets.filter((s) => s.workoutId === w.id));
         return (
           <section className="history-card" key={w.id}>
+            <div className="history-card-actions">
+              {editingWorkout === w.id ? (
+                <>
+                  <label>
+                    Fecha
+                    <input
+                      type="date"
+                      max={new Date().toLocaleDateString("sv-SE")}
+                      value={workoutDate}
+                      onChange={(event) => setWorkoutDate(event.target.value)}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="secondary compact"
+                    disabled={busy || !workoutDate}
+                    onClick={async () => {
+                      const result = await execute({
+                        action: "updateWorkoutDate",
+                        workoutId: w.id,
+                        date: workoutDate,
+                      });
+                      if (result) {
+                        setSelectedDate(workoutDate);
+                        setMonth(workoutDate.slice(0, 7));
+                        setEditingWorkout("");
+                      }
+                    }}
+                  >
+                    <Save size={15} /> Guardar fecha
+                  </button>
+                  <button
+                    type="button"
+                    className="icon-button"
+                    aria-label="Cancelar edición de fecha"
+                    onClick={() => setEditingWorkout("")}
+                  >
+                    <X size={17} />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="secondary compact"
+                    onClick={() => {
+                      setEditingWorkout(w.id);
+                      setWorkoutDate(localDateKey(w.startedAt));
+                    }}
+                  >
+                    <Pencil size={15} /> Cambiar fecha
+                  </button>
+                  <button
+                    type="button"
+                    className="danger-button compact"
+                    disabled={busy}
+                    onClick={() => setPendingDelete(w)}
+                  >
+                    <Trash2 size={15} /> Eliminar sesión
+                  </button>
+                </>
+              )}
+            </div>
             <button
+              type="button"
               className="history-header"
               onClick={() => setOpen(open === w.id ? "" : w.id)}
             >
@@ -413,6 +526,43 @@ export function History({
             Selecciona otro día del calendario o registra un deporte desde
             Inicio.
           </p>
+        </div>
+      )}
+      {pendingDelete && (
+        <div className="modal-backdrop">
+          <section className="modal" role="dialog" aria-modal="true">
+            <h2>¿Eliminar esta sesión?</h2>
+            <p>
+              Se eliminarán el entrenamiento y todas sus series. Esta acción no
+              se puede deshacer.
+            </p>
+            <div className="button-row">
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setPendingDelete(null)}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="danger-button"
+                disabled={busy}
+                onClick={async () => {
+                  const result = await execute({
+                    action: "deleteWorkout",
+                    workoutId: pendingDelete.id,
+                  });
+                  if (result) {
+                    setPendingDelete(null);
+                    setOpen("");
+                  }
+                }}
+              >
+                <Trash2 size={16} /> Eliminar definitivamente
+              </button>
+            </div>
+          </section>
         </div>
       )}
     </>

@@ -155,14 +155,31 @@ export function Home({
             <Target size={18} />
             <span>Repeticiones de calidad. Mantén RIR 1–2.</span>
           </div>
-          <button
-            className="primary start"
-            onClick={() => onStart(plan, chosen?.name ?? `Día ${selected}`)}
-            disabled={busy || !plan.length}
-          >
-            <Play size={19} fill="currentColor" />
-            {active ? "Continuar entrenamiento" : "Empezar entrenamiento"}
-          </button>
+          <div className="hero-start-row">
+            {!active && (
+              <label className="hero-template-picker">
+                <span>Plantilla</span>
+                <select
+                  value={templateId}
+                  onChange={(e) => setTemplateId(e.target.value)}
+                >
+                  {templates.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <button
+              className="primary start"
+              onClick={() => onStart(plan, chosen?.name ?? `Día ${selected}`)}
+              disabled={busy || (!active && !plan.length)}
+            >
+              <Play size={19} fill="currentColor" />
+              {active ? "Continuar entrenamiento" : "Empezar entrenamiento"}
+            </button>
+          </div>
           {!plan.length && !active && (
             <p className="resume-note">
               Este día todavía no tiene plantillas. Créala desde la sección
@@ -224,19 +241,6 @@ export function Home({
       </div>
       {!active && (
         <div className="template-toolbar">
-          <label>
-            Plantilla
-            <select
-              value={templateId}
-              onChange={(e) => setTemplateId(e.target.value)}
-            >
-              {templates.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-          </label>
           <button className="secondary" onClick={() => setEditing(!editing)}>
             {editing ? "Cerrar edición" : "Editar antes de empezar"}
           </button>

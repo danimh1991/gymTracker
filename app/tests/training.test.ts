@@ -13,7 +13,7 @@ import {
   stats,
 } from "../services/training";
 import { commandSchema } from "../services/validation";
-import { csv } from "../services/export";
+import { csv, workoutBackup } from "../services/export";
 import type { WorkoutSet } from "../domain/types";
 function sets(reps: number[], rir = 1): WorkoutSet[] {
   return reps.map((r, i) => ({
@@ -225,9 +225,14 @@ test("persistencia: inicio idempotente, series sin duplicar, snapshot, cierre y 
   });
   d = await repo.snapshot();
   assert.equal(d.workouts.length, 1);
-  assert.equal(d.workouts[0].bodyweight, 73.5);
+  assert.equal(d.workouts[0].bodyweight, null);
   const w = d.workouts[0],
     e = d.workoutExercises[0];
+  await repo.execute({
+    action: "setWorkoutBodyweight",
+    workoutId: w.id,
+    weightKg: 73.5,
+  });
   await assert.rejects(
     () => repo.execute({ action: "finish", workoutId: w.id, notes: "" }),
     /al menos/,
@@ -558,5 +563,89 @@ test("los deportes externos validan sus métricas, se aíslan y se pueden borrar
   });
   data = await repo.snapshot();
   assert.equal(data.externalActivities.length, 0);
+  sql.close();
+});
+test("las sesiones se importan sin duplicados y permiten cambiar fecha y borrar", async () => {
+  const { db, sql } = database();
+  const source = new D1TrainingRepository(db, "backup-source:demo", true);
+  await source.execute({ action: "resetDemo" });
+  const backup = workoutBackup(await source.snapshot());
+  const target = new D1TrainingRepository(db, "backup-target:real");
+  await target.execute({ action: "importWorkouts", workouts: backup.workouts });
+  await target.execute({ action: "importWorkouts", workouts: backup.workouts });
+  let data = await target.snapshot();
+  assert.equal(data.workouts.length, 3);
+  const workout = data.workouts[0];
+  await target.execute({
+    action: "updateWorkoutDate",
+    workoutId: workout.id,
+    date: "2020-01-02",
+  });
+  data = await target.snapshot();
+  assert.equal(
+    data.workouts.find((row) => row.id === workout.id)?.startedAt.slice(0, 10),
+    "2020-01-02",
+  );
+  await target.execute({ action: "deleteWorkout", workoutId: workout.id });
+  data = await target.snapshot();
+  assert.equal(data.workouts.length, 2);
+  assert.ok(!data.sets.some((set) => set.workoutId === workout.id));
+  sql.close();
+});
+test("las importaciones de plantillas y ejercicios omiten duplicados naturales", async () => {
+  const { db, sql } = database();
+  const repo = new D1TrainingRepository(db, "dedupe:real");
+  let data = await repo.snapshot();
+  const initialTemplates = data.templates.length;
+  const template = {
+    dayId: "A" as const,
+    name: "Plantilla sin duplicados",
+    description: "Importada",
+    exercises: [
+      {
+        exerciseId: "pushup",
+        sets: 3,
+        repMin: 8,
+        repMax: 12,
+        rir: "2",
+        optional: 0,
+        notes: "",
+        priority: "Principal",
+      },
+    ],
+  };
+  await repo.execute({ action: "importTemplates", templates: [template] });
+  await repo.execute({ action: "importTemplates", templates: [template] });
+  data = await repo.snapshot();
+  assert.equal(data.templates.length, initialTemplates + 1);
+  const exercise = {
+    id: "first-natural-id",
+    name: "Ejercicio natural único",
+    shortName: "Natural",
+    type: "gym" as const,
+    movementPattern: "push",
+    primaryMuscles: "Pecho",
+    secondaryMuscles: "",
+    equipment: "Máquina",
+    metricType: "reps" as const,
+    bodyweightExercise: 0,
+    supportsAssistance: 0,
+    supportsAddedWeight: 0,
+    defaultRepMin: 8,
+    defaultRepMax: 12,
+    defaultRIR: "2",
+    notes: "",
+    enabled: 1,
+  };
+  await repo.execute({ action: "importExercises", exercises: [exercise] });
+  await repo.execute({
+    action: "importExercises",
+    exercises: [{ ...exercise, id: "second-natural-id" }],
+  });
+  data = await repo.snapshot();
+  assert.equal(
+    data.exercises.filter((row) => row.name === exercise.name).length,
+    1,
+  );
   sql.close();
 });
