@@ -23,12 +23,10 @@ export function previousSets(
   data: Snapshot,
   exerciseId: string,
   before = new Date().toISOString(),
-  dayId?: DayKey,
 ): WorkoutSet[] {
   const workout = completedWorkouts(data).find(
     (w) =>
       w.startedAt < before &&
-      (!dayId || w.dayId === dayId) &&
       data.sets.some(
         (s) =>
           s.workoutId === w.id && s.exerciseId === exerciseId && s.completed,

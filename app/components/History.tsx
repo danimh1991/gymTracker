@@ -105,12 +105,7 @@ export function WorkoutDetail({
       </p>
       {rows.map((e) => {
         const current = sets.filter((s) => s.workoutExerciseId === e.id),
-          prev = previousSets(
-            data,
-            e.exerciseId,
-            workout.startedAt,
-            workout.dayId,
-          ),
+          prev = previousSets(data, e.exerciseId, workout.startedAt),
           delta = stats(current).reps - stats(prev).reps,
           recommendation =
             e.exerciseId === "pullup"

@@ -108,6 +108,10 @@ export const commandSchema = z.discriminatedUnion("action", [
   }),
   z.object({ action: z.literal("saveSet"), set: setInput }),
   z.object({
+    action: z.literal("deleteSet"),
+    setId: z.string().min(1),
+  }),
+  z.object({
     action: z.literal("setWorkoutBodyweight"),
     workoutId: z.string().min(1),
     weightKg: z.number().finite().min(20).max(400),

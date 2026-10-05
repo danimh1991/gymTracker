@@ -10,6 +10,7 @@ import {
   evaluateDipProgression,
   detectPersonalRecord,
   historicalExercise,
+  previousSets,
   stats,
 } from "../services/training";
 import { commandSchema } from "../services/validation";
@@ -112,6 +113,35 @@ test("validación rechaza cargas negativas y asistencia con lastre", () => {
       action: "saveSet",
       set: { ...s, addedWeight: 5, assistanceWeight: 1 },
     }).success,
+  );
+});
+test("el último registro de un ejercicio no depende del día de rutina", () => {
+  const older = sets([8]);
+  older[0].workoutId = "old";
+  const newer = sets([10]);
+  newer[0].workoutId = "new";
+  const data = {
+    workouts: [
+      {
+        id: "old",
+        dayId: "A",
+        status: "completed",
+        startedAt: "2026-01-01T10:00:00.000Z",
+        finishedAt: "2026-01-01T11:00:00.000Z",
+      },
+      {
+        id: "new",
+        dayId: "B",
+        status: "completed",
+        startedAt: "2026-02-01T10:00:00.000Z",
+        finishedAt: "2026-02-01T11:00:00.000Z",
+      },
+    ],
+    sets: [...older, ...newer],
+  } as unknown as Parameters<typeof previousSets>[0];
+  assert.equal(
+    previousSets(data, "pullup", "2026-03-01T10:00:00.000Z")[0].reps,
+    10,
   );
 });
 
@@ -250,6 +280,10 @@ test("persistencia: inicio idempotente, series sin duplicar, snapshot, cierre y 
     notes: "",
   };
   await repo.execute({ action: "saveSet", set: value });
+  await repo.execute({ action: "saveSet", set: { ...value, reps: 2 } });
+  const saved = await repo.snapshot();
+  await repo.execute({ action: "deleteSet", setId: saved.sets[0].id });
+  assert.equal((await repo.snapshot()).sets.length, 0);
   await repo.execute({ action: "saveSet", set: { ...value, reps: 2 } });
   const reloaded = new D1TrainingRepository(db, "alice:real");
   d = await reloaded.snapshot();

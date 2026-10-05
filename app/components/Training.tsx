@@ -203,8 +203,6 @@ export function Training({
     [end, setEnd] = useState<number | null>(null),
     [now, setNow] = useState(() => Date.now()),
     [confirm, setConfirm] = useState<"finish" | "cancel" | null>(null),
-    [bodyweightPrompt, setBodyweightPrompt] = useState(false),
-    [bodyweightHandled, setBodyweightHandled] = useState(false),
     [bodyweightDraft, setBodyweightDraft] = useState(
       String(workout.bodyweight ?? data.bodyWeights[0]?.weightKg ?? ""),
     ),
@@ -335,12 +333,7 @@ export function Training({
           const done = sets
               .filter((s) => s.workoutExerciseId === e.id)
               .sort((a, b) => a.setNumber - b.setNumber),
-            prev = previousSets(
-              data,
-              e.exerciseId,
-              workout.startedAt,
-              workout.dayId,
-            ),
+            prev = previousSets(data, e.exerciseId, workout.startedAt),
             next =
               editing && open === e.id
                 ? editing
@@ -499,7 +492,17 @@ export function Training({
                               title="Clonar en la siguiente serie"
                               onClick={() => {
                                 setClone(s);
-                                setEditing(done.length + 1);
+                                setEditing(
+                                  Array.from(
+                                    { length: e.sets },
+                                    (_, index) => index + 1,
+                                  ).find(
+                                    (number) =>
+                                      !done.some(
+                                        (row) => row.setNumber === number,
+                                      ),
+                                  ) ?? null,
+                                );
                                 setCopyVersion((v) => v + 1);
                               }}
                             >
@@ -507,6 +510,31 @@ export function Training({
                               Clonar
                             </button>
                           )}
+                          <button
+                            type="button"
+                            className="delete-set"
+                            aria-label={`Eliminar serie ${s.setNumber}`}
+                            title="Eliminar serie"
+                            disabled={busy}
+                            onClick={async () => {
+                              if (
+                                !window.confirm(
+                                  `¿Eliminar la serie ${s.setNumber}?`,
+                                )
+                              )
+                                return;
+                              const updated = await execute({
+                                action: "deleteSet",
+                                setId: s.id,
+                              });
+                              if (updated) {
+                                setEditing(null);
+                                setClone(null);
+                              }
+                            }}
+                          >
+                            <Trash2 size={15} />
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -539,7 +567,6 @@ export function Training({
                           (s) => s.workoutExerciseId === e.id,
                         );
                         if (current.length === e.sets) {
-                          if (!bodyweightHandled) setBodyweightPrompt(true);
                           const following = exercises.find(
                             (x) =>
                               x.position > e.position &&
@@ -600,83 +627,6 @@ export function Training({
           </button>
         </aside>
       )}
-      {bodyweightPrompt && (
-        <div className="modal-backdrop">
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="bodyweight-title"
-            className="modal"
-          >
-            <h2 id="bodyweight-title">
-              <Scale size={21} /> Peso corporal de hoy
-            </h2>
-            <p>
-              Has terminado un ejercicio. Registra el peso de esta sesión para
-              que las cargas relativas queden completas.
-            </p>
-            <label className="field">
-              Peso (kg)
-              <input
-                type="number"
-                inputMode="decimal"
-                min="20"
-                max="400"
-                step="0.1"
-                value={bodyweightDraft}
-                onChange={(event) => setBodyweightDraft(event.target.value)}
-              />
-            </label>
-            {data.bodyWeights[0] && (
-              <button
-                type="button"
-                className="secondary compact"
-                onClick={() =>
-                  setBodyweightDraft(String(data.bodyWeights[0].weightKg))
-                }
-              >
-                <Copy size={16} /> Copiar último: {data.bodyWeights[0].weightKg}{" "}
-                kg
-              </button>
-            )}
-            <div className="button-row">
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => {
-                  setBodyweightPrompt(false);
-                  setBodyweightHandled(true);
-                }}
-              >
-                Ahora no
-              </button>
-              <button
-                type="button"
-                className="primary"
-                disabled={
-                  busy ||
-                  !bodyweightDraft ||
-                  Number(bodyweightDraft) < 20 ||
-                  Number(bodyweightDraft) > 400
-                }
-                onClick={async () => {
-                  const updated = await execute({
-                    action: "setWorkoutBodyweight",
-                    workoutId: workout.id,
-                    weightKg: Number(bodyweightDraft),
-                  });
-                  if (updated) {
-                    setBodyweightPrompt(false);
-                    setBodyweightHandled(true);
-                  }
-                }}
-              >
-                Guardar peso
-              </button>
-            </div>
-          </section>
-        </div>
-      )}
       {confirm && (
         <div className="modal-backdrop">
           <section
@@ -696,14 +646,33 @@ export function Training({
                 : "La sesión quedará cancelada y la secuencia no avanzará. Sus datos se conservarán en el backup."}
             </p>
             {confirm === "finish" && (
-              <label className="field">
-                Notas de la sesión
-                <textarea
-                  maxLength={4000}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                />
-              </label>
+              <>
+                <label className="field">
+                  <span>
+                    <Scale size={17} /> Peso corporal de hoy (kg)
+                  </span>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min="20"
+                    max="400"
+                    step="0.1"
+                    value={bodyweightDraft}
+                    onChange={(event) => setBodyweightDraft(event.target.value)}
+                  />
+                  <small className="muted">
+                    Puedes dejarlo vacío si hoy no quieres registrarlo.
+                  </small>
+                </label>
+                <label className="field">
+                  Notas de la sesión
+                  <textarea
+                    maxLength={4000}
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                  />
+                </label>
+              </>
             )}
             <div className="button-row">
               <button
@@ -715,8 +684,22 @@ export function Training({
               </button>
               <button
                 className="primary"
-                disabled={busy}
+                disabled={
+                  busy ||
+                  (confirm === "finish" &&
+                    bodyweightDraft !== "" &&
+                    (Number(bodyweightDraft) < 20 ||
+                      Number(bodyweightDraft) > 400))
+                }
                 onClick={async () => {
+                  if (confirm === "finish" && bodyweightDraft !== "") {
+                    const weightUpdated = await execute({
+                      action: "setWorkoutBodyweight",
+                      workoutId: workout.id,
+                      weightKg: Number(bodyweightDraft),
+                    });
+                    if (!weightUpdated) return;
+                  }
                   const updated = await execute(
                     confirm === "finish"
                       ? { action: "finish", workoutId: workout.id, notes }

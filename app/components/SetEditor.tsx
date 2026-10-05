@@ -101,7 +101,8 @@ export function SetEditor({
               ""),
     ),
     rir: saved?.RIR ?? clone?.RIR ?? lastSaved?.RIR ?? null,
-    notes: saved?.notes ?? clone?.notes ?? lastSaved?.notes ?? "",
+    // A set note describes only that specific set and must never carry forward.
+    notes: saved?.notes ?? "",
   };
   const [draft, setDraft] = useState(base),
     [restored, setRestored] = useState(false);

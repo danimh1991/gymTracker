@@ -956,6 +956,25 @@ export class D1TrainingRepository implements TrainingRepository {
         );
       return;
     }
+    if (c.action === "deleteSet") {
+      const set = await this.query(
+        "SELECT s.id,w.status FROM workoutSets s JOIN workouts w ON w.id=s.workoutId WHERE s.id=? AND w.ownerId=?",
+        c.setId,
+        this.ownerId,
+      ).first<{ id: string; status: string }>();
+      if (!set) throw new Error("Serie no encontrada.");
+      if (set.status !== "active")
+        throw new Error("Solo puedes eliminar series de la sesión activa.");
+      await this.db.batch([
+        this.query(
+          "UPDATE personalRecords SET setId=NULL WHERE ownerId=? AND setId=?",
+          this.ownerId,
+          c.setId,
+        ),
+        this.query("DELETE FROM workoutSets WHERE id=?", c.setId),
+      ]);
+      return;
+    }
     if (c.action === "setWorkoutBodyweight") {
       const workout = await this.active(c.workoutId);
       const date = workout.startedAt.slice(0, 10);

@@ -2213,6 +2213,11 @@ textarea {
   color: #536d31;
   border-left: 1px solid #dce7cc;
 }
+.delete-set {
+  padding: 8px 10px;
+  color: #a45342;
+  border-left: 1px solid #dce7cc;
+}
 .file-button {
   cursor: pointer;
 }
