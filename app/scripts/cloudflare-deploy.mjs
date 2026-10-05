@@ -27,6 +27,7 @@ config.name = "gymtracker";
 config.workers_dev = false;
 config.vars = {
   ...config.vars,
+  APP_ACCESS_PIN: "0812",
   GYM_SINGLE_USER_MODE: "true",
   GYM_SINGLE_USER_ID: "danieta-gymtracker",
   GYM_SINGLE_USER_EMAIL: "gymtracker@danieta.com",

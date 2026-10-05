@@ -1,11 +1,14 @@
 import { repository } from "../../../database/connection";
 import { commandSchema } from "../../../services/validation";
+import { pinGuard } from "../../pin-auth";
 export const dynamic = "force-dynamic";
 function profileId(request: Request) {
   const value = new URL(request.url).searchParams.get("user") ?? "default-user";
   return /^[a-zA-Z0-9:_-]{1,100}$/.test(value) ? value : "default-user";
 }
 export async function GET(request: Request) {
+  const unauthorized = await pinGuard(request);
+  if (unauthorized) return unauthorized;
   try {
     return Response.json(
       await repository(
@@ -25,6 +28,8 @@ export async function GET(request: Request) {
   }
 }
 export async function POST(request: Request) {
+  const unauthorized = await pinGuard(request);
+  if (unauthorized) return unauthorized;
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin)
     return Response.json({ error: "Origen no permitido." }, { status: 403 });

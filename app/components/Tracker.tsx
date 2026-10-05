@@ -8,6 +8,7 @@ import {
   History as HistoryIcon,
   House,
   LayoutTemplate,
+  LockKeyhole,
   RefreshCw,
   Settings,
 } from "lucide-react";
@@ -39,7 +40,7 @@ const navigation = [
   { id: "exercises", name: "Ejercicios", icon: BookOpen },
   { id: "more", name: "Ajustes", icon: Settings },
 ] as const;
-export default function Tracker() {
+export default function Tracker({ onLock }: { onLock?: () => void }) {
   const [demo, updateDemo] = useState(false),
     [userId, setUserId] = useState(""),
     [page, setPage] = useState<Page>("home"),
@@ -162,6 +163,16 @@ export default function Tracker() {
             >
               <RefreshCw size={17} />
             </button>
+            {onLock && (
+              <button
+                className="icon-button"
+                aria-label="Bloquear aplicación"
+                title="Bloquear aplicación"
+                onClick={onLock}
+              >
+                <LockKeyhole size={17} />
+              </button>
+            )}
           </div>
         </header>
         <main>

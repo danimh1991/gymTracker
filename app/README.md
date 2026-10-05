@@ -11,7 +11,7 @@ Aplicación personal de gimnasio hacia calistenia. Primera entrega centrada en l
 - Finalización parcial explícita, resumen, comparación, histórico con filtros.
 - Primeras recomendaciones de progresión, métricas básicas, objetivos iniciales, peso corporal.
 - Exportación JSON y CSV. Demo aislada con reinicio.
-- Perfiles locales sin login, seleccionables desde Inicio, con sesiones e histórico independientes.
+- Acceso protegido por PIN y perfiles locales seleccionables desde Inicio, con sesiones e histórico independientes.
 - Ejercicios y plantillas compartidos entre perfiles, con alta, edición, borrado, importación y exportación JSON.
 - Registro de deportes externos con métricas específicas por disciplina y calendario unificado con las sesiones de gimnasio.
 - Edición de ejercicios y objetivos durante una sesión; añadir, sustituir o quitar ejercicios aún no realizados.
@@ -33,7 +33,7 @@ npm run dev
 
 Aplicar la migración solo la primera vez en una base local nueva. `npm run db:generate` genera futuras migraciones. La vista local usa SQLite persistente bajo `.wrangler/state` y es independiente de producción. No borrar esa carpeta si contiene registros que quieras conservar.
 
-Vista local: `http://127.0.0.1:5173/`. La aplicación no requiere login: el perfil activo se elige desde Inicio. No exponer el servidor de desarrollo en Internet.
+Vista local: `http://127.0.0.1:5173/`. La aplicación solicita por defecto el PIN `0812`; el perfil activo se elige después desde Inicio. El valor puede cambiarse con `APP_ACCESS_PIN` y la firma de la sesión con `PIN_SESSION_SECRET`.
 
 Publicación mediante Sites: `.openai/hosting.json` identifica el sitio y declara D1. El adaptador `database/connection.ts` es el único que importa el binding; servicios y contrato del repositorio no dependen de Cloudflare. Para otro despliegue Workers hay que configurar identidad confiable y D1; no basta copiar cabeceras desde clientes públicos.
 
@@ -55,7 +55,7 @@ npm run deploy:cloudflare
 
 El despliegue aplica las migraciones de `drizzle/` antes de publicar. La aplicación espera el binding `DB`; Sites administra su propia D1 a partir de `.openai/hosting.json`, por lo que ambas instalaciones quedan separadas.
 
-Protege `danieta.com/gymtracker*` con Cloudflare Access y permite tu correo. El Worker obtiene la identidad verificada mediante `ctx.access` y la adapta al mismo contrato que usa Sites. `workers.dev` queda desactivado en el despliegue de Cloudflare para evitar una entrada alternativa sin Access.
+El Worker protege tanto la interfaz como la API mediante el PIN y una cookie de sesión `HttpOnly` con `SameSite=Strict`. En producción conviene definir `PIN_SESSION_SECRET` con `wrangler secret put PIN_SESSION_SECRET`. `workers.dev` queda desactivado para evitar una entrada alternativa a la ruta publicada.
 
 ## Limitaciones explícitas
 

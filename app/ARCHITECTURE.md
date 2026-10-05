@@ -27,7 +27,7 @@ Los perfiles locales viven en `users` y no requieren autenticación. Las tablas 
 - Peso corporal opcional, copiado al iniciar; nunca inventar peso. Asistencia y lastre separados y no simultáneos.
 - Repeticiones y RIR inicialmente vacíos. Copiar anterior transfiere solamente cargas, nunca reps/RIR.
 - Finalización parcial permitida con confirmación y resumen fiel. Campos grandes, botones de RIR y descanso no bloqueante.
-- Selección explícita de perfil en Inicio, sin login. Preview local y producción tienen bases separadas.
+- Acceso previo mediante PIN y cookie de sesión `HttpOnly`; selección explícita de perfil en Inicio. Preview local y producción tienen bases separadas.
 - Pruebas de secuencia, progresiones, récords, conversión histórica e integración SQLite; compilación TypeScript y build.
 
 ## Entregas pendientes tras Fase 1
