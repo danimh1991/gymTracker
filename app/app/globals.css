@@ -6,9 +6,19 @@
   --paper: #f6f7f3;
   --lime: #c5f36c;
   --deep: #252c22;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
 }
 * {
   box-sizing: border-box;
+}
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-x: clip;
 }
 body {
   margin: 0;
@@ -74,9 +84,11 @@ h3 {
 }
 .pin-screen {
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
-  padding: 32px 20px;
+  padding: calc(32px + var(--safe-top)) calc(20px + var(--safe-right))
+    calc(32px + var(--safe-bottom)) calc(20px + var(--safe-left));
   background:
     radial-gradient(circle at 8% 5%, #e8f7c7 0, transparent 28%),
     radial-gradient(circle at 92% 95%, #e5e9df 0, transparent 30%),
@@ -200,14 +212,16 @@ a {
 }
 .app-shell {
   min-height: 100vh;
+  min-height: 100dvh;
 }
 .sidebar {
   position: fixed;
   inset: 0 auto 0 0;
-  width: 238px;
+  width: calc(238px + var(--safe-left));
   background: #fff;
   border-right: 1px solid var(--line);
-  padding: 34px 22px;
+  padding: calc(34px + var(--safe-top)) 22px
+    calc(34px + var(--safe-bottom)) calc(22px + var(--safe-left));
   display: flex;
   flex-direction: column;
   z-index: 20;
@@ -278,14 +292,14 @@ a {
   letter-spacing: -0.5px;
 }
 .main-shell {
-  margin-left: 238px;
+  margin-left: calc(238px + var(--safe-left));
 }
 .topbar {
-  height: 78px;
+  min-height: calc(78px + var(--safe-top));
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 44px;
+  padding: var(--safe-top) calc(44px + var(--safe-right)) 0 44px;
   background: #fff;
   border-bottom: 1px solid var(--line);
   font-size: 14px;
@@ -373,7 +387,7 @@ a {
 main {
   max-width: 1260px;
   margin: auto;
-  padding: 42px 44px 50px;
+  padding: 42px calc(44px + var(--safe-right)) 50px 44px;
 }
 .page-heading {
   display: flex;
@@ -715,7 +729,8 @@ main {
 .main-footer {
   max-width: 1260px;
   margin: auto;
-  padding: 0 44px 24px;
+  padding: 0 calc(44px + var(--safe-right))
+    calc(24px + var(--safe-bottom)) 44px;
   display: flex;
   justify-content: space-between;
   color: #939b88;
@@ -1007,8 +1022,8 @@ textarea {
 }
 .rest-toast {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
+  bottom: calc(24px + var(--safe-bottom));
+  right: calc(24px + var(--safe-right));
   background: var(--deep);
   color: var(--lime);
   z-index: 35;
@@ -1037,13 +1052,22 @@ textarea {
   place-items: center;
   background: #18200db3;
   z-index: 60;
-  padding: 20px;
+  padding: calc(20px + var(--safe-top)) calc(20px + var(--safe-right))
+    calc(20px + var(--safe-bottom)) calc(20px + var(--safe-left));
+  overflow-y: auto;
 }
 .modal {
   background: white;
   border-radius: 14px;
   padding: 28px;
   width: min(100%, 500px);
+  max-height: calc(
+    100vh - var(--safe-top) - var(--safe-bottom) - 40px
+  );
+  max-height: calc(
+    100dvh - var(--safe-top) - var(--safe-bottom) - 40px
+  );
+  overflow-y: auto;
 }
 .modal p {
   margin: 18px 0;
@@ -1478,17 +1502,19 @@ textarea {
 }
 @media (max-width: 1150px) {
   .sidebar {
-    width: 205px;
-    padding: 28px 16px;
+    width: calc(205px + var(--safe-left));
+    padding: calc(28px + var(--safe-top)) 16px
+      calc(28px + var(--safe-bottom)) calc(16px + var(--safe-left));
   }
   .main-shell {
-    margin-left: 205px;
+    margin-left: calc(205px + var(--safe-left));
   }
   main {
-    padding: 30px 26px;
+    padding: 30px calc(26px + var(--safe-right)) 30px 26px;
   }
   .topbar {
-    padding: 0 26px;
+    padding-right: calc(26px + var(--safe-right));
+    padding-left: 26px;
   }
   .previous {
     min-width: 128px;
@@ -1526,6 +1552,9 @@ textarea {
   .main-shell {
     margin-left: 0;
   }
+  main {
+    padding-left: calc(26px + var(--safe-left));
+  }
   .mobile-brand {
     display: flex;
     align-items: center;
@@ -1537,7 +1566,15 @@ textarea {
     display: none;
   }
   .topbar {
-    height: 64px;
+    height: auto;
+    min-height: calc(64px + var(--safe-top));
+    padding-top: var(--safe-top);
+    padding-left: calc(26px + var(--safe-left));
+    padding-right: calc(26px + var(--safe-right));
+  }
+  .topbar .icon-button {
+    min-width: 44px;
+    min-height: 44px;
   }
   .bottom-nav {
     position: fixed;
@@ -1549,7 +1586,8 @@ textarea {
     background: white;
     border-top: 1px solid var(--line);
     z-index: 40;
-    padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+    padding: 8px calc(4px + var(--safe-right))
+      calc(8px + var(--safe-bottom)) calc(4px + var(--safe-left));
   }
   .bottom-nav button {
     display: flex;
@@ -1558,10 +1596,16 @@ textarea {
     justify-content: center;
     gap: 4px;
     min-height: 48px;
+    min-width: 0;
+    overflow: hidden;
     color: #818878;
   }
   .bottom-nav button span {
+    max-width: 100%;
+    overflow: hidden;
     font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .bottom-nav .nav-active {
     color: #42621c;
@@ -1572,21 +1616,35 @@ textarea {
     border-radius: 4px;
   }
   .main-footer {
-    padding-bottom: 100px;
+    padding-left: calc(44px + var(--safe-left));
+    padding-bottom: calc(100px + var(--safe-bottom));
   }
   .rest-toast {
-    bottom: 90px;
+    right: calc(24px + var(--safe-right));
+    bottom: calc(90px + var(--safe-bottom));
   }
   .page-heading h1 {
     font-size: 37px;
   }
 }
 @media (max-width: 600px) {
+  .pin-card {
+    padding-right: clamp(18px, 7vw, 30px);
+    padding-left: clamp(18px, 7vw, 30px);
+  }
+  .pin-input-group {
+    gap: clamp(6px, 2vw, 9px);
+  }
+  .pin-slot {
+    width: clamp(44px, 14vw, 54px);
+  }
   main {
-    padding: 28px 17px 28px;
+    padding: 28px calc(17px + var(--safe-right)) 28px
+      calc(17px + var(--safe-left));
   }
   .topbar {
-    padding: 0 18px;
+    padding-right: calc(18px + var(--safe-right));
+    padding-left: calc(18px + var(--safe-left));
   }
   .topbar-right {
     gap: 8px;
@@ -1733,8 +1791,8 @@ textarea {
     flex-shrink: 0;
   }
   .main-footer {
-    padding-left: 17px;
-    padding-right: 17px;
+    padding-right: calc(17px + var(--safe-right));
+    padding-left: calc(17px + var(--safe-left));
     font-size: 9px;
   }
   .exercise-toggle {
@@ -1786,9 +1844,9 @@ textarea {
     flex-direction: column-reverse;
   }
   .rest-toast {
-    left: 17px;
-    right: 17px;
-    bottom: 88px;
+    left: calc(17px + var(--safe-left));
+    right: calc(17px + var(--safe-right));
+    bottom: calc(88px + var(--safe-bottom));
   }
   .rest-toast button {
     margin-left: auto;
@@ -1831,6 +1889,12 @@ textarea {
   }
   .completion-title h1 {
     font-size: 35px;
+  }
+}
+@media (max-width: 360px) {
+  .topbar .private-label,
+  .topbar .demo-label {
+    display: none;
   }
 }
 .settings-grid,
@@ -2356,8 +2420,16 @@ textarea {
     flex: 1;
     min-width: 56px;
   }
+  .active-exercise-editor label {
+    min-width: 0;
+  }
+  .active-exercise-editor input,
+  .active-exercise-editor select {
+    min-width: 0;
+    width: 100%;
+  }
   .active-exercise-editor {
-    grid-template-columns: repeat(4, minmax(62px, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
   .active-exercise-editor label:first-child {
     grid-column: 1/-1;
