@@ -9,7 +9,7 @@ import {
   Trash2,
   UserRound,
 } from "lucide-react";
-import type { Snapshot } from "../domain/types";
+import type { Snapshot, UserProfile } from "../domain/types";
 import type { Execute } from "./Training";
 import { exportData } from "../services/export";
 import { dateLabel } from "./Home";
@@ -31,7 +31,10 @@ export function More({
   const [weight, setWeight] = useState(""),
     [date, setDate] = useState(new Date().toLocaleDateString("sv-SE")),
     [saved, setSaved] = useState(false),
-    [userName, setUserName] = useState("");
+    [userName, setUserName] = useState(""),
+    [pendingDeleteUser, setPendingDeleteUser] = useState<UserProfile | null>(
+      null,
+    );
   return (
     <>
       <div className="page-heading">
@@ -72,20 +75,7 @@ export function More({
                     : `Eliminar a ${user.name}`
                 }
                 disabled={busy || data.users.length === 1}
-                onClick={async () => {
-                  if (
-                    !window.confirm(
-                      `¿Eliminar a ${user.name}? Se borrarán sus sesiones, progreso, pesos y actividades. Los ejercicios y plantillas compartidos se conservarán.`,
-                    )
-                  )
-                    return;
-                  const updated = await execute({
-                    action: "deleteUser",
-                    userId: user.id,
-                  });
-                  if (updated && user.id === data.activeUserId)
-                    onUserSelect(updated.activeUserId);
-                }}
+                onClick={() => setPendingDeleteUser(user)}
               >
                 <Trash2 size={16} />
               </button>
@@ -172,6 +162,50 @@ export function More({
           </button>
         </div>
       </section>
+      {pendingDeleteUser && (
+        <div className="modal-backdrop">
+          <section
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-user-title"
+          >
+            <h2 id="delete-user-title">¿Eliminar usuario?</h2>
+            <p>
+              Se borrarán las sesiones, el progreso, los pesos y las actividades
+              de <strong>{pendingDeleteUser.name}</strong>. Los ejercicios y
+              plantillas compartidos se conservarán.
+            </p>
+            <div className="button-row">
+              <button
+                type="button"
+                className="secondary"
+                disabled={busy}
+                onClick={() => setPendingDeleteUser(null)}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="danger-button"
+                disabled={busy}
+                onClick={async () => {
+                  const user = pendingDeleteUser;
+                  const updated = await execute({
+                    action: "deleteUser",
+                    userId: user.id,
+                  });
+                  if (updated && user.id === data.activeUserId)
+                    onUserSelect(updated.activeUserId);
+                  if (updated) setPendingDeleteUser(null);
+                }}
+              >
+                {busy ? "Eliminando…" : "Eliminar usuario"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
       <div className="settings-grid">
         <section className="settings-card">
           <h2>
