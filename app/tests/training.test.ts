@@ -24,6 +24,8 @@ import {
   readTrainingRequest,
   RequestTooLargeError,
 } from "../services/request";
+import { reconcileTemplateExercises } from "../services/template-import";
+import { initialExercises } from "../database/seed";
 function sets(reps: number[], rir = 1): WorkoutSet[] {
   return reps.map((r, i) => ({
     id: String(i),
@@ -70,6 +72,75 @@ test("el límite se aplica aunque falte content-length", async () => {
       ),
     RequestTooLargeError,
   );
+});
+test("las plantillas reconcilian ejercicios importados por nombre", () => {
+  const imported = {
+    ...initialExercises[0],
+    id: "plank",
+    name: "Plancha",
+    shortName: "Plancha",
+  };
+  const existing = {
+    ...imported,
+    id: "custom-plancha",
+  };
+  const template = {
+    dayId: "A",
+    name: "Core",
+    description: "",
+    exercises: [
+      {
+        exerciseId: "plank",
+        sets: 3,
+        repMin: 30,
+        repMax: 60,
+        rir: "2",
+        optional: 0,
+        notes: "",
+        priority: "Principal",
+      },
+    ],
+  };
+  const result = reconcileTemplateExercises([template], [imported], [existing]);
+  assert.deepEqual(result.missing, []);
+  assert.equal(result.templates[0].exercises[0].exerciseId, "custom-plancha");
+});
+
+test("las plantillas informan todos los ejercicios que faltan", () => {
+  const template = {
+    exercises: [
+      { exerciseId: "plank" },
+      { exerciseId: "muscle-up" },
+      { exerciseId: "plank" },
+    ],
+  } as never;
+  const result = reconcileTemplateExercises([template], [], []);
+  assert.deepEqual(result.missing, ["muscle-up", "plank"]);
+});
+test("las plantillas antiguas resuelven IDs equivalentes al nombre", () => {
+  const existing = {
+    ...initialExercises[0],
+    id: "custom-plank",
+    name: "Plank",
+    shortName: "Plank",
+  };
+  const template = {
+    exercises: [
+      {
+        exerciseId: "plank",
+        sets: 3,
+        repMin: 30,
+        repMax: 60,
+        rir: "2",
+        optional: 0,
+        notes: "",
+        priority: "Principal",
+      },
+    ],
+  };
+  const result = reconcileTemplateExercises([template], [], [existing]);
+  assert.deepEqual(result.missing, []);
+  assert.equal(result.templates[0].exercises[0].exerciseId, "custom-plank");
 });
 test("secuencia A → B → C → A y primera sesión A", () => {
   assert.equal(getNextRoutineDay(), "A");

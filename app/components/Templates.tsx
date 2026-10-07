@@ -6,6 +6,7 @@ import type { DayKey, PlanExercise, Snapshot, Template } from "../domain/types";
 import type { Execute } from "./Training";
 import { PlanEditor } from "./PlanEditor";
 import { closeOnBackdrop, useHistoryView } from "./navigation";
+import { reconcileTemplateExercises } from "../services/template-import";
 
 function planFor(data: Snapshot, template: Template): PlanExercise[] {
   return data.templateExercises
@@ -63,8 +64,7 @@ export function Templates({
 }) {
   const editorView = useHistoryView<string | null>("template-editor", null);
   const deleteView = useHistoryView<string>("template-delete", "");
-  const editingId =
-    editorView.value === "new" ? "" : editorView.value;
+  const editingId = editorView.value === "new" ? "" : editorView.value;
   const editorOpen =
     editingId === "" ||
     (editingId !== null &&
@@ -101,7 +101,10 @@ export function Templates({
     }
     if (editingId !== null)
       requestAnimationFrame(() =>
-        editorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+        editorRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        }),
       );
   }, [editorView.value, editingId, data]);
 
@@ -122,8 +125,14 @@ export function Templates({
     editorView.open(template.id);
   };
   const download = () => {
+    const referencedIds = new Set(
+      data.templateExercises.map((exercise) => exercise.exerciseId),
+    );
     const value = {
-      version: 1,
+      version: 2,
+      exerciseCatalog: data.exercises.filter((exercise) =>
+        referencedIds.has(exercise.id),
+      ),
       templates: data.templates.map((template) => ({
         dayId: template.dayId,
         name: template.name,
@@ -147,7 +156,33 @@ export function Templates({
       const templates = Array.isArray(value) ? value : value.templates;
       if (!Array.isArray(templates))
         throw new Error("El JSON no contiene una lista válida de plantillas.");
-      await execute({ action: "importTemplates", templates });
+      const exerciseCatalog = Array.isArray(value?.exerciseCatalog)
+        ? value.exerciseCatalog
+        : [];
+      let library = data.exercises;
+      if (exerciseCatalog.length) {
+        const result = await execute({
+          action: "importExercises",
+          exercises: exerciseCatalog,
+        });
+        if (!result) return;
+        library = result.exercises;
+      }
+      const prepared = reconcileTemplateExercises(
+        templates,
+        exerciseCatalog,
+        library,
+      );
+      if (prepared.missing.length) {
+        const ids = prepared.missing.map((id) => `“${id}”`).join(", ");
+        throw new Error(
+          `Faltan ejercicios en la biblioteca: ${ids}. Importa primero el archivo de ejercicios o vuelve a exportar las plantillas con la versión actual.`,
+        );
+      }
+      await execute({
+        action: "importTemplates",
+        templates: prepared.templates,
+      });
     } catch (error) {
       alert(
         error instanceof Error ? error.message : "No se pudo leer el archivo.",
@@ -184,7 +219,10 @@ export function Templates({
           <input
             type="file"
             accept="application/json,.json"
-            onChange={(event) => void importFile(event.target.files?.[0])}
+            onChange={(event) => {
+              void importFile(event.target.files?.[0]);
+              event.target.value = "";
+            }}
           />
         </label>
       </div>
@@ -328,7 +366,9 @@ export function Templates({
         >
           <section className="modal" role="dialog" aria-modal="true">
             <h2>¿Eliminar “{pendingDelete.name}”?</h2>
-            <p>La plantilla desaparecerá, pero tus sesiones guardadas no cambian.</p>
+            <p>
+              La plantilla desaparecerá, pero tus sesiones guardadas no cambian.
+            </p>
             <div className="button-row">
               <button
                 type="button"
