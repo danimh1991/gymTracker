@@ -1,4 +1,8 @@
 import { repository } from "../../../database/connection";
+import {
+  readTrainingRequest,
+  RequestTooLargeError,
+} from "../../../services/request";
 import { commandSchema } from "../../../services/validation";
 import { pinGuard } from "../../pin-auth";
 export const dynamic = "force-dynamic";
@@ -34,12 +38,7 @@ export async function POST(request: Request) {
   if (origin && origin !== new URL(request.url).origin)
     return Response.json({ error: "Origen no permitido." }, { status: 403 });
   try {
-    if (Number(request.headers.get("content-length") ?? 0) > 20000)
-      return Response.json(
-        { error: "Solicitud demasiado grande." },
-        { status: 413 },
-      );
-    const parsed = commandSchema.safeParse(await request.json());
+    const parsed = commandSchema.safeParse(await readTrainingRequest(request));
     if (!parsed.success)
       return Response.json(
         { error: parsed.error.issues.map((i) => i.message).join(" ") },
@@ -54,6 +53,8 @@ export async function POST(request: Request) {
       headers: { "Cache-Control": "no-store" },
     });
   } catch (error) {
+    if (error instanceof RequestTooLargeError)
+      return Response.json({ error: error.message }, { status: 413 });
     console.error(error);
     const msg = error instanceof Error ? error.message : "";
     return Response.json(

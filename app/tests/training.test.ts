@@ -19,6 +19,11 @@ import {
 import { commandSchema } from "../services/validation";
 import { csv, workoutBackup } from "../services/export";
 import type { WorkoutSet } from "../domain/types";
+import {
+  MAX_TRAINING_REQUEST_BYTES,
+  readTrainingRequest,
+  RequestTooLargeError,
+} from "../services/request";
 function sets(reps: number[], rir = 1): WorkoutSet[] {
   return reps.map((r, i) => ({
     id: String(i),
@@ -40,6 +45,32 @@ function sets(reps: number[], rir = 1): WorkoutSet[] {
     timestamp: new Date().toISOString(),
   }));
 }
+test("las importaciones admiten cuerpos grandes con un límite de 10 MiB", async () => {
+  assert.equal(MAX_TRAINING_REQUEST_BYTES, 10 * 1024 * 1024);
+  const payload = { action: "importExercises", data: "x".repeat(27 * 1024) };
+  assert.deepEqual(
+    await readTrainingRequest(
+      new Request("https://example.test/api/training", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    ),
+    payload,
+  );
+});
+test("el límite se aplica aunque falte content-length", async () => {
+  await assert.rejects(
+    () =>
+      readTrainingRequest(
+        new Request("https://example.test/api/training", {
+          method: "POST",
+          body: JSON.stringify({ data: "x".repeat(100) }),
+        }),
+        50,
+      ),
+    RequestTooLargeError,
+  );
+});
 test("secuencia A → B → C → A y primera sesión A", () => {
   assert.equal(getNextRoutineDay(), "A");
   assert.equal(getNextRoutineDay("A"), "B");
