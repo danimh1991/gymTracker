@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Activity, LockKeyhole, ShieldCheck } from "lucide-react";
 import { appPath } from "../lib/base-path";
 import Tracker from "./Tracker";
+import { NavigationProvider } from "./navigation";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "./ui/input-otp";
 
 const pinEndpoint = appPath("/api/auth/pin");
@@ -62,7 +63,12 @@ export default function PinGate() {
     setStatus("locked");
   }
 
-  if (status === "unlocked") return <Tracker onLock={lock} />;
+  if (status === "unlocked")
+    return (
+      <NavigationProvider>
+        <Tracker onLock={lock} />
+      </NavigationProvider>
+    );
 
   return (
     <main className="pin-screen">

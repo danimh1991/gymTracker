@@ -22,6 +22,7 @@ import type {
 import type { Command } from "../services/validation";
 import { previousSets, loadLabel, stats } from "../services/training";
 import { SetEditor } from "./SetEditor";
+import { closeOnBackdrop, useHistoryView } from "./navigation";
 export type Execute = (command: Command) => Promise<Snapshot | null>;
 
 function WorkoutExerciseEditor({
@@ -190,23 +191,47 @@ export function Training({
     first = exercises.find(
       (e) => sets.filter((s) => s.workoutExerciseId === e.id).length < e.sets,
     );
-  const [open, setOpen] = useState(first?.id ?? exercises[0].id),
-    [editing, setEditing] = useState<number | null>(null),
-    [clone, setClone] = useState<WorkoutSet | null>(null),
-    [editSession, setEditSession] = useState(false),
-    [editingExercise, setEditingExercise] = useState(""),
+  const detailView = useHistoryView<string>(
+      "training-exercise-detail",
+      first?.id ?? exercises[0]?.id ?? "",
+    ),
+    setView = useHistoryView<number | null>("training-set-editor", null),
+    sessionEditorView = useHistoryView<boolean>(
+      "training-session-editor",
+      false,
+    ),
+    exerciseEditorView = useHistoryView<string>(
+      "training-exercise-editor",
+      "",
+    ),
+    restView = useHistoryView<number | null>("training-rest-timer", null),
+    deleteSetView = useHistoryView<string>("training-set-delete", ""),
+    confirmView = useHistoryView<"" | "finish" | "cancel">(
+      "training-confirm",
+      "",
+    ),
+    open = detailView.value,
+    editing = setView.value,
+    editSession = sessionEditorView.value,
+    editingExercise = exerciseEditorView.value;
+  const [clone, setClone] = useState<WorkoutSet | null>(null),
     [newExercise, setNewExercise] = useState(data.exercises[0]?.id ?? ""),
     [copy, setCopy] = useState(false),
     [copyVersion, setCopyVersion] = useState(0),
     [seconds, setSeconds] = useState(150),
     [autoRest, setAutoRest] = useState(true),
-    [end, setEnd] = useState<number | null>(null),
     [now, setNow] = useState(() => Date.now()),
-    [confirm, setConfirm] = useState<"finish" | "cancel" | null>(null),
     [bodyweightDraft, setBodyweightDraft] = useState(
       String(workout.bodyweight ?? data.bodyWeights[0]?.weightKg ?? ""),
     ),
     [notes, setNotes] = useState("");
+  const end = restView.value;
+  const pendingSetDelete =
+    sets.find((set) => set.id === deleteSetView.value) ?? null;
+  const confirm =
+    confirmView.value === "finish" || confirmView.value === "cancel"
+      ? confirmView.value
+      : null;
   useEffect(() => {
     const tick = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(tick);
@@ -238,7 +263,11 @@ export function Training({
         <div className="button-row">
           <button
             className="secondary"
-            onClick={() => setEditSession(!editSession)}
+            onClick={() =>
+              editSession
+                ? sessionEditorView.close()
+                : sessionEditorView.open(true)
+            }
             disabled={busy}
           >
             <Edit3 size={17} />
@@ -350,8 +379,11 @@ export function Training({
                 <button
                   className="exercise-toggle"
                   onClick={() => {
-                    setOpen(open === e.id ? "" : e.id);
-                    setEditing(null);
+                    if (open === e.id) {
+                      if (detailView.active) detailView.close();
+                      else detailView.open("");
+                    } else detailView.open(e.id);
+                    if (editing !== null) setView.replace(null);
                   }}
                 >
                   <span className="exercise-index">
@@ -381,9 +413,10 @@ export function Training({
                   aria-label={`Editar ${e.name}`}
                   title="Editar este ejercicio"
                   onClick={() => {
-                    setOpen(e.id);
-                    setEditing(null);
-                    setEditingExercise(editingExercise === e.id ? "" : e.id);
+                    if (open !== e.id) detailView.open(e.id);
+                    if (editing !== null) setView.replace(null);
+                    if (editingExercise === e.id) exerciseEditorView.close();
+                    else exerciseEditorView.open(e.id);
                   }}
                 >
                   <Edit3 size={17} />
@@ -401,8 +434,9 @@ export function Training({
                       busy={busy}
                       execute={execute}
                       onClose={() => {
-                        setEditingExercise("");
-                        if (editSession) setEditSession(false);
+                        if (editingExercise === e.id)
+                          exerciseEditorView.close();
+                        else if (editSession) sessionEditorView.close();
                       }}
                     />
                   )}
@@ -473,7 +507,7 @@ export function Training({
                         >
                           <button
                             disabled={busy}
-                            onClick={() => setEditing(s.setNumber)}
+                            onClick={() => setView.open(s.setNumber)}
                           >
                             <Check size={15} />
                             <span>Serie {s.setNumber}</span>
@@ -492,7 +526,7 @@ export function Training({
                               title="Clonar en la siguiente serie"
                               onClick={() => {
                                 setClone(s);
-                                setEditing(
+                                setView.open(
                                   Array.from(
                                     { length: e.sets },
                                     (_, index) => index + 1,
@@ -516,22 +550,7 @@ export function Training({
                             aria-label={`Eliminar serie ${s.setNumber}`}
                             title="Eliminar serie"
                             disabled={busy}
-                            onClick={async () => {
-                              if (
-                                !window.confirm(
-                                  `¿Eliminar la serie ${s.setNumber}?`,
-                                )
-                              )
-                                return;
-                              const updated = await execute({
-                                action: "deleteSet",
-                                setId: s.id,
-                              });
-                              if (updated) {
-                                setEditing(null);
-                                setClone(null);
-                              }
-                            }}
+                            onClick={() => deleteSetView.open(s.id)}
                           >
                             <Trash2 size={15} />
                           </button>
@@ -560,9 +579,10 @@ export function Training({
                           set,
                         });
                         if (!updated) return false;
-                        setEditing(null);
+                        if (setView.active) setView.close();
                         setClone(null);
-                        if (autoRest) setEnd(Date.now() + seconds * 1000);
+                        if (autoRest)
+                          restView.open(Date.now() + seconds * 1000);
                         const current = updated.sets.filter(
                           (s) => s.workoutExerciseId === e.id,
                         );
@@ -574,7 +594,7 @@ export function Training({
                                 (s) => s.workoutExerciseId === x.id,
                               ).length < x.sets,
                           );
-                          if (following) setOpen(following.id);
+                          if (following) detailView.open(following.id);
                         }
                         return true;
                       }}
@@ -595,14 +615,14 @@ export function Training({
         <button
           className="secondary danger"
           disabled={busy}
-          onClick={() => setConfirm("cancel")}
+          onClick={() => confirmView.open("cancel")}
         >
           Abandonar sesión
         </button>
         <button
           className="primary"
           disabled={busy || !sets.length}
-          onClick={() => setConfirm("finish")}
+          onClick={() => confirmView.open("finish")}
         >
           <Check size={19} /> Terminar entrenamiento
         </button>
@@ -622,13 +642,48 @@ export function Training({
                 : "Continúa cuando estés preparado."}
             </span>
           </div>
-          <button aria-label="Cerrar temporizador" onClick={() => setEnd(null)}>
+          <button aria-label="Cerrar temporizador" onClick={restView.close}>
             <X size={20} />
           </button>
         </aside>
       )}
+      {pendingSetDelete && (
+        <div
+          className="modal-backdrop"
+          onClick={(event) => closeOnBackdrop(event, deleteSetView.close)}
+        >
+          <section className="modal" role="dialog" aria-modal="true">
+            <h2>¿Eliminar la serie {pendingSetDelete.setNumber}?</h2>
+            <p>La serie guardada se eliminará de este entrenamiento.</p>
+            <div className="button-row">
+              <button className="secondary" onClick={deleteSetView.close}>
+                Cancelar
+              </button>
+              <button
+                className="danger-button"
+                disabled={busy}
+                onClick={async () => {
+                  const updated = await execute({
+                    action: "deleteSet",
+                    setId: pendingSetDelete.id,
+                  });
+                  if (updated) {
+                    deleteSetView.close();
+                    setClone(null);
+                  }
+                }}
+              >
+                <Trash2 size={16} /> Eliminar serie
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
       {confirm && (
-        <div className="modal-backdrop">
+        <div
+          className="modal-backdrop"
+          onClick={(event) => closeOnBackdrop(event, confirmView.close)}
+        >
           <section
             role="dialog"
             aria-modal="true"
@@ -678,7 +733,7 @@ export function Training({
               <button
                 className="secondary"
                 disabled={busy}
-                onClick={() => setConfirm(null)}
+                onClick={confirmView.close}
               >
                 Seguir entrenando
               </button>

@@ -1,10 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BookOpen, Download, Pencil, Plus, Upload, X } from "lucide-react";
 import type { Exercise, Snapshot } from "../domain/types";
 import type { Execute } from "./Training";
 import { downloadJson } from "../services/export";
+import { useHistoryView } from "./navigation";
 
 type LoadMode = "bodyweight" | "added" | "assisted" | "external";
 type ExerciseType = "calisthenics" | "gym" | "mobility" | "skill";
@@ -34,22 +35,20 @@ export function Exercises({
   execute: Execute;
 }) {
   const [search, setSearch] = useState("");
-  const [showAdd, setShowAdd] = useState(false);
   const [draft, setDraft] = useState(emptyExercise);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const formView = useHistoryView<string | null>("exercise-editor", null);
+  const detailView = useHistoryView<string>("exercise-detail", "");
+  const showAdd = formView.value !== null;
+  const editingId =
+    formView.value && formView.value !== "new" ? formView.value : null;
   const formRef = useRef<HTMLFormElement>(null);
+  const initializedForm = useRef<string | null>(null);
 
   const showForm = () =>
     requestAnimationFrame(() =>
       formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
     );
-  const beginNew = () => {
-    setDraft(emptyExercise);
-    setEditingId(null);
-    setShowAdd(true);
-    showForm();
-  };
-  const beginEdit = (exercise: Exercise) => {
+  const draftFor = (exercise: Exercise) => {
     const loadMode: LoadMode = exercise.bodyweightExercise
       ? exercise.supportsAssistance
         ? "assisted"
@@ -57,7 +56,7 @@ export function Exercises({
           ? "added"
           : "bodyweight"
       : "external";
-    setDraft({
+    return {
       name: exercise.name,
       type: exercise.type as ExerciseType,
       movementPattern: exercise.movementPattern,
@@ -70,11 +69,33 @@ export function Exercises({
       defaultRepMax: exercise.defaultRepMax,
       defaultRIR: exercise.defaultRIR,
       notes: exercise.notes,
-    });
-    setEditingId(exercise.id);
-    setShowAdd(true);
-    showForm();
+    };
   };
+  const beginNew = () => {
+    initializedForm.current = "new";
+    setDraft(emptyExercise);
+    formView.open("new");
+  };
+  const beginEdit = (exercise: Exercise) => {
+    initializedForm.current = exercise.id;
+    setDraft(draftFor(exercise));
+    formView.open(exercise.id);
+  };
+
+  useEffect(() => {
+    if (
+      formView.value !== null &&
+      initializedForm.current !== formView.value
+    ) {
+      initializedForm.current = formView.value;
+      if (formView.value === "new") setDraft(emptyExercise);
+      else if (editingId) {
+        const exercise = data.exercises.find((row) => row.id === editingId);
+        if (exercise) setDraft(draftFor(exercise));
+      }
+    }
+    if (formView.value !== null) showForm();
+  }, [formView.value, editingId, data.exercises]);
 
   const importJson = async (file: File | undefined) => {
     if (!file) return;
@@ -166,9 +187,9 @@ export function Exercises({
                 : { action: "addExercise", exercise },
             );
             if (result) {
+              initializedForm.current = null;
               setDraft(emptyExercise);
-              setEditingId(null);
-              setShowAdd(false);
+              formView.close();
             }
           }}
         >
@@ -188,9 +209,8 @@ export function Exercises({
               className="icon-button"
               aria-label="Cerrar formulario"
               onClick={() => {
-                setShowAdd(false);
-                setEditingId(null);
                 setDraft(emptyExercise);
+                formView.close();
               }}
             >
               <X size={18} />
@@ -395,8 +415,14 @@ export function Exercises({
             )
             .map((exercise) => (
               <div className="library-item" key={exercise.id}>
-                <details>
-                  <summary>
+                <details open={detailView.value === exercise.id}>
+                  <summary
+                    onClick={(event) => {
+                      event.preventDefault();
+                      if (detailView.value === exercise.id) detailView.close();
+                      else detailView.open(exercise.id);
+                    }}
+                  >
                     {exercise.name}
                     <span>
                       {exercise.metricType === "time" ? "Tiempo" : "Reps"} ·{" "}

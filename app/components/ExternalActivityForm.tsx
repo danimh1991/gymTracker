@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Bike, Plus, X } from "lucide-react";
 import { SPORTS, sportDefinition, type SportKey } from "../domain/sports";
 import type { Execute } from "./Training";
+import { useHistoryView } from "./navigation";
 
 const groups = [...new Set(SPORTS.map((sport) => sport.group))];
 
@@ -15,7 +16,8 @@ export function ExternalActivityForm({
   execute: Execute;
 }) {
   const today = new Date().toLocaleDateString("sv-SE");
-  const [open, setOpen] = useState(false);
+  const formView = useHistoryView<boolean>("home-external-activity", false);
+  const open = formView.value;
   const [saved, setSaved] = useState(false);
   const [sport, setSport] = useState<SportKey>("padel");
   const [date, setDate] = useState(today);
@@ -58,7 +60,8 @@ export function ExternalActivityForm({
           className={open ? "icon-button" : "primary"}
           aria-label={open ? "Cerrar formulario" : undefined}
           onClick={() => {
-            setOpen(!open);
+            if (open) formView.close();
+            else formView.open(true);
             setSaved(false);
           }}
         >
@@ -98,7 +101,7 @@ export function ExternalActivityForm({
               setElevation("");
               setNotes("");
               setSaved(true);
-              setOpen(false);
+              formView.close();
             }
           }}
         >

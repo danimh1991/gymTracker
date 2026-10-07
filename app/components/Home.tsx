@@ -10,6 +10,7 @@ import {
 import { PlanEditor } from "./PlanEditor";
 import { ExternalActivityForm } from "./ExternalActivityForm";
 import type { Execute } from "./Training";
+import { useHistoryView } from "./navigation";
 export const dateLabel = (date: string) =>
   new Date(date).toLocaleDateString("es-ES", {
     day: "numeric",
@@ -71,14 +72,14 @@ export function Home({
       ? Math.floor((Date.now() - Date.parse(last.finishedAt!)) / 86400000)
       : null;
   const [templateId, setTemplateId] = useState(""),
-    [plan, setPlan] = useState<PlanExercise[]>([]),
-    [editing, setEditing] = useState(false);
+    [plan, setPlan] = useState<PlanExercise[]>([]);
+  const editingView = useHistoryView<boolean>("home-plan-editor", false);
+  const editing = editingView.value;
   useEffect(() => {
     const template = templates.find((t) => t.id === templateId) ?? templates[0];
     if (!template) {
       setTemplateId("");
       setPlan([]);
-      setEditing(false);
       return;
     }
     setTemplateId(template.id);
@@ -108,7 +109,6 @@ export function Home({
           }),
         ),
     );
-    setEditing(false);
   }, [
     selected,
     templateId,
@@ -188,7 +188,10 @@ export function Home({
                 <span>Plantilla</span>
                 <select
                   value={templateId}
-                  onChange={(e) => setTemplateId(e.target.value)}
+                  onChange={(e) => {
+                    if (editing) editingView.close();
+                    setTemplateId(e.target.value);
+                  }}
                 >
                   {templates.map((t) => (
                     <option key={t.id} value={t.id}>
@@ -261,14 +264,22 @@ export function Home({
         </div>
         <DayPicker
           selected={selected}
-          onSelect={onSelect}
+          onSelect={(day) => {
+            if (editing) editingView.close();
+            onSelect(day);
+          }}
           days={data.days}
           disabled={!!active}
         />
       </div>
       {!active && (
         <div className="template-toolbar">
-          <button className="secondary" onClick={() => setEditing(!editing)}>
+          <button
+            className="secondary"
+            onClick={() =>
+              editing ? editingView.close() : editingView.open(true)
+            }
+          >
             {editing ? "Cerrar edición" : "Editar antes de empezar"}
           </button>
         </div>

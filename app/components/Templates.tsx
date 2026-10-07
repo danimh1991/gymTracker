@@ -5,6 +5,7 @@ import { Download, FilePlus2, Pencil, Trash2, Upload } from "lucide-react";
 import type { DayKey, PlanExercise, Snapshot, Template } from "../domain/types";
 import type { Execute } from "./Training";
 import { PlanEditor } from "./PlanEditor";
+import { closeOnBackdrop, useHistoryView } from "./navigation";
 
 function planFor(data: Snapshot, template: Template): PlanExercise[] {
   return data.templateExercises
@@ -60,34 +61,65 @@ export function Templates({
   busy: boolean;
   execute: Execute;
 }) {
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const editorView = useHistoryView<string | null>("template-editor", null);
+  const deleteView = useHistoryView<string>("template-delete", "");
+  const editingId =
+    editorView.value === "new" ? "" : editorView.value;
+  const editorOpen =
+    editingId === "" ||
+    (editingId !== null &&
+      data.templates.some((template) => template.id === editingId));
   const [dayId, setDayId] = useState<DayKey>(data.days[0]?.id ?? "A");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [plan, setPlan] = useState<PlanExercise[]>([]);
-  const [pendingDelete, setPendingDelete] = useState<Template | null>(null);
+  const pendingDelete =
+    data.templates.find((template) => template.id === deleteView.value) ?? null;
   const editorRef = useRef<HTMLElement>(null);
+  const initializedEditor = useRef<string | null>(null);
 
   useEffect(() => {
+    if (
+      editorView.value !== null &&
+      initializedEditor.current !== editorView.value
+    ) {
+      initializedEditor.current = editorView.value;
+      if (editorView.value === "new") {
+        setDayId(data.days[0]?.id ?? "A");
+        setName("");
+        setDescription("");
+        setPlan(initialPlan(data));
+      } else if (editingId) {
+        const template = data.templates.find((row) => row.id === editingId);
+        if (template) {
+          setDayId(template.dayId);
+          setName(template.name);
+          setDescription(template.description);
+          setPlan(planFor(data, template));
+        }
+      }
+    }
     if (editingId !== null)
       requestAnimationFrame(() =>
         editorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
       );
-  }, [editingId]);
+  }, [editorView.value, editingId, data]);
 
   const beginNew = () => {
-    setEditingId("");
+    initializedEditor.current = "new";
     setDayId(data.days[0]?.id ?? "A");
     setName("");
     setDescription("");
     setPlan(initialPlan(data));
+    editorView.open("new");
   };
   const beginEdit = (template: Template) => {
-    setEditingId(template.id);
+    initializedEditor.current = template.id;
     setDayId(template.dayId);
     setName(template.name);
     setDescription(template.description);
     setPlan(planFor(data, template));
+    editorView.open(template.id);
   };
   const download = () => {
     const value = {
@@ -157,14 +189,14 @@ export function Templates({
         </label>
       </div>
 
-      {editingId !== null && (
+      {editorOpen && (
         <section ref={editorRef} className="settings-card template-editor-card">
           <div className="section-title">
             <h2>{editingId ? "Editar plantilla" : "Nueva plantilla"}</h2>
             <button
               type="button"
               className="secondary compact"
-              onClick={() => setEditingId(null)}
+              onClick={editorView.close}
             >
               Cerrar
             </button>
@@ -225,7 +257,10 @@ export function Templates({
                   description,
                   exercises: plan,
                 });
-                if (result) setEditingId(null);
+                if (result) {
+                  initializedEditor.current = null;
+                  editorView.close();
+                }
               }}
             >
               Guardar plantilla
@@ -270,7 +305,7 @@ export function Templates({
                   type="button"
                   className="danger-button"
                   disabled={busy}
-                  onClick={() => setPendingDelete(template)}
+                  onClick={() => deleteView.open(template.id)}
                 >
                   <Trash2 size={16} /> Eliminar
                 </button>
@@ -287,7 +322,10 @@ export function Templates({
         </div>
       )}
       {pendingDelete && (
-        <div className="modal-backdrop">
+        <div
+          className="modal-backdrop"
+          onClick={(event) => closeOnBackdrop(event, deleteView.close)}
+        >
           <section className="modal" role="dialog" aria-modal="true">
             <h2>¿Eliminar “{pendingDelete.name}”?</h2>
             <p>La plantilla desaparecerá, pero tus sesiones guardadas no cambian.</p>
@@ -295,7 +333,7 @@ export function Templates({
               <button
                 type="button"
                 className="secondary"
-                onClick={() => setPendingDelete(null)}
+                onClick={deleteView.close}
               >
                 Cancelar
               </button>
@@ -309,8 +347,7 @@ export function Templates({
                     templateId: pendingDelete.id,
                   });
                   if (result) {
-                    if (editingId === pendingDelete.id) setEditingId(null);
-                    setPendingDelete(null);
+                    deleteView.close();
                   }
                 }}
               >

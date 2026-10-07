@@ -9,10 +9,11 @@ import {
   Trash2,
   UserRound,
 } from "lucide-react";
-import type { Snapshot, UserProfile } from "../domain/types";
+import type { Snapshot } from "../domain/types";
 import type { Execute } from "./Training";
 import { exportData } from "../services/export";
 import { dateLabel } from "./Home";
+import { closeOnBackdrop, useHistoryView } from "./navigation";
 export function More({
   data,
   demo,
@@ -28,13 +29,13 @@ export function More({
   busy: boolean;
   execute: Execute;
 }) {
+  const deleteView = useHistoryView<string>("settings-user-delete", "");
   const [weight, setWeight] = useState(""),
     [date, setDate] = useState(new Date().toLocaleDateString("sv-SE")),
     [saved, setSaved] = useState(false),
-    [userName, setUserName] = useState(""),
-    [pendingDeleteUser, setPendingDeleteUser] = useState<UserProfile | null>(
-      null,
-    );
+    [userName, setUserName] = useState("");
+  const pendingDeleteUser =
+    data.users.find((user) => user.id === deleteView.value) ?? null;
   return (
     <>
       <div className="page-heading">
@@ -75,7 +76,7 @@ export function More({
                     : `Eliminar a ${user.name}`
                 }
                 disabled={busy || data.users.length === 1}
-                onClick={() => setPendingDeleteUser(user)}
+                onClick={() => deleteView.open(user.id)}
               >
                 <Trash2 size={16} />
               </button>
@@ -163,7 +164,10 @@ export function More({
         </div>
       </section>
       {pendingDeleteUser && (
-        <div className="modal-backdrop">
+        <div
+          className="modal-backdrop"
+          onClick={(event) => closeOnBackdrop(event, deleteView.close)}
+        >
           <section
             className="modal"
             role="dialog"
@@ -181,7 +185,7 @@ export function More({
                 type="button"
                 className="secondary"
                 disabled={busy}
-                onClick={() => setPendingDeleteUser(null)}
+                onClick={deleteView.close}
               >
                 Cancelar
               </button>
@@ -197,7 +201,7 @@ export function More({
                   });
                   if (updated && user.id === data.activeUserId)
                     onUserSelect(updated.activeUserId);
-                  if (updated) setPendingDeleteUser(null);
+                  if (updated) deleteView.close();
                 }}
               >
                 {busy ? "Eliminando…" : "Eliminar usuario"}

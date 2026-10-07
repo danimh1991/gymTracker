@@ -32,6 +32,7 @@ import {
 import { dateLabel } from "./Home";
 import type { Execute } from "./Training";
 import { downloadJson, workoutBackup } from "../services/export";
+import { closeOnBackdrop, useHistoryView } from "./navigation";
 export function WorkoutDetail({
   data,
   workout,
@@ -204,10 +205,22 @@ export function History({
     activityDates[0] ?? new Date().toLocaleDateString("sv-SE");
   const [selectedDate, setSelectedDate] = useState(initialDate);
   const [month, setMonth] = useState(initialDate.slice(0, 7));
-  const [open, setOpen] = useState("");
-  const [editingWorkout, setEditingWorkout] = useState("");
+  const detailView = useHistoryView<string>("history-workout-detail", "");
+  const editView = useHistoryView<string>("history-workout-edit", "");
+  const deleteView = useHistoryView<string>("history-workout-delete", "");
+  const activityDeleteView = useHistoryView<string>(
+    "history-activity-delete",
+    "",
+  );
+  const open = detailView.value;
+  const editingWorkout = editView.value;
   const [workoutDate, setWorkoutDate] = useState("");
-  const [pendingDelete, setPendingDelete] = useState<Workout | null>(null);
+  const pendingDelete =
+    completed.find((workout) => workout.id === deleteView.value) ?? null;
+  const pendingActivityDelete =
+    data.externalActivities.find(
+      (activity) => activity.id === activityDeleteView.value,
+    ) ?? null;
   const [year, monthNumber] = month.split("-").map(Number);
   const firstDay = new Date(year, monthNumber - 1, 1);
   const calendarOffset = (firstDay.getDay() + 6) % 7;
@@ -323,7 +336,7 @@ export function History({
                 aria-label={`${dayNumber}${hasWorkout ? ", entrenamiento" : ""}${hasSport ? ", deporte" : ""}`}
                 onClick={() => {
                   setSelectedDate(key);
-                  setOpen("");
+                  if (open) detailView.open("");
                 }}
               >
                 <span>{dayNumber}</span>
@@ -375,13 +388,7 @@ export function History({
                   className="delete-activity"
                   aria-label={`Eliminar ${sport.name}`}
                   disabled={busy}
-                  onClick={() => {
-                    if (confirm(`¿Eliminar la actividad “${sport.name}”?`))
-                      void execute({
-                        action: "deleteExternalActivity",
-                        activityId: activity.id,
-                      });
-                  }}
+                  onClick={() => activityDeleteView.open(activity.id)}
                 >
                   <Trash2 size={16} />
                 </button>
@@ -452,7 +459,7 @@ export function History({
                       if (result) {
                         setSelectedDate(workoutDate);
                         setMonth(workoutDate.slice(0, 7));
-                        setEditingWorkout("");
+                        editView.close();
                       }
                     }}
                   >
@@ -462,7 +469,7 @@ export function History({
                     type="button"
                     className="icon-button"
                     aria-label="Cancelar edición de fecha"
-                    onClick={() => setEditingWorkout("")}
+                    onClick={editView.close}
                   >
                     <X size={17} />
                   </button>
@@ -473,8 +480,8 @@ export function History({
                     type="button"
                     className="secondary compact"
                     onClick={() => {
-                      setEditingWorkout(w.id);
                       setWorkoutDate(localDateKey(w.startedAt));
+                      editView.open(w.id);
                     }}
                   >
                     <Pencil size={15} /> Cambiar fecha
@@ -483,7 +490,7 @@ export function History({
                     type="button"
                     className="danger-button compact"
                     disabled={busy}
-                    onClick={() => setPendingDelete(w)}
+                    onClick={() => deleteView.open(w.id)}
                   >
                     <Trash2 size={15} /> Eliminar sesión
                   </button>
@@ -493,7 +500,9 @@ export function History({
             <button
               type="button"
               className="history-header"
-              onClick={() => setOpen(open === w.id ? "" : w.id)}
+              onClick={() =>
+                open === w.id ? detailView.close() : detailView.open(w.id)
+              }
             >
               <span className="day-badge">
                 <Dumbbell size={17} />
@@ -525,8 +534,51 @@ export function History({
           </p>
         </div>
       )}
+      {pendingActivityDelete && (
+        <div
+          className="modal-backdrop"
+          onClick={(event) =>
+            closeOnBackdrop(event, activityDeleteView.close)
+          }
+        >
+          <section className="modal" role="dialog" aria-modal="true">
+            <h2>¿Eliminar esta actividad?</h2>
+            <p>
+              Se eliminará el registro de{" "}
+              {sportDefinition(pendingActivityDelete.sport).name.toLowerCase()}.
+              Esta acción no se puede deshacer.
+            </p>
+            <div className="button-row">
+              <button
+                type="button"
+                className="secondary"
+                onClick={activityDeleteView.close}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="danger-button"
+                disabled={busy}
+                onClick={async () => {
+                  const result = await execute({
+                    action: "deleteExternalActivity",
+                    activityId: pendingActivityDelete.id,
+                  });
+                  if (result) activityDeleteView.close();
+                }}
+              >
+                <Trash2 size={16} /> Eliminar actividad
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
       {pendingDelete && (
-        <div className="modal-backdrop">
+        <div
+          className="modal-backdrop"
+          onClick={(event) => closeOnBackdrop(event, deleteView.close)}
+        >
           <section className="modal" role="dialog" aria-modal="true">
             <h2>¿Eliminar esta sesión?</h2>
             <p>
@@ -537,7 +589,7 @@ export function History({
               <button
                 type="button"
                 className="secondary"
-                onClick={() => setPendingDelete(null)}
+                onClick={deleteView.close}
               >
                 Cancelar
               </button>
@@ -551,8 +603,7 @@ export function History({
                     workoutId: pendingDelete.id,
                   });
                   if (result) {
-                    setPendingDelete(null);
-                    setOpen("");
+                    deleteView.close();
                   }
                 }}
               >

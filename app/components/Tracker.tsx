@@ -23,14 +23,11 @@ import { Progress } from "./Progress";
 import { History, WorkoutDetail } from "./History";
 import { Templates } from "./Templates";
 import { Exercises } from "./Exercises";
-type Page =
-  | "home"
-  | "train"
-  | "history"
-  | "progress"
-  | "templates"
-  | "exercises"
-  | "more";
+import {
+  useAppNavigation,
+  useHistoryView,
+  type AppPage,
+} from "./navigation";
 const navigation = [
   { id: "home", name: "Inicio", icon: House },
   { id: "train", name: "Entrenar", icon: Dumbbell },
@@ -41,11 +38,13 @@ const navigation = [
   { id: "more", name: "Ajustes", icon: Settings },
 ] as const;
 export default function Tracker({ onLock }: { onLock?: () => void }) {
+  const navigationState = useAppNavigation();
+  const page = navigationState.snapshot.page;
+  const summaryView = useHistoryView<string>("workout-summary", "");
+  const summary = summaryView.value;
   const [demo, updateDemo] = useState(false),
     [userId, setUserId] = useState(""),
-    [page, setPage] = useState<Page>("home"),
-    [selected, setSelected] = useState<DayKey>("A"),
-    [summary, setSummary] = useState("");
+    [selected, setSelected] = useState<DayKey>("A");
   useEffect(() => {
     try {
       updateDemo(sessionStorage.getItem("gym-demo") === "1");
@@ -54,8 +53,7 @@ export default function Tracker({ onLock }: { onLock?: () => void }) {
   }, []);
   const selectUser = (value: string) => {
     setUserId(value);
-    setPage("home");
-    setSummary("");
+    navigationState.finishFlow("home");
     try {
       localStorage.setItem("gym-user", value);
     } catch {}
@@ -68,7 +66,8 @@ export default function Tracker({ onLock }: { onLock?: () => void }) {
   };
   const { data, error, busy, execute, refresh } = useTraining(demo, userId),
     active = data?.workouts.find((w) => w.status === "active"),
-    last = data ? completedWorkouts(data)[0] : undefined;
+    last = data ? completedWorkouts(data)[0] : undefined,
+    summaryWorkout = data?.workouts.find((w) => w.id === summary);
   useEffect(() => {
     if (!data?.days.length) return;
     setSelected(
@@ -79,10 +78,8 @@ export default function Tracker({ onLock }: { onLock?: () => void }) {
         ),
     );
   }, [last?.id, active?.id, demo, data?.settings.trainingDays]);
-  const navigate = (p: Page) => {
-    setPage(p);
-    setSummary("");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const navigate = (p: AppPage) => {
+    navigationState.navigate(p);
   };
   async function start(plan: PlanExercise[], templateName: string) {
     if (active) {
@@ -182,7 +179,7 @@ export default function Tracker({ onLock }: { onLock?: () => void }) {
               <button
                 onClick={() => {
                   setDemo(false);
-                  setPage("home");
+                  navigationState.finishFlow("home");
                 }}
               >
                 Volver a mis datos
@@ -207,17 +204,17 @@ export default function Tracker({ onLock }: { onLock?: () => void }) {
                 <button onClick={() => void refresh()}>Reintentar</button>
               )}
             </div>
-          ) : summary ? (
+          ) : summaryWorkout ? (
             <>
               <WorkoutDetail
                 data={data}
-                workout={data.workouts.find((w) => w.id === summary)!}
+                workout={summaryWorkout}
                 celebrate
               />
-              <button className="primary" onClick={() => navigate("home")}>
+              <button className="primary" onClick={summaryView.close}>
                 Ver próximo entrenamiento · Día{" "}
                 {getNextRoutineDay(
-                  data.workouts.find((w) => w.id === summary)?.dayId,
+                  summaryWorkout.dayId,
                   data.days.map((day) => day.id),
                 )}
               </button>
@@ -243,9 +240,10 @@ export default function Tracker({ onLock }: { onLock?: () => void }) {
                   execute={execute}
                   busy={busy}
                   onFinished={(id) => {
-                    setSummary(id);
-                    setPage("home");
-                    window.scrollTo(0, 0);
+                    navigationState.finishFlow(
+                      "home",
+                      id ? { "workout-summary": id } : {},
+                    );
                   }}
                 />
               )}
@@ -268,7 +266,7 @@ export default function Tracker({ onLock }: { onLock?: () => void }) {
                   execute={execute}
                   setDemo={(value) => {
                     setDemo(value);
-                    setSummary("");
+                    navigationState.finishFlow("home");
                   }}
                 />
               )}
