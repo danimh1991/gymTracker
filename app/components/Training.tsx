@@ -1,11 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import {
+  ArrowUp,
   Check,
   ChevronDown,
   Copy,
   CopyPlus,
   Edit3,
+  Minus,
   Plus,
   Save,
   Scale,
@@ -20,7 +22,12 @@ import type {
   WorkoutSet,
 } from "../domain/types";
 import type { Command } from "../services/validation";
-import { previousSets, loadLabel, stats } from "../services/training";
+import {
+  previousLoadDecision,
+  previousSets,
+  loadLabel,
+  stats,
+} from "../services/training";
 import { SetEditor } from "./SetEditor";
 import { closeOnBackdrop, useHistoryView } from "./navigation";
 export type Execute = (command: Command) => Promise<Snapshot | null>;
@@ -200,12 +207,10 @@ export function Training({
       "training-session-editor",
       false,
     ),
-    exerciseEditorView = useHistoryView<string>(
-      "training-exercise-editor",
-      "",
-    ),
+    exerciseEditorView = useHistoryView<string>("training-exercise-editor", ""),
     restView = useHistoryView<number | null>("training-rest-timer", null),
     deleteSetView = useHistoryView<string>("training-set-delete", ""),
+    loadDecisionView = useHistoryView<string>("training-load-decision", ""),
     confirmView = useHistoryView<"" | "finish" | "cancel">(
       "training-confirm",
       "",
@@ -224,10 +229,18 @@ export function Training({
     [bodyweightDraft, setBodyweightDraft] = useState(
       String(workout.bodyweight ?? data.bodyWeights[0]?.weightKg ?? ""),
     ),
+    [freeDayName, setFreeDayName] = useState(
+      workout.isFreeDay && workout.templateName !== "Día libre"
+        ? workout.templateName
+        : "",
+    ),
     [notes, setNotes] = useState("");
   const end = restView.value;
   const pendingSetDelete =
     sets.find((set) => set.id === deleteSetView.value) ?? null;
+  const pendingLoadDecision =
+    exercises.find((exercise) => exercise.id === loadDecisionView.value) ??
+    null;
   const confirm =
     confirmView.value === "finish" || confirmView.value === "cancel"
       ? confirmView.value
@@ -249,7 +262,7 @@ export function Training({
         <div>
           <p className="eyebrow">ENTRENAMIENTO EN CURSO</p>
           <h1>
-            Día {workout.dayId}
+            {workout.isFreeDay ? "Día libre" : `Día ${workout.dayId}`}
             <span className="muted"> / A tu ritmo</span>
           </h1>
           <p className="muted">
@@ -363,6 +376,11 @@ export function Training({
               .filter((s) => s.workoutExerciseId === e.id)
               .sort((a, b) => a.setNumber - b.setNumber),
             prev = previousSets(data, e.exerciseId, workout.startedAt),
+            previousDecision = previousLoadDecision(
+              data,
+              e.exerciseId,
+              workout.startedAt,
+            ),
             next =
               editing && open === e.id
                 ? editing
@@ -458,6 +476,23 @@ export function Training({
                         : "Aún sin registros"}
                     </strong>
                   </div>
+                  {previousDecision && (
+                    <div className={`load-reminder ${previousDecision}`}>
+                      {previousDecision === "increase" ? (
+                        <ArrowUp size={18} />
+                      ) : (
+                        <Minus size={18} />
+                      )}
+                      <div>
+                        <span>INDICACIÓN DE LA ÚLTIMA VEZ</span>
+                        <strong>
+                          {previousDecision === "increase"
+                            ? "Hoy toca subir peso"
+                            : "Hoy toca mantener el peso"}
+                        </strong>
+                      </div>
+                    </div>
+                  )}
                   {["handstand", "pushup-hard"].includes(e.exerciseId) && (
                     <label className="field">
                       Variante
@@ -587,23 +622,35 @@ export function Training({
                           (s) => s.workoutExerciseId === e.id,
                         );
                         if (current.length === e.sets) {
-                          const following = exercises.find(
-                            (x) =>
-                              x.position > e.position &&
-                              updated.sets.filter(
-                                (s) => s.workoutExerciseId === x.id,
-                              ).length < x.sets,
-                          );
-                          if (following) detailView.open(following.id);
+                          loadDecisionView.open(e.id);
                         }
                         return true;
                       }}
                     />
                   ) : (
-                    <p className="success-line">
-                      <Check size={18} /> Ejercicio completado. Puedes editar
-                      una serie pulsándola.
-                    </p>
+                    <div className="completed-exercise">
+                      <p className="success-line">
+                        <Check size={18} /> Ejercicio completado. Puedes editar
+                        una serie pulsándola.
+                      </p>
+                      {e.nextLoadAction ? (
+                        <p className="load-decision-saved">
+                          Próxima vez:{" "}
+                          {e.nextLoadAction === "increase"
+                            ? "subir peso"
+                            : "mantener peso"}
+                          .
+                        </p>
+                      ) : (
+                        <button
+                          type="button"
+                          className="secondary compact"
+                          onClick={() => loadDecisionView.open(e.id)}
+                        >
+                          Elegir peso para la próxima vez
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
@@ -679,6 +726,54 @@ export function Training({
           </section>
         </div>
       )}
+      {pendingLoadDecision && (
+        <div className="modal-backdrop">
+          <section
+            className="modal load-decision-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="load-decision-title"
+          >
+            <p className="eyebrow">EJERCICIO COMPLETADO</p>
+            <h2 id="load-decision-title">{pendingLoadDecision.name}</h2>
+            <p>¿Qué quieres hacer con el peso la próxima vez?</p>
+            <div className="load-decision-actions">
+              {(
+                [
+                  ["increase", "Subir peso", ArrowUp],
+                  ["maintain", "Mantener peso", Minus],
+                ] as const
+              ).map(([decision, label, Icon]) => (
+                <button
+                  type="button"
+                  className={decision === "increase" ? "primary" : "secondary"}
+                  disabled={busy}
+                  key={decision}
+                  onClick={async () => {
+                    const updated = await execute({
+                      action: "setExerciseLoadDecision",
+                      workoutExerciseId: pendingLoadDecision.id,
+                      decision,
+                    });
+                    if (!updated) return;
+                    loadDecisionView.replace("");
+                    const following = exercises.find(
+                      (exercise) =>
+                        exercise.position > pendingLoadDecision.position &&
+                        updated.sets.filter(
+                          (set) => set.workoutExerciseId === exercise.id,
+                        ).length < exercise.sets,
+                    );
+                    if (following) detailView.open(following.id);
+                  }}
+                >
+                  <Icon size={18} /> {label}
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
       {confirm && (
         <div
           className="modal-backdrop"
@@ -702,6 +797,20 @@ export function Training({
             </p>
             {confirm === "finish" && (
               <>
+                {workout.isFreeDay === 1 && (
+                  <label className="field">
+                    Nombre del día libre
+                    <input
+                      maxLength={100}
+                      placeholder="Ej. Día full abdominales"
+                      value={freeDayName}
+                      onChange={(event) => setFreeDayName(event.target.value)}
+                    />
+                    <small className="muted">
+                      Si lo dejas vacío se guardará como “Día libre”.
+                    </small>
+                  </label>
+                )}
                 <label className="field">
                   <span>
                     <Scale size={17} /> Peso corporal de hoy (kg)
@@ -757,7 +866,14 @@ export function Training({
                   }
                   const updated = await execute(
                     confirm === "finish"
-                      ? { action: "finish", workoutId: workout.id, notes }
+                      ? {
+                          action: "finish",
+                          workoutId: workout.id,
+                          notes,
+                          name: workout.isFreeDay
+                            ? freeDayName.trim() || "Día libre"
+                            : undefined,
+                        }
                       : { action: "cancel", workoutId: workout.id },
                   );
                   if (updated)

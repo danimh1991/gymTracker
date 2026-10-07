@@ -534,6 +534,7 @@ export class D1TrainingRepository implements TrainingRepository {
           position,
           workoutId: id,
           variant: "",
+          nextLoadAction: null,
         });
       }
       await this.db.batch([
@@ -547,6 +548,7 @@ export class D1TrainingRepository implements TrainingRepository {
           bodyweight: null,
           notes: "",
           templateName: c.templateName,
+          ...(c.isFreeDay ? { isFreeDay: 1 } : {}),
         }),
         ...rows.map((row) =>
           this.insert("workoutExercises", {
@@ -769,6 +771,7 @@ export class D1TrainingRepository implements TrainingRepository {
             bodyweight: imported.bodyweight,
             notes: imported.notes,
             templateName: imported.templateName,
+            ...(imported.isFreeDay ? { isFreeDay: 1 } : {}),
           }),
         );
         for (const [position, row] of rows.entries()) {
@@ -956,6 +959,27 @@ export class D1TrainingRepository implements TrainingRepository {
         );
       return;
     }
+    if (c.action === "setExerciseLoadDecision") {
+      const e = await this.query(
+        "SELECT e.* FROM workoutExercises e JOIN workouts w ON w.id=e.workoutId WHERE e.id=? AND w.ownerId=?",
+        c.workoutExerciseId,
+        this.ownerId,
+      ).first<WorkoutExercise>();
+      if (!e) throw new Error("Ejercicio no encontrado.");
+      await this.active(e.workoutId);
+      const count = await this.query(
+        "SELECT COUNT(*) count FROM workoutSets WHERE workoutExerciseId=? AND completed=1",
+        e.id,
+      ).first<{ count: number }>();
+      if ((count?.count ?? 0) < e.sets)
+        throw new Error("Completa todas las series antes de decidir la carga.");
+      await this.query(
+        "UPDATE workoutExercises SET nextLoadAction=? WHERE id=?",
+        c.decision,
+        e.id,
+      ).run();
+      return;
+    }
     if (c.action === "deleteSet") {
       const set = await this.query(
         "SELECT s.id,w.status FROM workoutSets s JOIN workouts w ON w.id=s.workoutId WHERE s.id=? AND w.ownerId=?",
@@ -1015,13 +1039,33 @@ export class D1TrainingRepository implements TrainingRepository {
       return;
     }
     if (c.action === "finish") {
+      if (c.name) {
+        const workout = await this.query(
+          "SELECT isFreeDay FROM workouts WHERE id=? AND ownerId=?",
+          c.workoutId,
+          this.ownerId,
+        ).first<{ isFreeDay: number }>();
+        if (workout?.isFreeDay !== 1)
+          throw new Error("Solo los días libres pueden cambiar de nombre.");
+      }
       // Conditional update makes retries harmless and never completes an empty session.
-      await this.query(
-        "UPDATE workouts SET status='completed',finishedAt=?,notes=? WHERE id=? AND ownerId=? AND status='active' AND EXISTS(SELECT 1 FROM workoutSets WHERE workoutId=workouts.id AND completed=1)",
-        new Date().toISOString(),
-        c.notes,
-        c.workoutId,
-        this.ownerId,
+      await (
+        c.name
+          ? this.query(
+              "UPDATE workouts SET status='completed',finishedAt=?,notes=?,templateName=? WHERE id=? AND ownerId=? AND status='active' AND EXISTS(SELECT 1 FROM workoutSets WHERE workoutId=workouts.id AND completed=1)",
+              new Date().toISOString(),
+              c.notes,
+              c.name,
+              c.workoutId,
+              this.ownerId,
+            )
+          : this.query(
+              "UPDATE workouts SET status='completed',finishedAt=?,notes=? WHERE id=? AND ownerId=? AND status='active' AND EXISTS(SELECT 1 FROM workoutSets WHERE workoutId=workouts.id AND completed=1)",
+              new Date().toISOString(),
+              c.notes,
+              c.workoutId,
+              this.ownerId,
+            )
       ).run();
       const w = await this.query(
         "SELECT status FROM workouts WHERE id=? AND ownerId=?",

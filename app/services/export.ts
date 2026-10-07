@@ -13,6 +13,7 @@ export function workoutBackup(data: Snapshot) {
         bodyweight: workout.bodyweight,
         notes: workout.notes,
         templateName: workout.templateName,
+        isFreeDay: workout.isFreeDay,
         exercises: data.workoutExercises
           .filter((exercise) => exercise.workoutId === workout.id)
           .sort((a, b) => a.position - b.position)

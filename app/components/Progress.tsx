@@ -180,7 +180,8 @@ export function Progress({ data }: { data: Snapshot }) {
                   <div>
                     <strong>{dateLabel(w.startedAt)}</strong>
                     <span>
-                      Día {w.dayId} · {s.length} series · RIR medio{" "}
+                      {w.isFreeDay ? w.templateName : `Día ${w.dayId}`} ·{" "}
+                      {s.length} series · RIR medio{" "}
                       {rated.length
                         ? (
                             rated.reduce((n, s) => n + s.RIR!, 0) / rated.length

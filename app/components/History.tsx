@@ -63,7 +63,8 @@ export function WorkoutDetail({
           <p className="eyebrow">ENTRENAMIENTO COMPLETADO</p>
           <h1>Un paso más.</h1>
           <p>
-            Día {workout.dayId} · {dateLabel(workout.startedAt)}
+            {workout.isFreeDay ? workout.templateName : `Día ${workout.dayId}`}{" "}
+            · {dateLabel(workout.startedAt)}
           </p>
         </div>
       )}
@@ -129,7 +130,7 @@ export function WorkoutDetail({
                 e.metricType === "reps" && (
                   <span className={delta > 0 ? "improvement" : "small muted"}>
                     {delta > 0 ? "+" : ""}
-                    {delta} reps vs. último Día {workout.dayId}
+                    {delta} reps vs. última sesión
                   </span>
                 )}
             </div>
@@ -506,11 +507,15 @@ export function History({
             >
               <span className="day-badge">
                 <Dumbbell size={17} />
-                {w.dayId}
+                {w.isFreeDay ? "LIBRE" : w.dayId}
               </span>
               <div>
                 <h2>{dateLabel(w.startedAt)}</h2>
-                <p>{data.days.find((d) => d.id === w.dayId)?.title}</p>
+                <p>
+                  {w.isFreeDay
+                    ? w.templateName
+                    : data.days.find((d) => d.id === w.dayId)?.title}
+                </p>
               </div>
               <span className="history-meta">
                 {s.sets} series · {s.reps} reps{" "}
@@ -537,9 +542,7 @@ export function History({
       {pendingActivityDelete && (
         <div
           className="modal-backdrop"
-          onClick={(event) =>
-            closeOnBackdrop(event, activityDeleteView.close)
-          }
+          onClick={(event) => closeOnBackdrop(event, activityDeleteView.close)}
         >
           <section className="modal" role="dialog" aria-modal="true">
             <h2>¿Eliminar esta actividad?</h2>

@@ -4,12 +4,15 @@ import { readFileSync, readdirSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import { D1TrainingRepository } from "../repositories/d1TrainingRepository";
 import {
+  completedRoutineWorkouts,
+  completedWorkouts,
   getNextRoutineDay,
   evaluatePullupProgression,
   evaluateDoubleProgression,
   evaluateDipProgression,
   detectPersonalRecord,
   historicalExercise,
+  previousLoadDecision,
   previousSets,
   stats,
 } from "../services/training";
@@ -464,6 +467,15 @@ test("plantillas, ejercicios propios y edición de sesión quedan persistidos", 
     2,
   );
   assert.equal(d.workoutExercises.find((e) => e.id === we.id)?.repMax, 12);
+  assert.equal(
+    d.templateExercises.find(
+      (exercise) =>
+        exercise.templateId ===
+        d.templates.find((template) => template.name === "A · Hombro")?.id,
+    )?.repMax,
+    10,
+    "editar la sesión no debe modificar la plantilla",
+  );
   await repo.execute({
     action: "removeWorkoutExercise",
     workoutExerciseId: d.workoutExercises.find(
@@ -475,6 +487,154 @@ test("plantillas, ejercicios propios y edición de sesión quedan persistidos", 
       .length,
     1,
   );
+  sql.close();
+});
+test("la decisión de carga se guarda al completar el ejercicio y reaparece después", async () => {
+  const { db, sql } = database(),
+    repo = new D1TrainingRepository(db, "load:real"),
+    plan = {
+      exerciseId: "pushup",
+      sets: 1,
+      repMin: 8,
+      repMax: 12,
+      rir: "2",
+      optional: 0,
+      notes: "",
+      priority: "Principal",
+    };
+  await repo.execute({
+    action: "start",
+    dayId: "A",
+    templateName: "Carga",
+    exercises: [plan],
+  });
+  let data = await repo.snapshot();
+  const workout = data.workouts[0],
+    exercise = data.workoutExercises[0];
+  await assert.rejects(
+    () =>
+      repo.execute({
+        action: "setExerciseLoadDecision",
+        workoutExerciseId: exercise.id,
+        decision: "increase",
+      }),
+    /Completa todas las series/,
+  );
+  await repo.execute({
+    action: "saveSet",
+    set: {
+      workoutExerciseId: exercise.id,
+      setNumber: 1,
+      reps: 12,
+      weight: null,
+      addedWeight: null,
+      assistanceWeight: null,
+      RIR: 2,
+      durationSeconds: null,
+      notes: "",
+    },
+  });
+  await repo.execute({
+    action: "setExerciseLoadDecision",
+    workoutExerciseId: exercise.id,
+    decision: "increase",
+  });
+  await repo.execute({ action: "finish", workoutId: workout.id, notes: "" });
+  sql
+    .prepare("UPDATE workouts SET startedAt=? WHERE id=?")
+    .run("2026-01-01T10:00:00.000Z", workout.id);
+  data = await repo.snapshot();
+  assert.equal(data.workoutExercises[0].nextLoadAction, "increase");
+  assert.equal(
+    previousLoadDecision(data, "pushup", "2026-02-01T10:00:00.000Z"),
+    "increase",
+  );
+  sql.close();
+});
+test("un día libre conserva el progreso sin avanzar ni guardar la rutina", async () => {
+  const { db, sql } = database(),
+    repo = new D1TrainingRepository(db, "free:real"),
+    plan = (exerciseId: string) => ({
+      exerciseId,
+      sets: 1,
+      repMin: 8,
+      repMax: 12,
+      rir: "2",
+      optional: 0,
+      notes: "",
+      priority: "Libre",
+    });
+  await repo.execute({
+    action: "start",
+    dayId: "A",
+    templateName: "Día A",
+    exercises: [plan("pushup")],
+  });
+  let data = await repo.snapshot();
+  let workout = data.workouts.find((item) => item.status === "active")!;
+  let exercise = data.workoutExercises.find(
+    (item) => item.workoutId === workout.id,
+  )!;
+  await repo.execute({
+    action: "saveSet",
+    set: {
+      workoutExerciseId: exercise.id,
+      setNumber: 1,
+      reps: 12,
+      weight: null,
+      assistanceWeight: null,
+      addedWeight: null,
+      RIR: 2,
+      durationSeconds: null,
+      notes: "",
+    },
+  });
+  await repo.execute({ action: "finish", workoutId: workout.id, notes: "" });
+  const templateCount = (await repo.snapshot()).templates.length;
+  await repo.execute({
+    action: "start",
+    dayId: "B",
+    templateName: "Día libre",
+    exercises: [plan("pullup")],
+    isFreeDay: true,
+  });
+  data = await repo.snapshot();
+  workout = data.workouts.find((item) => item.status === "active")!;
+  exercise = data.workoutExercises.find(
+    (item) => item.workoutId === workout.id,
+  )!;
+  assert.equal(workout.isFreeDay, 1);
+  await repo.execute({
+    action: "saveSet",
+    set: {
+      workoutExerciseId: exercise.id,
+      setNumber: 1,
+      reps: 8,
+      weight: null,
+      assistanceWeight: null,
+      addedWeight: null,
+      RIR: 2,
+      durationSeconds: null,
+      notes: "",
+    },
+  });
+  await repo.execute({
+    action: "finish",
+    workoutId: workout.id,
+    notes: "",
+    name: "Día full abdominales",
+  });
+  data = await repo.snapshot();
+  assert.equal(completedWorkouts(data).length, 2);
+  assert.equal(completedRoutineWorkouts(data).length, 1);
+  assert.equal(completedRoutineWorkouts(data)[0].dayId, "A");
+  assert.equal(getNextRoutineDay(completedRoutineWorkouts(data)[0].dayId), "B");
+  assert.equal(
+    data.workouts.find((item) => item.id === workout.id)?.templateName,
+    "Día full abdominales",
+  );
+  assert.equal(previousSets(data, "pullup", "9999-01-01").length, 1);
+  assert.equal(data.templates.length, templateCount);
   sql.close();
 });
 test("los días configurables y el borrado de plantillas son persistentes", async () => {

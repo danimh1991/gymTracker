@@ -1,0 +1,1 @@
+ALTER TABLE `workouts` ADD `isFreeDay` integer DEFAULT 0 NOT NULL;

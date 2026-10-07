@@ -146,6 +146,7 @@ export const workouts = sqliteTable(
     bodyweight: real("bodyweight"),
     notes: text("notes").notNull(),
     templateName: text("templateName").notNull().default(""),
+    isFreeDay: integer("isFreeDay").notNull().default(0),
   },
   (t) => [
     uniqueIndex("one_active_per_owner")
@@ -179,6 +180,7 @@ export const workoutExercises = sqliteTable(
     supportsAssistance: integer("supportsAssistance").notNull(),
     supportsAddedWeight: integer("supportsAddedWeight").notNull(),
     variant: text("variant").notNull(),
+    nextLoadAction: text("nextLoadAction"),
   },
   (t) => [index("we_workout").on(t.workoutId)],
 );

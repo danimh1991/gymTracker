@@ -1,10 +1,36 @@
 import type {
   DayKey,
+  LoadDecision,
   Snapshot,
   Workout,
   WorkoutSet,
   RoutineExercise,
 } from "../domain/types";
+
+export function previousLoadDecision(
+  data: Snapshot,
+  exerciseId: string,
+  before = new Date().toISOString(),
+): LoadDecision | null {
+  const previousWorkout = completedWorkouts(data).find(
+    (workout) =>
+      workout.startedAt < before &&
+      data.workoutExercises.some(
+        (exercise) =>
+          exercise.workoutId === workout.id &&
+          exercise.exerciseId === exerciseId &&
+          exercise.nextLoadAction,
+      ),
+  );
+  return (
+    data.workoutExercises.find(
+      (exercise) =>
+        exercise.workoutId === previousWorkout?.id &&
+        exercise.exerciseId === exerciseId &&
+        exercise.nextLoadAction,
+    )?.nextLoadAction ?? null
+  );
+}
 export function getNextRoutineDay(
   last?: DayKey | null,
   days: DayKey[] = ["A", "B", "C"],
@@ -18,6 +44,9 @@ export function completedWorkouts(data: Snapshot): Workout[] {
     .sort((a, b) =>
       (b.finishedAt ?? b.startedAt).localeCompare(a.finishedAt ?? a.startedAt),
     );
+}
+export function completedRoutineWorkouts(data: Snapshot): Workout[] {
+  return completedWorkouts(data).filter((workout) => !workout.isFreeDay);
 }
 export function previousSets(
   data: Snapshot,

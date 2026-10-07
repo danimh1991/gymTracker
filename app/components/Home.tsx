@@ -1,9 +1,10 @@
 "use client";
 import { Fragment, useEffect, useState } from "react";
-import { Clock3, Dumbbell, Play, Target, UserRound } from "lucide-react";
+import { Clock3, Dumbbell, Plus, Play, Target, UserRound } from "lucide-react";
 import type { DayKey, PlanExercise, Snapshot } from "../domain/types";
 import {
   completedWorkouts,
+  completedRoutineWorkouts,
   previousSets,
   getNextRoutineDay,
 } from "../services/training";
@@ -56,12 +57,17 @@ export function Home({
   onUserSelect: (userId: string) => void;
   selected: DayKey;
   onSelect: (d: DayKey) => void;
-  onStart: (plan: PlanExercise[], templateName: string) => void;
+  onStart: (
+    plan: PlanExercise[],
+    templateName: string,
+    isFreeDay?: boolean,
+  ) => void;
   execute: Execute;
   busy: boolean;
 }) {
   const done = completedWorkouts(data),
     last = done[0],
+    lastRoutine = completedRoutineWorkouts(data)[0],
     active = data.workouts.find((w) => w.status === "active"),
     day = data.days.find((d) => d.id === selected)!,
     templates = data.templates.filter((t) => t.dayId === selected),
@@ -72,9 +78,32 @@ export function Home({
       ? Math.floor((Date.now() - Date.parse(last.finishedAt!)) / 86400000)
       : null;
   const [templateId, setTemplateId] = useState(""),
-    [plan, setPlan] = useState<PlanExercise[]>([]);
+    [plan, setPlan] = useState<PlanExercise[]>([]),
+    [freePlan, setFreePlan] = useState<PlanExercise[]>([]);
   const editingView = useHistoryView<boolean>("home-plan-editor", false);
-  const editing = editingView.value;
+  const freeDayView = useHistoryView<boolean>("home-free-day", false);
+  const editing = editingView.value,
+    freeDay = freeDayView.value;
+  const openFreeDay = () => {
+    if (editing) editingView.replace(false);
+    if (!freePlan.length) {
+      const exercise = data.exercises.find((item) => item.enabled);
+      if (exercise)
+        setFreePlan([
+          {
+            exerciseId: exercise.id,
+            sets: 3,
+            repMin: exercise.defaultRepMin,
+            repMax: exercise.defaultRepMax,
+            rir: exercise.defaultRIR || "1–2",
+            optional: 0,
+            notes: "",
+            priority: "Libre",
+          },
+        ]);
+    }
+    freeDayView.open(true);
+  };
   useEffect(() => {
     const template = templates.find((t) => t.id === templateId) ?? templates[0];
     if (!template) {
@@ -148,7 +177,12 @@ export function Home({
         <div>
           <p className="eyebrow">TU PRÓXIMA SESIÓN</p>
           <h1>
-            Hoy toca <span>Día {active?.dayId ?? selected}.</span>
+            Hoy toca{" "}
+            <span>
+              {active?.isFreeDay
+                ? "Día libre."
+                : `Día ${active?.dayId ?? selected}.`}
+            </span>
           </h1>
           <p className="muted">
             {dateLabel(new Date().toISOString())}{" "}
@@ -218,7 +252,8 @@ export function Home({
           )}
           {active && (
             <p className="resume-note">
-              Tienes un entrenamiento en curso: Día {active.dayId}.
+              Tienes un entrenamiento en curso:{" "}
+              {active.isFreeDay ? "día libre" : `Día ${active.dayId}`}.
             </p>
           )}
         </section>
@@ -235,7 +270,12 @@ export function Home({
             {data.days.map((d) => (
               <div key={d.id}>
                 <span>Día {d.id}</span>
-                <strong>{recent.filter((w) => w.dayId === d.id).length}</strong>
+                <strong>
+                  {
+                    recent.filter((w) => !w.isFreeDay && w.dayId === d.id)
+                      .length
+                  }
+                </strong>
               </div>
             ))}
           </div>
@@ -244,7 +284,7 @@ export function Home({
             <div>
               <strong>
                 {last
-                  ? `Última sesión · Día ${last.dayId}`
+                  ? `Última sesión · ${last.isFreeDay ? last.templateName : `Día ${last.dayId}`}`
                   : "Todo empieza con una sesión"}
               </strong>
               <p>
@@ -276,31 +316,65 @@ export function Home({
         <div className="template-toolbar">
           <button
             className="secondary"
-            onClick={() =>
-              editing ? editingView.close() : editingView.open(true)
-            }
+            onClick={() => {
+              if (freeDay) freeDayView.replace(false);
+              if (editing) editingView.close();
+              else editingView.open(true);
+            }}
           >
             {editing ? "Cerrar edición" : "Editar antes de empezar"}
+          </button>
+          <button
+            className="secondary"
+            onClick={() => (freeDay ? freeDayView.close() : openFreeDay())}
+          >
+            <Plus size={17} />
+            {freeDay ? "Cerrar día libre" : "Crear día libre"}
           </button>
         </div>
       )}
       {selected !==
         getNextRoutineDay(
-          last?.dayId,
+          lastRoutine?.dayId,
           data.days.map((d) => d.id),
         ) &&
-        !active && (
+        !active &&
+        !freeDay && (
           <p className="notice">
             Has elegido el Día {selected}. Según tu última sesión, el
             recomendado es el Día{" "}
             {getNextRoutineDay(
-              last?.dayId,
+              lastRoutine?.dayId,
               data.days.map((d) => d.id),
             )}
             .
           </p>
         )}
-      {editing && !active ? (
+      {freeDay && !active ? (
+        <section className="free-day-builder">
+          <div>
+            <p className="eyebrow">SESIÓN FUERA DE LA RUTINA</p>
+            <h2>Prepara tu día libre</h2>
+            <p className="muted">
+              Elige los ejercicios que quieras. Contará para tu progreso, pero
+              no hará avanzar la secuencia{" "}
+              {data.days.map((d) => d.id).join(" → ")}.
+            </p>
+          </div>
+          <PlanEditor
+            plan={freePlan}
+            exercises={data.exercises}
+            onChange={setFreePlan}
+          />
+          <button
+            className="primary free-day-start"
+            disabled={busy || !freePlan.length}
+            onClick={() => onStart(freePlan, "Día libre", true)}
+          >
+            <Play size={18} fill="currentColor" /> Empezar día libre
+          </button>
+        </section>
+      ) : editing && !active ? (
         <PlanEditor plan={plan} exercises={data.exercises} onChange={setPlan} />
       ) : (
         <div className="routine-list">

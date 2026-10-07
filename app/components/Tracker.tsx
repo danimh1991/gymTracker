@@ -13,7 +13,10 @@ import {
   Settings,
 } from "lucide-react";
 import type { DayKey, PlanExercise } from "../domain/types";
-import { completedWorkouts, getNextRoutineDay } from "../services/training";
+import {
+  completedRoutineWorkouts,
+  getNextRoutineDay,
+} from "../services/training";
 import { appPath } from "../lib/base-path";
 import { useTraining } from "./useTraining";
 import { Home } from "./Home";
@@ -23,11 +26,7 @@ import { Progress } from "./Progress";
 import { History, WorkoutDetail } from "./History";
 import { Templates } from "./Templates";
 import { Exercises } from "./Exercises";
-import {
-  useAppNavigation,
-  useHistoryView,
-  type AppPage,
-} from "./navigation";
+import { useAppNavigation, useHistoryView, type AppPage } from "./navigation";
 const navigation = [
   { id: "home", name: "Inicio", icon: House },
   { id: "train", name: "Entrenar", icon: Dumbbell },
@@ -66,7 +65,7 @@ export default function Tracker({ onLock }: { onLock?: () => void }) {
   };
   const { data, error, busy, execute, refresh } = useTraining(demo, userId),
     active = data?.workouts.find((w) => w.status === "active"),
-    last = data ? completedWorkouts(data)[0] : undefined,
+    last = data ? completedRoutineWorkouts(data)[0] : undefined,
     summaryWorkout = data?.workouts.find((w) => w.id === summary);
   useEffect(() => {
     if (!data?.days.length) return;
@@ -81,7 +80,11 @@ export default function Tracker({ onLock }: { onLock?: () => void }) {
   const navigate = (p: AppPage) => {
     navigationState.navigate(p);
   };
-  async function start(plan: PlanExercise[], templateName: string) {
+  async function start(
+    plan: PlanExercise[],
+    templateName: string,
+    isFreeDay = false,
+  ) {
     if (active) {
       navigate("train");
       return;
@@ -91,6 +94,7 @@ export default function Tracker({ onLock }: { onLock?: () => void }) {
       dayId: selected,
       templateName,
       exercises: plan,
+      isFreeDay,
     });
     if (result) navigate("train");
   }
@@ -206,17 +210,9 @@ export default function Tracker({ onLock }: { onLock?: () => void }) {
             </div>
           ) : summaryWorkout ? (
             <>
-              <WorkoutDetail
-                data={data}
-                workout={summaryWorkout}
-                celebrate
-              />
+              <WorkoutDetail data={data} workout={summaryWorkout} celebrate />
               <button className="primary" onClick={summaryView.close}>
-                Ver próximo entrenamiento · Día{" "}
-                {getNextRoutineDay(
-                  summaryWorkout.dayId,
-                  data.days.map((day) => day.id),
-                )}
+                Ver próximo entrenamiento · Día {selected}
               </button>
             </>
           ) : (
@@ -227,7 +223,9 @@ export default function Tracker({ onLock }: { onLock?: () => void }) {
                   onUserSelect={selectUser}
                   selected={selected}
                   onSelect={setSelected}
-                  onStart={(plan, name) => void start(plan, name)}
+                  onStart={(plan, name, isFreeDay) =>
+                    void start(plan, name, isFreeDay)
+                  }
                   execute={execute}
                   busy={busy}
                 />

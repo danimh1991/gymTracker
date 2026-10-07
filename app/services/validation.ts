@@ -89,6 +89,7 @@ const importedWorkout = z.object({
   bodyweight: positive,
   notes: z.string().max(4000).default(""),
   templateName: z.string().max(100).default("Sesión importada"),
+  isFreeDay: z.number().int().min(0).max(1).default(0),
   exercises: z.array(importedWorkoutExercise).min(1).max(40),
 });
 export const commandSchema = z.discriminatedUnion("action", [
@@ -105,8 +106,14 @@ export const commandSchema = z.discriminatedUnion("action", [
     dayId: dayKey,
     templateName: z.string().min(1).max(100),
     exercises: z.array(planExercise).min(1).max(40),
+    isFreeDay: z.boolean().optional(),
   }),
   z.object({ action: z.literal("saveSet"), set: setInput }),
+  z.object({
+    action: z.literal("setExerciseLoadDecision"),
+    workoutExerciseId: z.string().min(1),
+    decision: z.enum(["increase", "maintain"]),
+  }),
   z.object({
     action: z.literal("deleteSet"),
     setId: z.string().min(1),
@@ -120,6 +127,7 @@ export const commandSchema = z.discriminatedUnion("action", [
     action: z.literal("finish"),
     workoutId: z.string(),
     notes: z.string().max(4000).default(""),
+    name: z.string().trim().min(1).max(100).optional(),
   }),
   z.object({ action: z.literal("cancel"), workoutId: z.string() }),
   z.object({

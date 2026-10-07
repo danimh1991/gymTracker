@@ -1,6 +1,7 @@
 import type { SportKey } from "./sports";
 export type DayKey = "A" | "B" | "C" | "D" | "E" | "F" | "G";
 export type Metric = "reps" | "time";
+export type LoadDecision = "increase" | "maintain";
 export type ActivityIntensity = "easy" | "moderate" | "hard";
 export interface UserProfile {
   id: string;
@@ -74,6 +75,7 @@ export interface Workout {
   bodyweight: number | null;
   notes: string;
   templateName: string;
+  isFreeDay: number;
 }
 export interface WorkoutExercise extends RoutineExercise {
   workoutId: string;
@@ -83,6 +85,7 @@ export interface WorkoutExercise extends RoutineExercise {
   supportsAssistance: number;
   supportsAddedWeight: number;
   variant: string;
+  nextLoadAction: LoadDecision | null;
 }
 export interface WorkoutSet {
   id: string;

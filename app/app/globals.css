@@ -91,8 +91,7 @@ h3 {
     calc(32px + var(--safe-bottom)) calc(20px + var(--safe-left));
   background:
     radial-gradient(circle at 8% 5%, #e8f7c7 0, transparent 28%),
-    radial-gradient(circle at 92% 95%, #e5e9df 0, transparent 30%),
-    var(--paper);
+    radial-gradient(circle at 92% 95%, #e5e9df 0, transparent 30%), var(--paper);
 }
 .pin-card {
   width: min(100%, 390px);
@@ -139,7 +138,9 @@ h3 {
   animation: pin-spin 0.8s linear infinite;
 }
 @keyframes pin-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 .pin-form {
   margin-top: 30px;
@@ -220,8 +221,8 @@ a {
   width: calc(238px + var(--safe-left));
   background: #fff;
   border-right: 1px solid var(--line);
-  padding: calc(34px + var(--safe-top)) 22px
-    calc(34px + var(--safe-bottom)) calc(22px + var(--safe-left));
+  padding: calc(34px + var(--safe-top)) 22px calc(34px + var(--safe-bottom))
+    calc(22px + var(--safe-left));
   display: flex;
   flex-direction: column;
   z-index: 20;
@@ -729,8 +730,7 @@ main {
 .main-footer {
   max-width: 1260px;
   margin: auto;
-  padding: 0 calc(44px + var(--safe-right))
-    calc(24px + var(--safe-bottom)) 44px;
+  padding: 0 calc(44px + var(--safe-right)) calc(24px + var(--safe-bottom)) 44px;
   display: flex;
   justify-content: space-between;
   color: #939b88;
@@ -1011,6 +1011,54 @@ textarea {
   color: #4e752b;
   font-size: 14px;
 }
+.completed-exercise {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+.load-decision-saved {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.load-reminder {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border: 1px solid #bdd29e;
+  border-radius: 7px;
+  background: #f3f8eb;
+  color: #35551e;
+}
+.load-reminder.increase {
+  border-color: #a9c77b;
+  background: #edf7df;
+}
+.load-reminder span,
+.load-reminder strong {
+  display: block;
+}
+.load-reminder span {
+  margin-bottom: 2px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+.load-reminder strong {
+  font-size: 14px;
+}
+.load-decision-modal > p:not(.eyebrow) {
+  margin-bottom: 18px;
+}
+.load-decision-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.load-decision-actions button {
+  justify-content: center;
+}
 .finish-actions {
   display: flex;
   justify-content: space-between;
@@ -1061,12 +1109,8 @@ textarea {
   border-radius: 14px;
   padding: 28px;
   width: min(100%, 500px);
-  max-height: calc(
-    100vh - var(--safe-top) - var(--safe-bottom) - 40px
-  );
-  max-height: calc(
-    100dvh - var(--safe-top) - var(--safe-bottom) - 40px
-  );
+  max-height: calc(100vh - var(--safe-top) - var(--safe-bottom) - 40px);
+  max-height: calc(100dvh - var(--safe-top) - var(--safe-bottom) - 40px);
   overflow-y: auto;
 }
 .modal p {
@@ -1503,8 +1547,8 @@ textarea {
 @media (max-width: 1150px) {
   .sidebar {
     width: calc(205px + var(--safe-left));
-    padding: calc(28px + var(--safe-top)) 16px
-      calc(28px + var(--safe-bottom)) calc(16px + var(--safe-left));
+    padding: calc(28px + var(--safe-top)) 16px calc(28px + var(--safe-bottom))
+      calc(16px + var(--safe-left));
   }
   .main-shell {
     margin-left: calc(205px + var(--safe-left));
@@ -1586,8 +1630,8 @@ textarea {
     background: white;
     border-top: 1px solid var(--line);
     z-index: 40;
-    padding: 8px calc(4px + var(--safe-right))
-      calc(8px + var(--safe-bottom)) calc(4px + var(--safe-left));
+    padding: 8px calc(4px + var(--safe-right)) calc(8px + var(--safe-bottom))
+      calc(4px + var(--safe-left));
   }
   .bottom-nav button {
     display: flex;
@@ -2109,6 +2153,24 @@ textarea {
   border-radius: 6px;
   background: #fff;
   padding: 8px 10px;
+}
+.free-day-builder {
+  display: grid;
+  gap: 18px;
+  margin: 18px 0 26px;
+  padding: 22px;
+  border: 1px solid #bfd09f;
+  border-radius: 10px;
+  background: #f4f8ed;
+}
+.free-day-builder h2 {
+  margin: 3px 0 7px;
+}
+.free-day-builder .plan-row {
+  background: #fff;
+}
+.free-day-start {
+  justify-self: start;
 }
 .plan-editor {
   display: grid;
