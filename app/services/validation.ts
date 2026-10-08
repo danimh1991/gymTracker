@@ -192,6 +192,10 @@ export const commandSchema = z.discriminatedUnion("action", [
   }),
   z.object({ action: z.literal("addExercise"), exercise: exerciseInput }),
   z.object({
+    action: z.literal("deleteExercise"),
+    exerciseId: z.string().min(1).max(200),
+  }),
+  z.object({
     action: z.literal("updateExercise"),
     exerciseId: z.string().min(1),
     exercise: exerciseInput.omit({ id: true }),

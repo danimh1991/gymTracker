@@ -669,24 +669,64 @@ export class D1TrainingRepository implements TrainingRepository {
       ).run();
       return;
     }
+    if (c.action === "deleteExercise") {
+      const existing = await this.query(
+        "SELECT id FROM exercises WHERE id=? AND enabled=1",
+        c.exerciseId,
+      ).first<{ id: string }>();
+      if (!existing) throw new Error("Ejercicio no encontrado.");
+      await this.db.batch([
+        this.query(
+          "DELETE FROM templateExercises WHERE exerciseId=?",
+          c.exerciseId,
+        ),
+        this.query(
+          "DELETE FROM routineExercises WHERE exerciseId=?",
+          c.exerciseId,
+        ),
+        this.query("DELETE FROM goals WHERE exerciseId=?", c.exerciseId),
+        this.query(
+          "DELETE FROM exerciseOverrides WHERE exerciseId=?",
+          c.exerciseId,
+        ),
+        this.query("UPDATE exercises SET enabled=0 WHERE id=?", c.exerciseId),
+        this.query(
+          "DELETE FROM workoutTemplates WHERE NOT EXISTS (SELECT 1 FROM templateExercises WHERE templateId=workoutTemplates.id)",
+        ),
+      ]);
+      return;
+    }
     if (c.action === "addExercise" || c.action === "importExercises") {
       const exercises = c.action === "addExercise" ? [c.exercise] : c.exercises;
       for (const e of exercises) {
         const id = e.id?.trim() || `custom-${crypto.randomUUID()}`;
-        if (
-          await this.query("SELECT id FROM exercises WHERE id=?", id).first()
-        ) {
-          if (c.action === "importExercises") continue;
+        const existingById = await this.query(
+          "SELECT id FROM exercises WHERE id=?",
+          id,
+        ).first<{ id: string }>();
+        if (existingById) {
+          if (c.action === "importExercises") {
+            await this.query(
+              "UPDATE exercises SET enabled=1 WHERE id=?",
+              existingById.id,
+            ).run();
+            continue;
+          }
           throw new Error(`Ya existe un ejercicio con id ${id}.`);
         }
-        if (
-          c.action === "importExercises" &&
-          (await this.query(
+        if (c.action === "importExercises") {
+          const existingByName = await this.query(
             "SELECT id FROM exercises WHERE LOWER(TRIM(name))=LOWER(TRIM(?))",
             e.name,
-          ).first())
-        )
-          continue;
+          ).first<{ id: string }>();
+          if (existingByName) {
+            await this.query(
+              "UPDATE exercises SET enabled=1 WHERE id=?",
+              existingByName.id,
+            ).run();
+            continue;
+          }
+        }
         await this.insert("exercises", {
           ...e,
           id,

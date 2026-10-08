@@ -2052,6 +2052,11 @@ textarea {
 .library-item > button {
   flex-shrink: 0;
 }
+.library-item-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+}
 .library-list summary {
   cursor: pointer;
   font-size: 15px;
@@ -2573,6 +2578,9 @@ textarea {
   }
   .library-item > .icon-button {
     width: 40px;
+    align-self: flex-end;
+  }
+  .library-item-actions {
     align-self: flex-end;
   }
   .user-settings-form {

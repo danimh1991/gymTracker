@@ -946,6 +946,66 @@ test("las importaciones de plantillas y ejercicios omiten duplicados naturales",
   );
   sql.close();
 });
+test("eliminar un ejercicio lo quita del catálogo sin romper la sesión activa", async () => {
+  const { db, sql } = database();
+  const repo = new D1TrainingRepository(db, "delete-exercise:real");
+  const exercise = {
+    ...initialExercises[0],
+    id: "exercise-to-delete",
+    name: "Ejercicio eliminable",
+    shortName: "Eliminable",
+    type: "calisthenics" as const,
+  };
+  await repo.execute({ action: "addExercise", exercise });
+  const plan = {
+    exerciseId: exercise.id,
+    sets: 1,
+    repMin: 1,
+    repMax: 5,
+    rir: "2",
+    optional: 0,
+    notes: "",
+    priority: "Principal",
+  };
+  await repo.execute({
+    action: "saveTemplate",
+    dayId: "A",
+    name: "Plantilla eliminable",
+    description: "",
+    exercises: [plan],
+  });
+  await repo.execute({
+    action: "start",
+    dayId: "A",
+    templateName: "Plantilla eliminable",
+    exercises: [plan],
+  });
+
+  await repo.execute({
+    action: "deleteExercise",
+    exerciseId: exercise.id,
+  });
+  let data = await repo.snapshot();
+  assert.equal(
+    data.exercises.find((row) => row.id === exercise.id)?.enabled,
+    0,
+  );
+  assert.ok(
+    !data.templateExercises.some((row) => row.exerciseId === exercise.id),
+  );
+  assert.ok(!data.templates.some((row) => row.name === "Plantilla eliminable"));
+  assert.ok(
+    data.workoutExercises.some((row) => row.exerciseId === exercise.id),
+  );
+
+  await repo.execute({ action: "importExercises", exercises: [exercise] });
+  data = await repo.snapshot();
+  assert.equal(
+    data.exercises.find((row) => row.id === exercise.id)?.enabled,
+    1,
+  );
+  sql.close();
+});
 test("los ejercicios de biblioteca se comparten entre usuarios", async () => {
   const { db, sql } = database();
   const alice = new D1TrainingRepository(db, "exercise-editor:alice");

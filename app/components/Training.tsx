@@ -220,7 +220,9 @@ export function Training({
     editSession = sessionEditorView.value,
     editingExercise = exerciseEditorView.value;
   const [clone, setClone] = useState<WorkoutSet | null>(null),
-    [newExercise, setNewExercise] = useState(data.exercises[0]?.id ?? ""),
+    [newExercise, setNewExercise] = useState(
+      data.exercises.find((exercise) => exercise.enabled)?.id ?? "",
+    ),
     [copy, setCopy] = useState(false),
     [copyVersion, setCopyVersion] = useState(0),
     [seconds, setSeconds] = useState(150),
@@ -340,11 +342,13 @@ export function Training({
                 value={newExercise}
                 onChange={(e) => setNewExercise(e.target.value)}
               >
-                {data.exercises.map((e) => (
-                  <option value={e.id} key={e.id}>
-                    {e.name}
-                  </option>
-                ))}
+                {data.exercises
+                  .filter((e) => e.enabled)
+                  .map((e) => (
+                    <option value={e.id} key={e.id}>
+                      {e.name}
+                    </option>
+                  ))}
               </select>
               <button
                 className="secondary"

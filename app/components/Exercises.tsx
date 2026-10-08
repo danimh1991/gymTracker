@@ -1,11 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BookOpen, Download, Pencil, Plus, Upload, X } from "lucide-react";
+import {
+  BookOpen,
+  Download,
+  Pencil,
+  Plus,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 import type { Exercise, Snapshot } from "../domain/types";
 import type { Execute } from "./Training";
 import { downloadJson } from "../services/export";
-import { useHistoryView } from "./navigation";
+import { closeOnBackdrop, useHistoryView } from "./navigation";
 
 type LoadMode = "bodyweight" | "added" | "assisted" | "external";
 type ExerciseType = "calisthenics" | "gym" | "mobility" | "skill";
@@ -38,11 +46,17 @@ export function Exercises({
   const [draft, setDraft] = useState(emptyExercise);
   const formView = useHistoryView<string | null>("exercise-editor", null);
   const detailView = useHistoryView<string>("exercise-detail", "");
+  const deleteView = useHistoryView<string>("exercise-delete", "");
   const showAdd = formView.value !== null;
   const editingId =
     formView.value && formView.value !== "new" ? formView.value : null;
   const formRef = useRef<HTMLFormElement>(null);
   const initializedForm = useRef<string | null>(null);
+  const pendingDelete =
+    data.exercises.find((exercise) => exercise.id === deleteView.value) ?? null;
+  const enabledExercises = data.exercises.filter(
+    (exercise) => exercise.enabled,
+  );
 
   const showForm = () =>
     requestAnimationFrame(() =>
@@ -83,10 +97,7 @@ export function Exercises({
   };
 
   useEffect(() => {
-    if (
-      formView.value !== null &&
-      initializedForm.current !== formView.value
-    ) {
+    if (formView.value !== null && initializedForm.current !== formView.value) {
       initializedForm.current = formView.value;
       if (formView.value === "new") setDraft(emptyExercise);
       else if (editingId) {
@@ -134,7 +145,7 @@ export function Exercises({
           onClick={() =>
             downloadJson("gym-tracker-ejercicios.json", {
               version: 1,
-              exercises: data.exercises,
+              exercises: enabledExercises,
             })
           }
         >
@@ -396,7 +407,7 @@ export function Exercises({
           <h2>
             <BookOpen size={21} /> Todos los ejercicios
           </h2>
-          <span className="tag">{data.exercises.length} EJERCICIOS</span>
+          <span className="tag">{enabledExercises.length} EJERCICIOS</span>
         </div>
         <label className="field">
           Buscar ejercicio
@@ -407,7 +418,7 @@ export function Exercises({
           />
         </label>
         <div className="library-list">
-          {data.exercises
+          {enabledExercises
             .filter((exercise) =>
               `${exercise.name} ${exercise.primaryMuscles}`
                 .toLocaleLowerCase("es")
@@ -441,19 +452,73 @@ export function Exercises({
                   </p>
                   <p>{exercise.notes || "Sin notas permanentes."}</p>
                 </details>
-                <button
-                  type="button"
-                  className="icon-button"
-                  aria-label={`Editar ${exercise.name}`}
-                  title={`Editar ${exercise.name}`}
-                  onClick={() => beginEdit(exercise)}
-                >
-                  <Pencil size={17} />
-                </button>
+                <div className="library-item-actions">
+                  <button
+                    type="button"
+                    className="icon-button"
+                    aria-label={`Editar ${exercise.name}`}
+                    title={`Editar ${exercise.name}`}
+                    onClick={() => beginEdit(exercise)}
+                  >
+                    <Pencil size={17} />
+                  </button>
+                  <button
+                    type="button"
+                    className="icon-button danger"
+                    aria-label={`Eliminar ${exercise.name}`}
+                    title={`Eliminar ${exercise.name}`}
+                    disabled={busy}
+                    onClick={() => deleteView.open(exercise.id)}
+                  >
+                    <Trash2 size={17} />
+                  </button>
+                </div>
               </div>
             ))}
         </div>
       </section>
+      {pendingDelete && (
+        <div
+          className="modal-backdrop"
+          onClick={(event) => closeOnBackdrop(event, deleteView.close)}
+        >
+          <section className="modal" role="dialog" aria-modal="true">
+            <h2>¿Eliminar “{pendingDelete.name}”?</h2>
+            <p>
+              Se quitará del catálogo y de las plantillas. Las sesiones y los
+              registros históricos se conservarán.
+            </p>
+            <div className="button-row">
+              <button
+                type="button"
+                className="secondary"
+                onClick={deleteView.close}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="danger-button"
+                disabled={busy}
+                onClick={async () => {
+                  const result = await execute({
+                    action: "deleteExercise",
+                    exerciseId: pendingDelete.id,
+                  });
+                  if (result) {
+                    if (editingId === pendingDelete.id) formView.close();
+                    if (detailView.value === pendingDelete.id)
+                      detailView.close();
+                    deleteView.close();
+                  }
+                }}
+              >
+                <Trash2 size={16} /> Eliminar ejercicio
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </>
   );
 }
