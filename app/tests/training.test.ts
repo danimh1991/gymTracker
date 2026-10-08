@@ -1006,6 +1006,41 @@ test("eliminar un ejercicio lo quita del catálogo sin romper la sesión activa"
   );
   sql.close();
 });
+test("importar un ID nuevo no reactiva otro ejercicio eliminado con el mismo nombre", async () => {
+  const { db, sql } = database();
+  const repo = new D1TrainingRepository(db, "replace-exercise-id:real");
+  const obsolete = {
+    ...initialExercises[0],
+    id: "custom-old-plank-id",
+    name: "Plancha Abdominal",
+    shortName: "Plancha Abdominal",
+    type: "calisthenics" as const,
+  };
+  const canonical = { ...obsolete, id: "plank" };
+  await repo.execute({ action: "addExercise", exercise: obsolete });
+  await repo.execute({
+    action: "deleteExercise",
+    exerciseId: obsolete.id,
+  });
+  await repo.execute({ action: "importExercises", exercises: [canonical] });
+
+  const data = await repo.snapshot();
+  assert.equal(
+    data.exercises.find((row) => row.id === obsolete.id)?.enabled,
+    0,
+  );
+  assert.equal(
+    data.exercises.find((row) => row.id === canonical.id)?.enabled,
+    1,
+  );
+  assert.deepEqual(
+    data.exercises
+      .filter((row) => row.name === canonical.name && row.enabled)
+      .map((row) => row.id),
+    ["plank"],
+  );
+  sql.close();
+});
 test("los ejercicios de biblioteca se comparten entre usuarios", async () => {
   const { db, sql } = database();
   const alice = new D1TrainingRepository(db, "exercise-editor:alice");

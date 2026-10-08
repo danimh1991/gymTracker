@@ -707,6 +707,11 @@ export class D1TrainingRepository implements TrainingRepository {
         if (existingById) {
           if (c.action === "importExercises") {
             await this.query(
+              "UPDATE exercises SET enabled=0 WHERE id<>? AND LOWER(TRIM(name))=LOWER(TRIM(?))",
+              existingById.id,
+              e.name,
+            ).run();
+            await this.query(
               "UPDATE exercises SET enabled=1 WHERE id=?",
               existingById.id,
             ).run();
@@ -716,16 +721,10 @@ export class D1TrainingRepository implements TrainingRepository {
         }
         if (c.action === "importExercises") {
           const existingByName = await this.query(
-            "SELECT id FROM exercises WHERE LOWER(TRIM(name))=LOWER(TRIM(?))",
+            "SELECT id,enabled FROM exercises WHERE LOWER(TRIM(name))=LOWER(TRIM(?)) ORDER BY enabled DESC LIMIT 1",
             e.name,
-          ).first<{ id: string }>();
-          if (existingByName) {
-            await this.query(
-              "UPDATE exercises SET enabled=1 WHERE id=?",
-              existingByName.id,
-            ).run();
-            continue;
-          }
+          ).first<{ id: string; enabled: number }>();
+          if (existingByName?.enabled) continue;
         }
         await this.insert("exercises", {
           ...e,
