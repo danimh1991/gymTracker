@@ -15,6 +15,8 @@ import {
   previousLoadDecision,
   previousSets,
   stats,
+  effectiveLoad,
+  estimatedOneRepMax,
 } from "../services/training";
 import { commandSchema } from "../services/validation";
 import { csv, workoutBackup } from "../services/export";
@@ -47,6 +49,25 @@ function sets(reps: number[], rir = 1): WorkoutSet[] {
     timestamp: new Date().toISOString(),
   }));
 }
+test("la fuerza estimada combina carga, repeticiones y RIR", () => {
+  const set = {
+    ...sets([8], 2)[0],
+    bodyweight: 75,
+    addedWeight: 10,
+  };
+  assert.equal(effectiveLoad(set), 85);
+  assert.equal(estimatedOneRepMax(set), 85 * (1 + 10 / 30));
+});
+test("la carga efectiva descuenta asistencia y admite peso externo", () => {
+  const assisted = {
+    ...sets([6])[0],
+    bodyweight: 75,
+    assistanceWeight: 20,
+  };
+  const weighted = { ...sets([10])[0], weight: 40 };
+  assert.equal(effectiveLoad(assisted), 55);
+  assert.equal(effectiveLoad(weighted), 40);
+});
 test("las importaciones admiten cuerpos grandes con un límite de 10 MiB", async () => {
   assert.equal(MAX_TRAINING_REQUEST_BYTES, 10 * 1024 * 1024);
   const payload = { action: "importExercises", data: "x".repeat(27 * 1024) };

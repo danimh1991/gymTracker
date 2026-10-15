@@ -123,6 +123,38 @@ export function stats(sets: WorkoutSet[]) {
     unknownRIR: done.filter((s) => s.RIR === null).length,
   };
 }
+
+/**
+ * Load that the athlete actually moves. For calisthenics this includes body
+ * weight and accounts for added weight or assistance; for gym exercises it is
+ * the recorded external load.
+ */
+export function effectiveLoad(set: WorkoutSet): number | null {
+  const hasBodyweightLoad =
+    set.bodyweight !== null ||
+    set.addedWeight !== null ||
+    set.assistanceWeight !== null;
+  if (hasBodyweightLoad) {
+    const load =
+      (set.bodyweight ?? 0) +
+      (set.addedWeight ?? 0) -
+      (set.assistanceWeight ?? 0);
+    return load > 0 ? load : null;
+  }
+  return set.weight !== null && set.weight > 0 ? set.weight : null;
+}
+
+/**
+ * RIR-adjusted Epley estimate. `reps + RIR` approximates how many repetitions
+ * the athlete could have completed at that load, making submaximal sets more
+ * comparable without rewarding training to failure.
+ */
+export function estimatedOneRepMax(set: WorkoutSet): number | null {
+  const load = effectiveLoad(set);
+  if (!load || !set.reps || set.reps <= 0) return null;
+  const potentialReps = set.reps + Math.max(0, set.RIR ?? 0);
+  return load * (1 + potentialReps / 30);
+}
 export function loadLabel(s: WorkoutSet, bw = true) {
   if (!bw) return `${s.weight ?? 0} kg`;
   if (s.assistanceWeight) return `BW − ${s.assistanceWeight} kg`;
