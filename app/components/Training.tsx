@@ -469,16 +469,25 @@ export function Training({
                   )}
                   <div className="reference">
                     <span>ÚLTIMA VEZ</span>
-                    <strong>
-                      {prev.length
-                        ? prev
-                            .map(
-                              (s) =>
-                                `${s.reps ?? `${s.durationSeconds}s`} · ${loadLabel(s, !!e.bodyweightExercise)}`,
-                            )
-                            .join(" / ")
-                        : "Aún sin registros"}
-                    </strong>
+                    {prev.length ? (
+                      <strong className="reference-sets">
+                        {prev.map((s) => (
+                          <span className="reference-set" key={s.id}>
+                            <span className="reference-performance">
+                              {s.reps ?? `${s.durationSeconds}s`} ·{" "}
+                              {loadLabel(s, !!e.bodyweightExercise)}
+                            </span>
+                            <small
+                              className={s.RIR === 0 ? "failure-text" : ""}
+                            >
+                              {s.RIR === 0 ? "Fallo" : `RIR ${s.RIR ?? "—"}`}
+                            </small>
+                          </span>
+                        ))}
+                      </strong>
+                    ) : (
+                      <strong>Aún sin registros</strong>
+                    )}
                   </div>
                   {previousDecision && (
                     <div className={`load-reminder ${previousDecision}`}>

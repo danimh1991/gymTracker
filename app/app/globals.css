@@ -882,13 +882,40 @@ progress {
   margin-bottom: 18px;
   align-items: center;
 }
-.reference span {
+.reference > span {
   font-size: 10px;
   letter-spacing: 1px;
   color: var(--muted);
 }
 .reference strong {
   font-size: 15px;
+}
+.reference-sets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+}
+.reference-set {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  white-space: nowrap;
+}
+.reference-set:not(:last-child)::after {
+  content: "/";
+  margin-left: 9px;
+  color: var(--muted);
+  font-weight: 400;
+}
+.reference-set small {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.reference-set small.failure-text {
+  color: #a34936;
 }
 .set-editor {
   max-width: 660px;
