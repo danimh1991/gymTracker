@@ -1,6 +1,9 @@
 "use client";
 import { useState } from "react";
 import {
+  Activity,
+  ArrowDownRight,
+  ArrowUpRight,
   CalendarDays,
   Check,
   ChevronLeft,
@@ -18,7 +21,21 @@ import {
   Waves,
   X,
 } from "lucide-react";
-import type { Snapshot, Workout } from "../domain/types";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import type {
+  Snapshot,
+  Workout,
+  WorkoutExercise,
+  WorkoutSet,
+} from "../domain/types";
 import { sportDefinition } from "../domain/sports";
 import {
   completedWorkouts,
@@ -28,11 +45,266 @@ import {
   evaluatePullupProgression,
   evaluateDipProgression,
   evaluateDoubleProgression,
+  estimatedOneRepMax,
 } from "../services/training";
 import { dateLabel } from "./Home";
 import type { Execute } from "./Training";
 import { downloadJson, workoutBackup } from "../services/export";
 import { closeOnBackdrop, useHistoryView } from "./navigation";
+
+type SessionPerformance = {
+  id: string;
+  date: string;
+  label: string;
+  score: number;
+  current: boolean;
+};
+
+function performanceScore(sets: WorkoutSet[], exercise: WorkoutExercise) {
+  if (exercise.metricType === "time") {
+    return Math.max(0, ...sets.map((set) => set.durationSeconds ?? 0));
+  }
+  const strength = sets
+    .map(estimatedOneRepMax)
+    .filter((value): value is number => value !== null);
+  const values = strength.length
+    ? strength
+    : sets.map((set) => (set.reps ?? 0) + Math.max(0, set.RIR ?? 0));
+  return Math.max(0, ...values);
+}
+
+function SessionProgress({
+  data,
+  workout,
+  exercises,
+}: {
+  data: Snapshot;
+  workout: Workout;
+  exercises: WorkoutExercise[];
+}) {
+  const cards = exercises.flatMap((exercise) => {
+    const sessions: SessionPerformance[] = completedWorkouts(data)
+      .filter(
+        (candidate) =>
+          candidate.startedAt <= workout.startedAt &&
+          data.sets.some(
+            (set) =>
+              set.workoutId === candidate.id &&
+              set.exerciseId === exercise.exerciseId &&
+              set.completed,
+          ),
+      )
+      .slice(0, 6)
+      .reverse()
+      .map((candidate) => {
+        const sessionSets = data.sets.filter(
+          (set) =>
+            set.workoutId === candidate.id &&
+            set.exerciseId === exercise.exerciseId &&
+            set.completed,
+        );
+        return {
+          id: candidate.id,
+          date: candidate.startedAt,
+          label:
+            candidate.id === workout.id
+              ? "Hoy"
+              : new Date(candidate.startedAt).toLocaleDateString("es-ES", {
+                  day: "numeric",
+                  month: "short",
+                }),
+          score: Number(performanceScore(sessionSets, exercise).toFixed(1)),
+          current: candidate.id === workout.id,
+        };
+      });
+    const latest = sessions.at(-1);
+    if (!latest?.current) return [];
+    const previous = sessions.at(-2);
+    const priorBest = Math.max(
+      0,
+      ...sessions.slice(0, -1).map((item) => item.score),
+    );
+    const change = previous?.score
+      ? ((latest.score - previous.score) / previous.score) * 100
+      : null;
+    const hasStrength =
+      exercise.metricType !== "time" &&
+      data.sets.some(
+        (set) =>
+          set.exerciseId === exercise.exerciseId &&
+          set.completed &&
+          estimatedOneRepMax(set) !== null,
+      );
+    return [
+      {
+        exercise,
+        sessions,
+        latest,
+        change,
+        isRecord: priorBest > 0 && latest.score > priorBest,
+        unit:
+          exercise.metricType === "time"
+            ? "s"
+            : hasStrength
+              ? "kg e1RM"
+              : "reps",
+        metric:
+          exercise.metricType === "time"
+            ? "Mejor duración"
+            : hasStrength
+              ? "Fuerza estimada"
+              : "Repeticiones potenciales",
+      },
+    ];
+  });
+
+  if (!cards.length) return null;
+  const improved = cards.filter((card) => (card.change ?? 0) > 0.05).length;
+  const records = cards.filter((card) => card.isRecord).length;
+
+  return (
+    <section className="session-progress">
+      <div className="session-progress-heading">
+        <div>
+          <p className="eyebrow">TU PROGRESO HOY</p>
+          <h2>
+            {records
+              ? `${records} nueva${records > 1 ? "s" : ""} mejor${records > 1 ? "es" : ""} marca${records > 1 ? "s" : ""}`
+              : improved
+                ? `Mejoras en ${improved} ejercicio${improved > 1 ? "s" : ""}`
+                : "La sesión, en perspectiva"}
+          </h2>
+          <p>
+            El punto verde es el resultado de esta sesión frente a tus últimas
+            referencias.
+          </p>
+        </div>
+        <span className="session-progress-icon">
+          <Activity size={20} />
+        </span>
+      </div>
+      <div className="session-progress-grid">
+        {cards.map(
+          ({ exercise, sessions, latest, change, isRecord, unit, metric }) => {
+            const TrendIcon =
+              change !== null && change > 0.05
+                ? ArrowUpRight
+                : change !== null && change < -0.05
+                  ? ArrowDownRight
+                  : Activity;
+            return (
+              <article className="session-progress-card" key={exercise.id}>
+                <div className="session-progress-card-heading">
+                  <div>
+                    <h3>{exercise.name}</h3>
+                    <span>{metric}</span>
+                  </div>
+                  {isRecord && (
+                    <strong className="record-chip">
+                      <Trophy size={13} /> Mejor marca
+                    </strong>
+                  )}
+                </div>
+                <div className="session-progress-value">
+                  <strong>
+                    {latest.score.toLocaleString("es-ES")} <small>{unit}</small>
+                  </strong>
+                  <span
+                    className={
+                      change !== null && change > 0
+                        ? "positive"
+                        : change !== null && change < 0
+                          ? "negative"
+                          : ""
+                    }
+                  >
+                    <TrendIcon size={16} />
+                    {change === null
+                      ? "Primera referencia"
+                      : `${change > 0 ? "+" : ""}${change.toFixed(1)}% vs. anterior`}
+                  </span>
+                </div>
+                <ResponsiveContainer width="100%" height={145}>
+                  <LineChart
+                    data={sessions}
+                    margin={{ top: 12, right: 12, left: -24, bottom: 0 }}
+                  >
+                    <CartesianGrid
+                      stroke="#e7eae3"
+                      strokeDasharray="4 4"
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="label"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: "#73796f", fontSize: 10 }}
+                      dy={7}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: "#73796f", fontSize: 9 }}
+                      domain={["dataMin - 1", "dataMax + 1"]}
+                    />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        const point = payload?.[0]?.payload as
+                          | SessionPerformance
+                          | undefined;
+                        if (!active || !point) return null;
+                        return (
+                          <div className="progress-tooltip">
+                            <span>
+                              {new Date(point.date).toLocaleDateString(
+                                "es-ES",
+                                { day: "numeric", month: "long" },
+                              )}
+                            </span>
+                            <strong>
+                              {point.score.toLocaleString("es-ES")} {unit}
+                            </strong>
+                          </div>
+                        );
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="score"
+                      stroke="#252c22"
+                      strokeWidth={2.5}
+                      dot={(props) => {
+                        const point = props.payload as SessionPerformance;
+                        return (
+                          <circle
+                            key={`${point.id}-dot`}
+                            cx={props.cx}
+                            cy={props.cy}
+                            r={point.current ? 5 : 3}
+                            fill={point.current ? "#c5f36c" : "#fff"}
+                            stroke="#252c22"
+                            strokeWidth={2}
+                          />
+                        );
+                      }}
+                      activeDot={{
+                        r: 6,
+                        fill: "#c5f36c",
+                        stroke: "#252c22",
+                        strokeWidth: 2,
+                      }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </article>
+            );
+          },
+        )}
+      </div>
+    </section>
+  );
+}
+
 export function WorkoutDetail({
   data,
   workout,
@@ -105,6 +377,12 @@ export function WorkoutDetail({
           ? `${summary.unknownRIR} series sin RIR registrado; el porcentaje usa todas las series.`
           : ""}
       </p>
+      {celebrate && (
+        <SessionProgress data={data} workout={workout} exercises={rows} />
+      )}
+      {celebrate && (
+        <h2 className="session-detail-title">Detalle de la sesión</h2>
+      )}
       {rows.map((e) => {
         const current = sets.filter((s) => s.workoutExerciseId === e.id),
           prev = previousSets(data, e.exerciseId, workout.startedAt),
