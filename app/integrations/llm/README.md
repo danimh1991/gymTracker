@@ -9,15 +9,19 @@ La aplicación busca, por orden:
 
 1. `LLM_WORKER`, un service binding privado de Cloudflare.
 2. `LLM_WORKER_URL`, una URL HTTPS, con `LLM_WORKER_TOKEN` opcional.
+3. El binding nativo `AI` de Cloudflare Workers AI, actualmente con
+   `@cf/meta/llama-3.3-70b-instruct-fp8-fast` y salida JSON estructurada.
 
 El endpoint de comprobación es `/health` y se puede cambiar con
 `LLM_HEALTH_PATH`. `GET /api/llm/status` comprueba la conexión sin exponer URL,
 token ni contenido del bucket. Está protegido por el mismo PIN que el resto de
 la API.
 
-No hay todavía un endpoint público de inferencia. Los casos de uso futuros deben
-crear un adaptador de dominio que use `LlmWorkerClient`; no deben llamar al
-worker directamente desde componentes React.
+La inferencia solo se invoca desde `/api/adaptive`; los componentes React nunca
+llaman directamente al proveedor. Antes de cada generación el backend carga de
+R2 `guidance/training-domain.md`, calcula su SHA-256 y guarda versión y hash en
+el contexto auditable. Si la respuesta no supera esquema, catálogo,
+equipamiento, duración y restricciones deportivas, se usa el fallback.
 
 ## R2
 

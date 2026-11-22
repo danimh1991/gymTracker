@@ -33,6 +33,13 @@ export class LlmKnowledgeStore {
     return validateManifest(await object.json());
   }
 
+  async readText(key: string): Promise<string | null> {
+    if (!key.startsWith(`${LLM_KNOWLEDGE_PREFIX}/`) || key.includes(".."))
+      throw new Error("Clave R2 de conocimiento no válida.");
+    const object = await this.bucket.get(key);
+    return object ? object.text() : null;
+  }
+
   async writeManifest(manifest: LlmKnowledgeManifest) {
     const validated = validateManifest(manifest);
     await this.bucket.put(

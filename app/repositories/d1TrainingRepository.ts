@@ -73,7 +73,7 @@ export class D1TrainingRepository implements TrainingRepository {
           { id: "abc", name: "Gimnasio hacia calistenia" },
           true,
         ),
-        ...initialExercises.map((e) => this.insert("exercises", e, true)),
+        ...initialExercises.map((e) => this.insert("exercises", databaseExercise(e), true)),
         ...initialDays.map((d) =>
           this.insert("days", { ...d, routineId: "abc" }, true),
         ),
@@ -176,8 +176,11 @@ export class D1TrainingRepository implements TrainingRepository {
   async snapshot(): Promise<Snapshot> {
     await this.seed();
     const adaptiveReady = await this.adaptiveSchemaReady();
+    const catalogReady = await this.catalogSchemaReady();
     const result = await this.db.batch([
-      this.query("SELECT * FROM exercises ORDER BY name"),
+      catalogReady
+        ? this.query("SELECT e.*,m.catalogVersion,m.metadataJson FROM exercises e LEFT JOIN exerciseAdaptiveMetadata m ON m.exerciseId=e.id ORDER BY e.name")
+        : this.query("SELECT * FROM exercises ORDER BY name"),
       this.query(
         "SELECT * FROM days WHERE position < (SELECT trainingDays FROM userSettings WHERE ownerId=?) ORDER BY position",
         this.ownerId,
@@ -245,6 +248,11 @@ export class D1TrainingRepository implements TrainingRepository {
         "templateExercises",
       ].map((key, i) => [key, result[i].results]),
     ) as unknown as Snapshot;
+    snapshot.exercises = snapshot.exercises.map((exercise) => {
+      const raw = exercise as Exercise & { metadataJson?: string | null };
+      const metadata = parseExerciseMetadata(raw.metadataJson);
+      return { ...raw, ...metadata };
+    });
     snapshot.workouts = snapshot.workouts.map((workout) => ({
       ...workout,
       sessionType:
@@ -263,6 +271,7 @@ export class D1TrainingRepository implements TrainingRepository {
       priorities: { ...defaults.priorities, ...parseJsonObject(settingsRow?.priorities) },
       exercisePreferences: { ...defaults.exercisePreferences, ...parseJsonObject(settingsRow?.exercisePreferences) },
       availableEquipment: parseJsonArray(settingsRow?.availableEquipment),
+      equipmentConfigured: parseJsonArray(settingsRow?.availableEquipment).length ? 1 : 0,
     };
     snapshot.externalActivities = result[16]
       .results as unknown as Snapshot["externalActivities"];
@@ -315,6 +324,11 @@ export class D1TrainingRepository implements TrainingRepository {
       "SELECT 1 FROM sqlite_master WHERE type='table' AND name='adaptiveProposals'",
     ).first());
   }
+  private async catalogSchemaReady() {
+    return Boolean(await this.query(
+      "SELECT 1 FROM sqlite_master WHERE type='table' AND name='exerciseAdaptiveMetadata'",
+    ).first());
+  }
   async execute(c: Command): Promise<void> {
     await this.seed();
     if (c.action === "setTrainerSettings") {
@@ -332,13 +346,16 @@ export class D1TrainingRepository implements TrainingRepository {
     }
     if (c.action === "saveAdaptiveProposal") {
       const now = new Date().toISOString();
-      await this.insert("adaptiveProposals", {
-        ...c.proposal,
-        ownerId: this.ownerId,
-        status: "proposed",
-        createdAt: now,
-        updatedAt: now,
-      }, true).run();
+      await this.db.batch([
+        this.query(
+          "UPDATE adaptiveProposals SET status='superseded',updatedAt=? WHERE ownerId=? AND status='proposed'",
+          now, this.ownerId,
+        ),
+        this.insert("adaptiveProposals", {
+          ...c.proposal, ownerId: this.ownerId, status: "proposed",
+          createdAt: now, updatedAt: now,
+        }, true),
+      ]);
       return;
     }
     if (c.action === "updateAdaptiveProposal") {
@@ -801,8 +818,8 @@ export class D1TrainingRepository implements TrainingRepository {
               e.name,
             ).run();
             await this.query(
-              "UPDATE exercises SET enabled=1 WHERE id=?",
-              existingById.id,
+              "UPDATE exercises SET enabled=1,name=?,shortName=? WHERE id=?",
+              e.name, e.shortName, existingById.id,
             ).run();
             continue;
           }
@@ -815,11 +832,11 @@ export class D1TrainingRepository implements TrainingRepository {
           ).first<{ id: string; enabled: number }>();
           if (existingByName?.enabled) continue;
         }
-        await this.insert("exercises", {
+        await this.insert("exercises", databaseExercise({
           ...e,
           id,
           ownerId: this.ownerId,
-        }).run();
+        })).run();
       }
       return;
     }
@@ -1379,6 +1396,19 @@ function parseJsonObject(value: unknown): Record<string, number> {
   }
 }
 
+function databaseExercise(exercise: object) {
+  const {
+    stimulus: _stimulus, muscleTargets: _muscleTargets, exerciseFamily: _exerciseFamily,
+    preference: _preference, fatigueCost: _fatigueCost, planningStatus: _planningStatus,
+    autoSelectable: _autoSelectable, referenceExercise: _referenceExercise,
+    loadConvention: _loadConvention, defaultRestSeconds: _defaultRestSeconds,
+    prescriptionUnit: _prescriptionUnit, unilateralPerSide: _unilateralPerSide,
+    autoSuggestRequiresEquipmentMatch: _autoSuggestRequiresEquipmentMatch,
+    selectionNotes: _selectionNotes, ...row
+  } = exercise as Record<string, unknown>;
+  return row;
+}
+
 function parseJsonArray(value: unknown): string[] {
   try {
     const parsed = JSON.parse(typeof value === "string" ? value : "[]");
@@ -1387,5 +1417,27 @@ function parseJsonArray(value: unknown): string[] {
       : [];
   } catch {
     return [];
+  }
+}
+
+function parseExerciseMetadata(value: unknown): Pick<Exercise,
+  "stimulus" | "muscleTargets" | "exerciseFamily" | "preference" |
+  "fatigueCost" | "planningStatus" | "autoSelectable" | "referenceExercise" |
+  "loadConvention" | "defaultRestSeconds" | "prescriptionUnit" |
+  "unilateralPerSide" | "autoSuggestRequiresEquipmentMatch" | "selectionNotes"
+> {
+  const fallback = {
+    stimulus: [], muscleTargets: { primary: [], secondary: [] }, exerciseFamily: "legacy",
+    preference: 3, fatigueCost: 3, planningStatus: "legacy_only" as const,
+    autoSelectable: false, referenceExercise: false, loadConvention: "unknown",
+    defaultRestSeconds: 90, prescriptionUnit: "repetitions" as const,
+    unilateralPerSide: false, autoSuggestRequiresEquipmentMatch: true, selectionNotes: "",
+  };
+  if (typeof value !== "string") return fallback;
+  try {
+    const parsed = JSON.parse(value) as Partial<typeof fallback>;
+    return { ...fallback, ...parsed };
+  } catch {
+    return fallback;
   }
 }

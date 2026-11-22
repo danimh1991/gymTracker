@@ -33,6 +33,7 @@ import {
   ADAPTIVE_RULES_VERSION,
   buildAdaptiveContext,
   deterministicPlan,
+  exerciseStimulus,
   validateAdaptivePlan,
 } from "../services/adaptive-planner";
 import {
@@ -1304,16 +1305,59 @@ test("el plan adaptativo respeta tiempo, bloqueos y funciona sin historial", asy
   sql.close();
 });
 
+test("adaptive-1.1 usa estímulos estructurados y estados del catálogo autoritativo", async () => {
+  const { db, sql } = database();
+  const data = await new D1TrainingRepository(db, "adaptive-catalog:real").snapshot();
+  assert.equal(data.exercises.length >= 104, true);
+  assert.equal(data.exercises.filter((exercise) => exercise.planningStatus === "active").length, 87);
+  assert.equal(data.exercises.filter((exercise) => exercise.planningStatus === "manual_only").length, 15);
+  assert.equal(data.exercises.filter((exercise) => exercise.planningStatus === "legacy_only").length, 2);
+  assert.deepEqual(exerciseStimulus(data.exercises.find((exercise) => exercise.id === "side-bench-crunch")!).primary, ["core"]);
+  assert.deepEqual(exerciseStimulus(data.exercises.find((exercise) => exercise.id === "pullup")!).primary, ["vertical_pull"]);
+  assert.deepEqual(exerciseStimulus(data.exercises.find((exercise) => exercise.id === "pullup")!).secondary.sort(), ["biceps", "forearms_grip"]);
+  assert.ok(!exerciseStimulus(data.exercises.find((exercise) => exercise.id === "ez-bar-curl")!).primary.includes("horizontal_pull"));
+  assert.deepEqual(exerciseStimulus(data.exercises.find((exercise) => exercise.id === "side-plank")!).primary, ["core"]);
+  sql.close();
+});
+
+test("adaptive-1.1 penaliza exceso reciente y respeta equipamiento restringido", async () => {
+  const { db, sql } = database();
+  const data = await new D1TrainingRepository(db, "adaptive-equipment:real").snapshot();
+  const now = new Date("2026-11-22T20:00:00.000Z");
+  const baseline = buildAdaptiveContext(data, now).needs.find((need) => need.group === "chest")!;
+  data.workouts.push({ id: "recent-chest", dayId: "A", status: "completed", startedAt: "2026-11-22T18:00:00.000Z", finishedAt: "2026-11-22T19:00:00.000Z", bodyweight: null, notes: "", templateName: "", isFreeDay: 0, sessionType: "adaptive", proposalId: null });
+  data.workoutExercises.push({ id: "recent-dip", workoutId: "recent-chest", dayId: "A", exerciseId: "dip", name: "Fondos", position: 0, sets: 10, repMin: 5, repMax: 10, rir: "1", optional: 0, notes: "", priority: "", metricType: "reps", bodyweightExercise: 1, supportsAssistance: 0, supportsAddedWeight: 1, variant: "", nextLoadAction: null });
+  for (let index = 0; index < 10; index++) data.sets.push({ id: `recent-set-${index}`, workoutId: "recent-chest", workoutExerciseId: "recent-dip", exerciseId: "dip", setNumber: index + 1, reps: 8, weight: null, bodyweight: 86, assistanceWeight: null, addedWeight: null, RIR: 1, RPE: 9, durationSeconds: null, distance: null, notes: "", completed: 1, timestamp: "2026-11-22T18:30:00.000Z" });
+  const chest = buildAdaptiveContext(data, now).needs.find((need) => need.group === "chest")!;
+  assert.ok(chest.score < baseline.score);
+  assert.ok(chest.excessRatio > 0);
+  const plan = deterministicPlan(data, { durationMinutes: 50, energy: "normal", blockedExerciseIds: [], equipment: ["Peso corporal", "Barra de dominadas", "Paralelas"] }, buildAdaptiveContext(data, now));
+  assert.ok(plan.every((row) => {
+    const exercise = data.exercises.find((item) => item.id === row.exerciseId)!;
+    return !exercise.autoSuggestRequiresEquipmentMatch || ["Peso corporal", "Barra de dominadas", "Paralelas"].includes(exercise.equipment);
+  }));
+  assert.ok(plan.every((row) => data.exercises.find((exercise) => exercise.id === row.exerciseId)?.planningStatus === "active"));
+  sql.close();
+});
+
 test("la validación del LLM rechaza IDs inventados y sesiones imposibles", async () => {
   const { db, sql } = database();
   const data = await new D1TrainingRepository(db, "adaptive-validation:real").snapshot();
   const constraints = { durationMinutes: 30 as const, energy: "normal" as const, blockedExerciseIds: [], equipment: [] };
+  const llmRow = (exerciseId: string, order = 1) => ({
+    exerciseId, order, targetGroup: "vertical_pull" as const, sets: 3,
+    repMin: 5, repMax: 10, rir: "2", optional: 0, notes: "", priority: "Prioritario",
+    restSeconds: 180, suggestedLoad: { kind: "calibration" as const, valueKg: null, confidence: "low" as const },
+    reason: "Prueba", alternatives: [], estimatedSeconds: 1000,
+  });
   assert.throws(() => validateAdaptivePlan(data, {
-    exercises: [{ exerciseId: "inventado", sets: 3, repMin: 8, repMax: 12, rir: "2", optional: 0, notes: "", priority: "Prioritario" }],
+    schemaVersion: "adaptive-session-1.1",
+    exercises: [llmRow("inventado")],
     rationale: ["Prueba"],
   }, constraints), /no disponibles/);
   assert.throws(() => validateAdaptivePlan(data, {
-    exercises: ["pullup", "dip", "row", "pushup"].map((exerciseId) => ({ exerciseId, sets: 5, repMin: 5, repMax: 10, rir: "2", optional: 0, notes: "", priority: "Prioritario" })),
+    schemaVersion: "adaptive-session-1.1",
+    exercises: ["pullup", "dip", "row", "pushup"].map((exerciseId, index) => llmRow(exerciseId, index + 1)),
     rationale: ["Prueba"],
   }, constraints), /tiempo disponible/);
   sql.close();

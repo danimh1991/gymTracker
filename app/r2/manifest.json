@@ -1,27 +1,34 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-11-22T00:00:00.000Z",
+  "generatedAt": "2026-11-22T22:00:00.000Z",
   "entries": [
+    {
+      "key": "gym-tracker/v1/catalog/exercises.json",
+      "kind": "catalog",
+      "contentType": "application/json",
+      "version": 2,
+      "updatedAt": "2026-11-22T22:00:00.000Z"
+    },
     {
       "key": "gym-tracker/v1/guidance/training-domain.md",
       "kind": "guidance",
       "contentType": "text/markdown",
-      "version": 1,
-      "updatedAt": "2026-11-22T00:00:00.000Z"
+      "version": 2,
+      "updatedAt": "2026-11-22T22:00:00.000Z"
     },
     {
       "key": "gym-tracker/v1/schemas/session-context.schema.json",
       "kind": "schema",
       "contentType": "application/json",
-      "version": 1,
-      "updatedAt": "2026-11-22T00:00:00.000Z"
+      "version": 2,
+      "updatedAt": "2026-11-22T22:00:00.000Z"
     },
     {
       "key": "gym-tracker/v1/schemas/adaptive-session.schema.json",
       "kind": "schema",
       "contentType": "application/json",
-      "version": 1,
-      "updatedAt": "2026-11-22T00:00:00.000Z"
+      "version": 2,
+      "updatedAt": "2026-11-22T22:00:00.000Z"
     }
   ]
 }

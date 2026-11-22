@@ -12,10 +12,17 @@ export type MuscleGroup =
   | "lateral_rear_delts"
   | "biceps"
   | "triceps"
-  | "quadriceps"
+  | "quads"
   | "posterior_chain"
   | "core"
-  | "calves";
+  | "calves"
+  | "forearms_grip";
+export type PlanningStatus = "active" | "manual_only" | "legacy_only";
+export interface ExerciseStimulus {
+  group: MuscleGroup;
+  weight: number;
+  direct: boolean;
+}
 export interface TrainerSettings {
   trainingDays: number;
   adaptiveEnabled: number;
@@ -25,6 +32,7 @@ export interface TrainerSettings {
   priorities: Record<MuscleGroup, number>;
   exercisePreferences: Record<string, number>;
   availableEquipment: string[];
+  equipmentConfigured: number;
 }
 export interface UserProfile {
   id: string;
@@ -50,6 +58,20 @@ export interface Exercise {
   notes: string;
   enabled: number;
   ownerId?: string | null;
+  stimulus: ExerciseStimulus[];
+  muscleTargets: { primary: string[]; secondary: string[] };
+  exerciseFamily: string;
+  preference: number;
+  fatigueCost: number;
+  planningStatus: PlanningStatus;
+  autoSelectable: boolean;
+  referenceExercise: boolean;
+  loadConvention: string;
+  defaultRestSeconds: number;
+  prescriptionUnit: "repetitions" | "seconds";
+  unilateralPerSide: boolean;
+  autoSuggestRequiresEquipmentMatch: boolean;
+  selectionNotes?: string;
 }
 export interface Template {
   id: string;
@@ -70,6 +92,17 @@ export interface PlanExercise {
   optional: number;
   notes: string;
   priority: string;
+  order?: number;
+  targetGroup?: MuscleGroup;
+  restSeconds?: number;
+  suggestedLoad?: {
+    kind: "bodyweight" | "added_weight" | "assistance" | "external" | "calibration";
+    valueKg: number | null;
+    confidence: "low" | "medium" | "high";
+  };
+  reason?: string;
+  alternatives?: string[];
+  estimatedSeconds?: number;
 }
 export interface RoutineDay {
   id: DayKey;
@@ -131,12 +164,29 @@ export interface AdaptiveNeed {
   indirectSets10d: number;
   daysSinceExposure: number | null;
   recovery: number;
+  targetSets10d: number;
+  excessRatio: number;
+  indirectStimulus10d: number;
+  fatigue72h: number;
+  exposureCount28d: number;
+  components: {
+    structural: number;
+    deficit: number;
+    overdue: number;
+    readiness: number;
+    excessPenalty: number;
+    recentPenalty: number;
+  };
 }
 export interface AdaptiveContext {
   generatedAt: string;
   recentWorkoutCount: number;
   completedSets10d: number;
   needs: AdaptiveNeed[];
+  rulesVersion: string;
+  catalogVersion: string;
+  rulesHash?: string;
+  equipmentState: "configured" | "unknown";
 }
 export interface WorkoutExercise extends RoutineExercise {
   workoutId: string;

@@ -44,6 +44,19 @@ function exercise(
     defaultRIR: "1–2",
     notes,
     enabled: 1,
+    stimulus: [],
+    muscleTargets: { primary: [], secondary: [] },
+    exerciseFamily: id,
+    preference: 3,
+    fatigueCost: 3,
+    planningStatus: "legacy_only",
+    autoSelectable: false,
+    referenceExercise: false,
+    loadConvention: bw ? "bodyweight_plus_last" : "external_kg_equipment_specific",
+    defaultRestSeconds: 90,
+    prescriptionUnit: metric === "time" ? "seconds" : "repetitions",
+    unilateralPerSide: false,
+    autoSuggestRequiresEquipmentMatch: !bw,
   };
 }
 export const initialExercises: Exercise[] = [

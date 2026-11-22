@@ -6,6 +6,7 @@ declare namespace Cloudflare {
     LLM_WORKER_URL?: string;
     LLM_WORKER_TOKEN?: string;
     LLM_HEALTH_PATH?: string;
+    AI?: Ai;
     GYM_SINGLE_USER_MODE?: string;
     GYM_SINGLE_USER_ID?: string;
     GYM_SINGLE_USER_EMAIL?: string;

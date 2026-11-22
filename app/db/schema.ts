@@ -33,6 +33,17 @@ export const exercises = sqliteTable("exercises", {
   enabled: integer("enabled").notNull(),
   ownerId: text("ownerId"),
 });
+export const exerciseAdaptiveMetadata = sqliteTable("exerciseAdaptiveMetadata", {
+  exerciseId: text("exerciseId").primaryKey().references(() => exercises.id),
+  catalogVersion: text("catalogVersion").notNull(),
+  metadataJson: text("metadataJson").notNull(),
+  updatedAt: text("updatedAt").notNull(),
+});
+export const exerciseAliases = sqliteTable("exerciseAliases", {
+  aliasId: text("aliasId").primaryKey(),
+  canonicalExerciseId: text("canonicalExerciseId").notNull().references(() => exercises.id),
+  policy: text("policy").notNull(),
+});
 export const exerciseOverrides = sqliteTable(
   "exerciseOverrides",
   {

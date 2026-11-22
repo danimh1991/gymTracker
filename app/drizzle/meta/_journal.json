@@ -64,6 +64,13 @@
       "when": 1795348800000,
       "tag": "0008_adaptive_coach",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1795388400000,
+      "tag": "0009_adaptive_1_1",
+      "breakpoints": true
     }
   ]
 }

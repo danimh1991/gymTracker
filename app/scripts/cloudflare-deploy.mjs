@@ -53,6 +53,7 @@ config.r2_buckets = [
     jurisdiction: "eu",
   },
 ];
+config.ai = { binding: "AI" };
 writeFileSync(wranglerPath, `${JSON.stringify(config, null, 2)}\n`);
 
 if (command === "build") {

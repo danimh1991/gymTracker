@@ -1,0 +1,5306 @@
+{
+  "version": 2,
+  "catalogVersion": "adaptive-2.0-full-2026-11-22",
+  "snapshotType": "authoritative_full_snapshot",
+  "createdAt": "2026-11-22",
+  "dataSafety": {
+    "historicalExerciseIdsMustRemainResolvable": true,
+    "existingWorkoutAndSetRecordsImmutable": true,
+    "applyMode": "validated_upsert_then_soft_archive_excess_active_entries",
+    "neverExecuteBlindDeleteOrForeignKeyCascade": true,
+    "legacyRecordsNotSelectableByPlanner": true,
+    "notes": "Este fichero reemplaza la configuración del catálogo activo y sus reglas, NO los entrenamientos históricos ni las referencias de ejercicios utilizadas por ellos."
+  },
+  "planningDefaults": {
+    "priorityScale": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "preferenceScale": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "importanceByStimulus": {
+      "vertical_pull": 5,
+      "horizontal_pull": 4,
+      "chest": 4,
+      "vertical_push": 3,
+      "lateral_rear_delts": 4,
+      "biceps": 4,
+      "triceps": 4,
+      "quads": 3,
+      "posterior_chain": 3,
+      "core": 2,
+      "calves": 2,
+      "forearms_grip": 2
+    },
+    "timeWindowDays": 10,
+    "recentRecoveryWindowHours": 72,
+    "defaultSessionSeriesRange": [
+      14,
+      16
+    ],
+    "defaultSessionExerciseRange": [
+      5,
+      6
+    ],
+    "defaultSessionMinutesRange": [
+      45,
+      65
+    ],
+    "stimulusWeightsAreHeuristicsNotEquivalentHardSets": true,
+    "fallbackRepRangesOnly": "Los rangos por defecto son orientativos; historial comparable y recuperación preceden a la prescripción.",
+    "planningStatusSemantics": {
+      "active": "Elegible para selección automática y manual",
+      "manual_only": "Visible y seleccionable por usuario, nunca elegido por el planificador salvo solicitud explícita",
+      "legacy_only": "Conservar ID histórico y sus registros; ocultar de selección nueva; nunca borrar físicamente"
+    },
+    "fatigueCostScale": {
+      "1": "Bajo",
+      "2": "Bajo-moderado",
+      "3": "Moderado",
+      "4": "Alto",
+      "5": "Muy alto"
+    },
+    "stimulusSemantics": "Peso 1.0=objetivo directo dentro de ese eje, 0.xx=colaboración orientativa; no transformar automáticamente 0.35 en 0.35 series duras equivalentes.",
+    "equipmentPolicy": "Nunca dar por disponible una máquina no confirmada. Filtrar por equipamiento del lugar y permitir sustitución.",
+    "subgroupCoveragePolicy": "Para cadena posterior distinguir isquios (flexión rodilla / bisagra) y glúteos (extensión cadera); para hombros distinguir lateral y posterior; para gemelos incluir rodilla flexionada y extendida si procede.",
+    "historicalUsageCountPolicy": "Campo informativo calculado con el export de 2026-11-22; usar consulta viva a base de datos para planificar, no este conteo congelado.",
+    "recommendationPolicy": "Prescripciones iniciales, preferencia y fatiga son propuestas para revisar; no inferir aceptación solo por haber realizado un ejercicio."
+  },
+  "legacyAliases": [
+    {
+      "id": "custom-0b757bbe-431b-4620-9516-33f58107c111",
+      "canonicalExerciseId": "plank",
+      "policy": "resolve-only; no rewriting history"
+    },
+    {
+      "id": "custom-ae13dd83-7831-49c2-b986-445669a2f50f",
+      "canonicalExerciseId": "ez-bar-curl",
+      "policy": "resolve-only; no rewriting history"
+    }
+  ],
+  "exerciseCount": 104,
+  "exercises": [
+    {
+      "id": "situp",
+      "name": "Abdominales (Sit-ups)",
+      "shortName": "Sit-ups",
+      "type": "calisthenics",
+      "movementPattern": "core_flexion",
+      "primaryMuscles": "Core",
+      "secondaryMuscles": "Flexores de cadera",
+      "equipment": "Peso corporal",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 10,
+      "defaultRepMax": 20,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "core",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "situp",
+      "preference": 3,
+      "fatigueCost": 2,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 7,
+      "defaultRestSeconds": 90,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "rectus_abdominis"
+        ],
+        "secondary": [
+          "hip_flexors"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "v-up",
+      "name": "Abdominales en V (V-Ups)",
+      "shortName": "V-Ups",
+      "type": "calisthenics",
+      "movementPattern": "core_flexion",
+      "primaryMuscles": "Core",
+      "secondaryMuscles": "Flexores de cadera",
+      "equipment": "Peso corporal",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 8,
+      "defaultRepMax": 15,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "core",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "v-up",
+      "preference": 3,
+      "fatigueCost": 2,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 3,
+      "defaultRestSeconds": 90,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "rectus_abdominis"
+        ],
+        "secondary": [
+          "hip_flexors"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "side-bench-crunch",
+      "name": "Abdominales laterales en banco",
+      "shortName": "Abd. laterales banco",
+      "type": "gym",
+      "movementPattern": "core_lateral_flexion",
+      "primaryMuscles": "Oblicuos / core",
+      "secondaryMuscles": "",
+      "equipment": "Banco",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 10,
+      "defaultRepMax": 20,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "selectionNotes": "Preferencia baja; no colocar antes de dominadas/fondos sin motivo explícito.",
+      "stimulus": [
+        {
+          "group": "core",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "side-bench-crunch",
+      "preference": 2,
+      "fatigueCost": 3,
+      "planningStatus": "manual_only",
+      "autoSelectable": false,
+      "referenceExercise": false,
+      "historicalUsageCount": 20,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "obliques"
+        ],
+        "secondary": [
+          "rectus_abdominis"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "pec-deck-fly",
+      "name": "Aperturas en máquina",
+      "shortName": "Aperturas máquina",
+      "type": "gym",
+      "movementPattern": "chest_fly",
+      "primaryMuscles": "Pecho",
+      "secondaryMuscles": "Deltoides anterior",
+      "equipment": "Máquina",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 10,
+      "defaultRepMax": 15,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "chest",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "pec-deck-fly",
+      "preference": 3,
+      "fatigueCost": 2,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 15,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "pectoralis_major"
+        ],
+        "secondary": [
+          "anterior_deltoid"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "cable-fly",
+      "name": "Aperturas en polea",
+      "shortName": "Aperturas polea",
+      "type": "gym",
+      "movementPattern": "chest_fly",
+      "primaryMuscles": "Pecho",
+      "secondaryMuscles": "Deltoides anterior",
+      "equipment": "Polea",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 10,
+      "defaultRepMax": 15,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "chest",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "cable-fly",
+      "preference": 3,
+      "fatigueCost": 2,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 9,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "pectoralis_major"
+        ],
+        "secondary": [
+          "anterior_deltoid"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "flat-db-fly",
+      "name": "Aperturas planas con mancuernas",
+      "shortName": "Aperturas mancuernas",
+      "type": "gym",
+      "movementPattern": "chest_fly",
+      "primaryMuscles": "Pecho",
+      "secondaryMuscles": "Deltoides anterior",
+      "equipment": "Mancuernas / banco",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 15,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "chest",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "flat-db-fly",
+      "preference": 3,
+      "fatigueCost": 2,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 2,
+      "defaultRestSeconds": 90,
+      "loadConvention": "per_dumbbell_kg",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "pectoralis_major"
+        ],
+        "secondary": [
+          "anterior_deltoid"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "rear-delt-fly",
+      "name": "Aperturas posteriores (Rear Delt Fly)",
+      "shortName": "Rear delt fly",
+      "type": "gym",
+      "movementPattern": "rear_delt_isolation",
+      "primaryMuscles": "Deltoides posterior",
+      "secondaryMuscles": "Espalda alta",
+      "equipment": "Mancuernas o máquina (especificar)",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 12,
+      "defaultRepMax": 20,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "selectionNotes": "Variante genérica; preferir reverse pec-deck o apertura posterior en polea.",
+      "stimulus": [
+        {
+          "group": "lateral_rear_delts",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "horizontal_pull",
+          "weight": 0.15,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "rear_delt_fly",
+      "preference": 3,
+      "fatigueCost": 1,
+      "planningStatus": "manual_only",
+      "autoSelectable": false,
+      "referenceExercise": false,
+      "historicalUsageCount": 9,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "posterior_deltoid"
+        ],
+        "secondary": [
+          "mid_upper_back"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "dead-bug",
+      "name": "Bicho muerto (Dead Bug)",
+      "shortName": "Dead bug",
+      "type": "calisthenics",
+      "movementPattern": "core_anti_extension",
+      "primaryMuscles": "Core",
+      "secondaryMuscles": "",
+      "equipment": "Peso corporal",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 15,
+      "defaultRIR": "Técnica",
+      "notes": "Mantener la zona lumbar estable.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "core",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "dead-bug",
+      "preference": 3,
+      "fatigueCost": 1,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 15,
+      "defaultRestSeconds": 90,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "rectus_abdominis",
+          "deep_core"
+        ],
+        "secondary": []
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "crunch",
+      "name": "Crunch abdominal",
+      "shortName": "Crunch",
+      "type": "calisthenics",
+      "movementPattern": "core_flexion",
+      "primaryMuscles": "Core",
+      "secondaryMuscles": "",
+      "equipment": "Peso corporal",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 12,
+      "defaultRepMax": 20,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "core",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "crunch",
+      "preference": 3,
+      "fatigueCost": 1,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 14,
+      "defaultRestSeconds": 90,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "rectus_abdominis"
+        ],
+        "secondary": [
+          "hip_flexors"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "cable-crunch",
+      "name": "Crunch en polea",
+      "shortName": "Crunch polea",
+      "type": "gym",
+      "movementPattern": "core_flexion",
+      "primaryMuscles": "Core",
+      "secondaryMuscles": "",
+      "equipment": "Polea alta",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 10,
+      "defaultRepMax": 15,
+      "defaultRIR": "1–2",
+      "notes": "Flexión de tronco con recorrido controlado; evitar traccionar con brazos.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "core",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "cable-crunch",
+      "preference": 3,
+      "fatigueCost": 2,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 1,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "rectus_abdominis"
+        ],
+        "secondary": [
+          "hip_flexors"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "custom-ae13dd83-7831-49c2-b986-445669a2f50f",
+      "name": "Curl biceps con barra Z",
+      "shortName": "Curl biceps con barra Z",
+      "type": "gym",
+      "movementPattern": "elbow_flexion",
+      "primaryMuscles": "Bíceps",
+      "secondaryMuscles": "Braquial / antebrazo",
+      "equipment": "Barra EZ",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "ID histórico equivalente al curl con barra EZ. Conservado para integridad; seleccionar ez-bar-curl para nuevos entrenamientos.",
+      "enabled": 0,
+      "ownerId": "danieta-gymtracker:real",
+      "selectionNotes": "Alias histórico. No elegir automáticamente.",
+      "canonicalExerciseId": "ez-bar-curl",
+      "stimulus": [
+        {
+          "group": "biceps",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "bar_curl",
+      "preference": 3,
+      "fatigueCost": 2,
+      "planningStatus": "legacy_only",
+      "autoSelectable": false,
+      "referenceExercise": false,
+      "historicalUsageCount": 2,
+      "defaultRestSeconds": 90,
+      "loadConvention": "barbell_total_kg_verify_history",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "biceps_brachii",
+          "brachialis"
+        ],
+        "secondary": [
+          "brachioradialis"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "ez-bar-curl",
+      "name": "Curl con barra EZ",
+      "shortName": "Curl barra EZ",
+      "type": "gym",
+      "movementPattern": "elbow_flexion",
+      "primaryMuscles": "Bíceps",
+      "secondaryMuscles": "Braquial / antebrazo",
+      "equipment": "Barra EZ",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "biceps",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "bar_curl",
+      "preference": 3,
+      "fatigueCost": 1,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 32,
+      "defaultRestSeconds": 90,
+      "loadConvention": "barbell_total_kg_verify_history",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "biceps_brachii",
+          "brachialis"
+        ],
+        "secondary": [
+          "brachioradialis"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "curl",
+      "name": "Curl de bíceps",
+      "shortName": "Curl de bíceps",
+      "type": "gym",
+      "movementPattern": "elbow_flexion",
+      "primaryMuscles": "Bíceps",
+      "secondaryMuscles": "",
+      "equipment": "Gimnasio",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": null,
+      "selectionNotes": "Nombre genérico sin implemento especificado; elegir variante concreta para nuevas sesiones.",
+      "stimulus": [
+        {
+          "group": "biceps",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "free_curl",
+      "preference": 3,
+      "fatigueCost": 2,
+      "planningStatus": "manual_only",
+      "autoSelectable": false,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "biceps_brachii",
+          "brachialis"
+        ],
+        "secondary": [
+          "brachioradialis"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "backpack-curl",
+      "name": "Curl de bíceps con mochila",
+      "shortName": "Curl mochila",
+      "type": "calisthenics",
+      "movementPattern": "elbow_flexion",
+      "primaryMuscles": "Bíceps",
+      "secondaryMuscles": "Antebrazo",
+      "equipment": "Casa / mochila",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 10,
+      "defaultRepMax": 15,
+      "defaultRIR": "1–2",
+      "notes": "Usar una mochila resistente y una carga estable.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "biceps",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "backpack-curl",
+      "preference": 3,
+      "fatigueCost": 2,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "biceps_brachii",
+          "brachialis"
+        ],
+        "secondary": [
+          "brachioradialis"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "bodyweight-biceps-curl",
+      "name": "Curl de bíceps en barra baja",
+      "shortName": "Curl bíceps barra",
+      "type": "calisthenics",
+      "movementPattern": "elbow_flexion",
+      "primaryMuscles": "Bíceps",
+      "secondaryMuscles": "Antebrazo",
+      "equipment": "Barra baja / anillas",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 8,
+      "defaultRepMax": 15,
+      "defaultRIR": "1–2",
+      "notes": "Mantener el cuerpo rígido y flexionar principalmente el codo.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "biceps",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "bodyweight-biceps-curl",
+      "preference": 3,
+      "fatigueCost": 2,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 90,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "biceps_brachii",
+          "brachialis"
+        ],
+        "secondary": [
+          "brachioradialis"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "concentration-curl",
+      "name": "Curl de concentración",
+      "shortName": "Curl concentración",
+      "type": "gym",
+      "movementPattern": "elbow_flexion",
+      "primaryMuscles": "Bíceps",
+      "secondaryMuscles": "",
+      "equipment": "Mancuerna",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "biceps",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "concentration-curl",
+      "preference": 3,
+      "fatigueCost": 2,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 7,
+      "defaultRestSeconds": 90,
+      "loadConvention": "per_dumbbell_kg",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "biceps_brachii",
+          "brachialis"
+        ],
+        "secondary": [
+          "brachioradialis"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "cable-curl",
+      "name": "Curl en polea",
+      "shortName": "Curl polea",
+      "type": "gym",
+      "movementPattern": "elbow_flexion",
+      "primaryMuscles": "Bíceps",
+      "secondaryMuscles": "Antebrazo",
+      "equipment": "Polea",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 15,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "biceps",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "cable-curl",
+      "preference": 3,
+      "fatigueCost": 1,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 10,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "biceps_brachii",
+          "brachialis"
+        ],
+        "secondary": [
+          "brachioradialis"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "single-arm-cable-curl",
+      "name": "Curl en polea a una mano",
+      "shortName": "Curl polea unilateral",
+      "type": "gym",
+      "movementPattern": "elbow_flexion",
+      "primaryMuscles": "Bíceps",
+      "secondaryMuscles": "Antebrazo",
+      "equipment": "Polea",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 15,
+      "defaultRIR": "1–2",
+      "notes": "Repeticiones por brazo.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "biceps",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "single-arm-cable-curl",
+      "preference": 3,
+      "fatigueCost": 2,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 5,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "biceps_brachii",
+          "brachialis"
+        ],
+        "secondary": [
+          "brachioradialis"
+        ]
+      },
+      "unilateralPerSide": true,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "hammer-curl",
+      "name": "Curl martillo",
+      "shortName": "Curl martillo",
+      "type": "gym",
+      "movementPattern": "elbow_flexion",
+      "primaryMuscles": "Bíceps / braquiorradial",
+      "secondaryMuscles": "Antebrazo",
+      "equipment": "Mancuernas",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "Útil para bíceps y braquiorradial; transferencia al agarre y tirón.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "biceps",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "hammer-curl",
+      "preference": 4,
+      "fatigueCost": 1,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 7,
+      "defaultRestSeconds": 90,
+      "loadConvention": "per_dumbbell_kg",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "brachialis",
+          "brachioradialis"
+        ],
+        "secondary": [
+          "biceps_brachii"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "front-db-curl",
+      "name": "Curl por delante con mancuerna",
+      "shortName": "Curl mancuerna frontal",
+      "type": "gym",
+      "movementPattern": "elbow_flexion",
+      "primaryMuscles": "Bíceps",
+      "secondaryMuscles": "Antebrazo",
+      "equipment": "Mancuerna",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "biceps",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "free_curl",
+      "preference": 3,
+      "fatigueCost": 2,
+      "planningStatus": "manual_only",
+      "autoSelectable": false,
+      "referenceExercise": false,
+      "historicalUsageCount": 1,
+      "defaultRestSeconds": 90,
+      "loadConvention": "per_dumbbell_kg",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "biceps_brachii",
+          "brachialis"
+        ],
+        "secondary": [
+          "brachioradialis"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "preacher-curl-machine",
+      "name": "Curl predicador en máquina",
+      "shortName": "Curl predicador",
+      "type": "gym",
+      "movementPattern": "elbow_flexion",
+      "primaryMuscles": "Bíceps",
+      "secondaryMuscles": "Braquial",
+      "equipment": "Máquina",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "biceps",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "preacher-curl-machine",
+      "preference": 4,
+      "fatigueCost": 1,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 5,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "biceps_brachii",
+          "brachialis"
+        ],
+        "secondary": [
+          "brachioradialis"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "dead-hang",
+      "name": "Dead hang",
+      "shortName": "Dead hang",
+      "type": "calisthenics",
+      "movementPattern": "grip_hang",
+      "primaryMuscles": "Agarre / flexores de dedos",
+      "secondaryMuscles": "Estabilizadores escapulares",
+      "equipment": "Barra",
+      "metricType": "time",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 20,
+      "defaultRepMax": 60,
+      "defaultRIR": "Técnica",
+      "notes": "Segundos suspendido; opcional, no equivale a series de dominadas.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "core",
+          "weight": 0.1,
+          "direct": false
+        },
+        {
+          "group": "forearms_grip",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "dead-hang",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 75,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "seconds",
+      "muscleTargets": {
+        "primary": [
+          "forearm_grip"
+        ],
+        "secondary": [
+          "scapular_stabilizers"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "seated-dip-machine",
+      "name": "Dips sentado en máquina",
+      "shortName": "Dips máquina",
+      "type": "gym",
+      "movementPattern": "elbow_extension",
+      "primaryMuscles": "Tríceps",
+      "secondaryMuscles": "Pecho / deltoides anterior",
+      "equipment": "Máquina",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "triceps",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "chest",
+          "weight": 0.3,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "seated-dip-machine",
+      "preference": 3,
+      "fatigueCost": 2,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 14,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "triceps_brachii"
+        ],
+        "secondary": [
+          "pectoralis_major",
+          "anterior_deltoid"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "pullup-close",
+      "name": "Dominadas agarre cerrado",
+      "shortName": "Dominadas agarre cerrado",
+      "type": "calisthenics",
+      "movementPattern": "vertical_pull",
+      "primaryMuscles": "Dorsal ancho / espalda",
+      "secondaryMuscles": "Bíceps / braquial",
+      "equipment": "Barra de dominadas",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 4,
+      "defaultRepMax": 8,
+      "defaultRIR": "2",
+      "notes": "Pronación, manos aproximadamente a anchura de hombros; no asumir agarre supino.",
+      "enabled": 1,
+      "ownerId": null,
+      "stimulus": [
+        {
+          "group": "vertical_pull",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "biceps",
+          "weight": 0.4,
+          "direct": false
+        },
+        {
+          "group": "forearms_grip",
+          "weight": 0.15,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "close_pullup",
+      "preference": 4,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 2,
+      "defaultRestSeconds": 90,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "latissimus_dorsi",
+          "upper_back"
+        ],
+        "secondary": [
+          "biceps_brachii",
+          "brachialis"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "pullup-assisted-close",
+      "name": "Dominadas asistidas agarre cerrado",
+      "shortName": "Dominadas asistidas agarre cerrado",
+      "type": "calisthenics",
+      "movementPattern": "vertical_pull",
+      "primaryMuscles": "Dorsal ancho / espalda",
+      "secondaryMuscles": "Bíceps / braquial",
+      "equipment": "Máquina de dominadas asistidas",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 1,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 6,
+      "defaultRepMax": 10,
+      "defaultRIR": "2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": null,
+      "stimulus": [
+        {
+          "group": "vertical_pull",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "biceps",
+          "weight": 0.4,
+          "direct": false
+        },
+        {
+          "group": "forearms_grip",
+          "weight": 0.15,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "close_pullup",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 90,
+      "loadConvention": "bodyweight_plus_last_minus_assistance",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "latissimus_dorsi",
+          "upper_back"
+        ],
+        "secondary": [
+          "biceps_brachii",
+          "brachialis"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "pullup-assisted",
+      "name": "Dominadas asistidas pronas",
+      "shortName": "Dominadas asistidas pronas",
+      "type": "calisthenics",
+      "movementPattern": "vertical_pull",
+      "primaryMuscles": "Dorsal ancho / espalda",
+      "secondaryMuscles": "Bíceps / braquial",
+      "equipment": "Máquina de dominadas asistidas",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 1,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 6,
+      "defaultRepMax": 10,
+      "defaultRIR": "2",
+      "notes": "Registrar kg de asistencia; no equiparar a lastre.",
+      "enabled": 1,
+      "ownerId": null,
+      "stimulus": [
+        {
+          "group": "vertical_pull",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "biceps",
+          "weight": 0.35,
+          "direct": false
+        },
+        {
+          "group": "forearms_grip",
+          "weight": 0.15,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "pronated_pullup",
+      "preference": 4,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 36,
+      "defaultRestSeconds": 90,
+      "loadConvention": "bodyweight_plus_last_minus_assistance",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "latissimus_dorsi",
+          "upper_back"
+        ],
+        "secondary": [
+          "biceps_brachii",
+          "brachialis"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "pullup",
+      "name": "Dominadas pronas",
+      "shortName": "Dominadas pronas",
+      "type": "calisthenics",
+      "movementPattern": "vertical_pull",
+      "primaryMuscles": "Dorsal ancho / espalda",
+      "secondaryMuscles": "Bíceps / braquial",
+      "equipment": "Barra de dominadas",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 4,
+      "defaultRepMax": 8,
+      "defaultRIR": "2",
+      "notes": "Evitar impulso. Pasar la barbilla claramente por encima.",
+      "enabled": 1,
+      "ownerId": null,
+      "selectionNotes": "Ejercicio de referencia; prescribir repeticiones según series históricas y recuperación, no copiar rango por defecto.",
+      "stimulus": [
+        {
+          "group": "vertical_pull",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "biceps",
+          "weight": 0.35,
+          "direct": false
+        },
+        {
+          "group": "forearms_grip",
+          "weight": 0.15,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "pronated_pullup",
+      "preference": 5,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": true,
+      "historicalUsageCount": 18,
+      "defaultRestSeconds": 180,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "latissimus_dorsi",
+          "upper_back"
+        ],
+        "secondary": [
+          "biceps_brachii",
+          "brachialis"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "chinup",
+      "name": "Dominadas supinas",
+      "shortName": "Dominadas supinas",
+      "type": "calisthenics",
+      "movementPattern": "vertical_pull",
+      "primaryMuscles": "Dorsal ancho / espalda",
+      "secondaryMuscles": "Bíceps",
+      "equipment": "Barra de dominadas",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 4,
+      "defaultRepMax": 8,
+      "defaultRIR": "2",
+      "notes": "Agarre supino; distinto de pronación estrecha.",
+      "enabled": 1,
+      "ownerId": null,
+      "stimulus": [
+        {
+          "group": "vertical_pull",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "biceps",
+          "weight": 0.5,
+          "direct": false
+        },
+        {
+          "group": "forearms_grip",
+          "weight": 0.15,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "chinup",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 2,
+      "defaultRestSeconds": 90,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "latissimus_dorsi",
+          "upper_back"
+        ],
+        "secondary": [
+          "biceps_brachii",
+          "brachialis"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "leg",
+      "name": "Elevaciones de piernas colgado",
+      "shortName": "Elevaciones de piernas colgado",
+      "type": "calisthenics",
+      "movementPattern": "core_hip_flexion",
+      "primaryMuscles": "Core",
+      "secondaryMuscles": "",
+      "equipment": "Peso corporal",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "Objetivo futuro: L-sit.",
+      "enabled": 1,
+      "ownerId": null,
+      "stimulus": [
+        {
+          "group": "core",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "core_leg_raise",
+      "preference": 4,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 12,
+      "defaultRestSeconds": 90,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "rectus_abdominis",
+          "hip_flexors"
+        ],
+        "secondary": [
+          "forearm_grip"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "knee",
+      "name": "Elevaciones de rodillas colgado",
+      "shortName": "Elevaciones de rodillas colgado",
+      "type": "calisthenics",
+      "movementPattern": "core_hip_flexion",
+      "primaryMuscles": "Core",
+      "secondaryMuscles": "",
+      "equipment": "Peso corporal",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "Progresar hacia elevaciones de piernas y L-sit.",
+      "enabled": 1,
+      "ownerId": null,
+      "stimulus": [
+        {
+          "group": "core",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "core_leg_raise",
+      "preference": 4,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 1,
+      "defaultRestSeconds": 90,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "rectus_abdominis",
+          "hip_flexors"
+        ],
+        "secondary": [
+          "forearm_grip"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "lateral-raise",
+      "name": "Elevaciones laterales",
+      "shortName": "Elevaciones laterales",
+      "type": "gym",
+      "movementPattern": "shoulder_abduction",
+      "primaryMuscles": "Deltoides lateral",
+      "secondaryMuscles": "",
+      "equipment": "Gimnasio",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 12,
+      "defaultRepMax": 20,
+      "defaultRIR": "1–2",
+      "notes": "Ejercicio genérico; si hay datos de equipo preferir variante específica mancuernas o polea.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "selectionNotes": "Manual hasta aclarar implemento utilizado.",
+      "stimulus": [
+        {
+          "group": "lateral_rear_delts",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "lateral_raise",
+      "preference": 4,
+      "fatigueCost": 1,
+      "planningStatus": "manual_only",
+      "autoSelectable": false,
+      "referenceExercise": false,
+      "historicalUsageCount": 5,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "lateral_deltoid"
+        ],
+        "secondary": []
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "lateral-raise-db",
+      "name": "Elevaciones laterales con mancuernas",
+      "shortName": "Laterales mancuernas",
+      "type": "gym",
+      "movementPattern": "shoulder_abduction",
+      "primaryMuscles": "Deltoides lateral",
+      "secondaryMuscles": "",
+      "equipment": "Mancuernas",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 10,
+      "defaultRepMax": 20,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "lateral_rear_delts",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "lateral_raise",
+      "preference": 4,
+      "fatigueCost": 1,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 15,
+      "defaultRestSeconds": 90,
+      "loadConvention": "per_dumbbell_kg",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "lateral_deltoid"
+        ],
+        "secondary": []
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "lateral-raise-cable",
+      "name": "Elevaciones laterales en polea",
+      "shortName": "Laterales polea",
+      "type": "gym",
+      "movementPattern": "shoulder_abduction",
+      "primaryMuscles": "Deltoides lateral",
+      "secondaryMuscles": "",
+      "equipment": "Polea",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 10,
+      "defaultRepMax": 20,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "lateral_rear_delts",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "lateral_raise",
+      "preference": 4,
+      "fatigueCost": 1,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 19,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "lateral_deltoid"
+        ],
+        "secondary": []
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "front-raise-db",
+      "name": "Elevación frontal con mancuernas",
+      "shortName": "Elevación frontal",
+      "type": "gym",
+      "movementPattern": "shoulder_flexion",
+      "primaryMuscles": "Deltoides anterior",
+      "secondaryMuscles": "",
+      "equipment": "Mancuernas",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 10,
+      "defaultRepMax": 15,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "selectionNotes": "Baja necesidad habitual frente a presses y deltoides lateral/posterior; uso manual.",
+      "stimulus": [
+        {
+          "group": "vertical_push",
+          "weight": 0.5,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "front-raise-db",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "manual_only",
+      "autoSelectable": false,
+      "referenceExercise": false,
+      "historicalUsageCount": 17,
+      "defaultRestSeconds": 90,
+      "loadConvention": "per_dumbbell_kg",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "anterior_deltoid"
+        ],
+        "secondary": []
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "barbell-shrug",
+      "name": "Encogimientos con barra",
+      "shortName": "Encogimientos barra",
+      "type": "gym",
+      "movementPattern": "scapular_elevation",
+      "primaryMuscles": "Trapecio",
+      "secondaryMuscles": "Antebrazo / agarre",
+      "equipment": "Barra",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 15,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "selectionNotes": "Trabajo de trapecio opcional; no cubrir déficit de tracción horizontal con encogimientos.",
+      "stimulus": [
+        {
+          "group": "forearms_grip",
+          "weight": 0.15,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "barbell-shrug",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "manual_only",
+      "autoSelectable": false,
+      "referenceExercise": false,
+      "historicalUsageCount": 9,
+      "defaultRestSeconds": 90,
+      "loadConvention": "barbell_total_kg_verify_history",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "upper_trapezius"
+        ],
+        "secondary": [
+          "forearm_grip"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "overhead-cable-triceps",
+      "name": "Extensiones de tríceps por encima de la cabeza en polea",
+      "shortName": "Tríceps overhead polea",
+      "type": "gym",
+      "movementPattern": "elbow_extension",
+      "primaryMuscles": "Tríceps",
+      "secondaryMuscles": "",
+      "equipment": "Polea",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 10,
+      "defaultRepMax": 15,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "triceps",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "overhead-cable-triceps",
+      "preference": 3,
+      "fatigueCost": 2,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 7,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "triceps_brachii"
+        ],
+        "secondary": []
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "triceps-pushdown",
+      "name": "Extensión de tríceps en polea",
+      "shortName": "Tríceps polea",
+      "type": "gym",
+      "movementPattern": "elbow_extension",
+      "primaryMuscles": "Tríceps",
+      "secondaryMuscles": "",
+      "equipment": "Gimnasio / polea",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 10,
+      "defaultRepMax": 15,
+      "defaultRIR": "1–2",
+      "notes": "Trabajo directo de tríceps.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "triceps",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "cable_triceps_extension",
+      "preference": 3,
+      "fatigueCost": 1,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 10,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "triceps_brachii"
+        ],
+        "secondary": []
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "db-triceps-kickback",
+      "name": "Extensión trasera con mancuerna",
+      "shortName": "Patada tríceps",
+      "type": "gym",
+      "movementPattern": "elbow_extension",
+      "primaryMuscles": "Tríceps",
+      "secondaryMuscles": "",
+      "equipment": "Mancuerna",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 10,
+      "defaultRepMax": 15,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "triceps",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "db-triceps-kickback",
+      "preference": 3,
+      "fatigueCost": 2,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 1,
+      "defaultRestSeconds": 90,
+      "loadConvention": "per_dumbbell_kg",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "triceps_brachii"
+        ],
+        "secondary": []
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "face-pull",
+      "name": "Face pull",
+      "shortName": "Face pull",
+      "type": "gym",
+      "movementPattern": "rear_delt_isolation",
+      "primaryMuscles": "Deltoides posterior / espalda alta",
+      "secondaryMuscles": "Rotadores externos",
+      "equipment": "Gimnasio",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 12,
+      "defaultRepMax": 20,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "lateral_rear_delts",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "horizontal_pull",
+          "weight": 0.2,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "face-pull",
+      "preference": 3,
+      "fatigueCost": 2,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 1,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "posterior_deltoid"
+        ],
+        "secondary": [
+          "mid_upper_back"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "farmer-carry",
+      "name": "Farmer carry / paseo del granjero",
+      "shortName": "Farmer carry",
+      "type": "gym",
+      "movementPattern": "loaded_carry",
+      "primaryMuscles": "Antebrazo / agarre",
+      "secondaryMuscles": "Trapecio / core",
+      "equipment": "Mancuernas / kettlebells / cargas",
+      "metricType": "time",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 20,
+      "defaultRepMax": 45,
+      "defaultRIR": "Técnica",
+      "notes": "Registrar segundos. Caminar erguido y mantener agarre firme.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "selectionNotes": "Baja aceptación histórica; disponible manualmente.",
+      "stimulus": [
+        {
+          "group": "core",
+          "weight": 0.25,
+          "direct": false
+        },
+        {
+          "group": "forearms_grip",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "farmer-carry",
+      "preference": 2,
+      "fatigueCost": 3,
+      "planningStatus": "manual_only",
+      "autoSelectable": false,
+      "referenceExercise": false,
+      "historicalUsageCount": 2,
+      "defaultRestSeconds": 75,
+      "loadConvention": "per_hand_kg",
+      "prescriptionUnit": "seconds",
+      "muscleTargets": {
+        "primary": [
+          "forearm_grip"
+        ],
+        "secondary": [
+          "upper_trapezius",
+          "deep_core"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "pushup",
+      "name": "Flexiones",
+      "shortName": "Flexiones",
+      "type": "calisthenics",
+      "movementPattern": "horizontal_push",
+      "primaryMuscles": "Pecho / tríceps / deltoides",
+      "secondaryMuscles": "",
+      "equipment": "Peso corporal",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": null,
+      "stimulus": [
+        {
+          "group": "chest",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "triceps",
+          "weight": 0.35,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "pushup_progression",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 2,
+      "defaultRestSeconds": 90,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "pectoralis_major"
+        ],
+        "secondary": [
+          "triceps_brachii",
+          "anterior_deltoid"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "decline-pushup",
+      "name": "Flexiones con pies elevados",
+      "shortName": "Flexiones pies elevados",
+      "type": "calisthenics",
+      "movementPattern": "horizontal_push",
+      "primaryMuscles": "Pecho / deltoides",
+      "secondaryMuscles": "Tríceps",
+      "equipment": "Peso corporal",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 6,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "chest",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "triceps",
+          "weight": 0.35,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "pushup_progression",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 90,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "pectoralis_major"
+        ],
+        "secondary": [
+          "triceps_brachii",
+          "anterior_deltoid"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "diamond-pushup",
+      "name": "Flexiones diamante",
+      "shortName": "Flexiones diamante",
+      "type": "calisthenics",
+      "movementPattern": "horizontal_push",
+      "primaryMuscles": "Tríceps / pecho",
+      "secondaryMuscles": "Deltoides anterior",
+      "equipment": "Peso corporal",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 6,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "triceps",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "chest",
+          "weight": 0.55,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "pushup_progression",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 90,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "triceps_brachii",
+          "pectoralis_major"
+        ],
+        "secondary": [
+          "anterior_deltoid"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "pushup-hard",
+      "name": "Flexiones difíciles",
+      "shortName": "Flexiones difíciles",
+      "type": "calisthenics",
+      "movementPattern": "horizontal_push",
+      "primaryMuscles": "Pecho / tríceps / deltoides",
+      "secondaryMuscles": "",
+      "equipment": "Peso corporal",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "ID histórico de flexiones difíciles; variantes antiguas pueden diferir. Para planificar usar ejercicio específico como decline-pushup y no extrapolar progresión sin variante.",
+      "enabled": 1,
+      "ownerId": null,
+      "selectionNotes": "Variante histórica poco precisa; manual si no hay variante explícita.",
+      "stimulus": [
+        {
+          "group": "chest",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "triceps",
+          "weight": 0.35,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "pushup_progression",
+      "preference": 4,
+      "fatigueCost": 3,
+      "planningStatus": "manual_only",
+      "autoSelectable": false,
+      "referenceExercise": false,
+      "historicalUsageCount": 4,
+      "defaultRestSeconds": 90,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "pectoralis_major"
+        ],
+        "secondary": [
+          "triceps_brachii",
+          "anterior_deltoid"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "single-arm-triceps-pushdown",
+      "name": "Fondo en polea a una mano",
+      "shortName": "Tríceps polea unilateral",
+      "type": "gym",
+      "movementPattern": "elbow_extension",
+      "primaryMuscles": "Tríceps",
+      "secondaryMuscles": "",
+      "equipment": "Polea",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 10,
+      "defaultRepMax": 15,
+      "defaultRIR": "1–2",
+      "notes": "Repeticiones por brazo.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "triceps",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "cable_triceps_extension",
+      "preference": 3,
+      "fatigueCost": 2,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 9,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "triceps_brachii"
+        ],
+        "secondary": []
+      },
+      "unilateralPerSide": true,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "dip-assisted-machine",
+      "name": "Fondos asistidos en máquina",
+      "shortName": "Fondos asistidos",
+      "type": "calisthenics",
+      "movementPattern": "dip_push",
+      "primaryMuscles": "Pecho / tríceps",
+      "secondaryMuscles": "Deltoides anterior",
+      "equipment": "Máquina de fondos asistidos",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 1,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 6,
+      "defaultRepMax": 12,
+      "defaultRIR": "2",
+      "notes": "Registrar la asistencia real en kg.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "chest",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "triceps",
+          "weight": 0.65,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "dips",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 4,
+      "defaultRestSeconds": 90,
+      "loadConvention": "bodyweight_plus_last_minus_assistance",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "pectoralis_major",
+          "triceps_brachii"
+        ],
+        "secondary": [
+          "anterior_deltoid"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "dip",
+      "name": "Fondos en paralelas",
+      "shortName": "Fondos en paralelas",
+      "type": "calisthenics",
+      "movementPattern": "dip_push",
+      "primaryMuscles": "Pecho / tríceps",
+      "secondaryMuscles": "Deltoides anterior",
+      "equipment": "Paralelas",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 6,
+      "defaultRepMax": 10,
+      "defaultRIR": "2",
+      "notes": "Descenso controlado. No perder posición escapular.",
+      "enabled": 1,
+      "ownerId": null,
+      "selectionNotes": "Ejercicio de referencia; considerar lastre y peso corporal.",
+      "stimulus": [
+        {
+          "group": "chest",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "triceps",
+          "weight": 0.65,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "dips",
+      "preference": 5,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": true,
+      "historicalUsageCount": 25,
+      "defaultRestSeconds": 180,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "pectoralis_major",
+          "triceps_brachii"
+        ],
+        "secondary": [
+          "anterior_deltoid"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "handstand",
+      "name": "Handstand asistido en pared",
+      "shortName": "Handstand pared",
+      "type": "calisthenics",
+      "movementPattern": "skill_inversion",
+      "primaryMuscles": "Deltoides / tríceps / core",
+      "secondaryMuscles": "",
+      "equipment": "Peso corporal",
+      "metricType": "time",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 15,
+      "defaultRepMax": 30,
+      "defaultRIR": "Técnica",
+      "notes": "Tiempo en segundos. Habilidad avanzada; solo por solicitud explícita. No confundir con pike push-up.",
+      "enabled": 1,
+      "ownerId": null,
+      "stimulus": [
+        {
+          "group": "vertical_push",
+          "weight": 0.6,
+          "direct": false
+        },
+        {
+          "group": "core",
+          "weight": 0.2,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "handstand",
+      "preference": 1,
+      "fatigueCost": 3,
+      "planningStatus": "manual_only",
+      "autoSelectable": false,
+      "referenceExercise": false,
+      "historicalUsageCount": 3,
+      "defaultRestSeconds": 75,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "seconds",
+      "muscleTargets": {
+        "primary": [
+          "anterior_deltoid",
+          "deep_core"
+        ],
+        "secondary": [
+          "triceps_brachii"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "back-extension",
+      "name": "Hiperextensiones lumbares",
+      "shortName": "Hiperextensiones",
+      "type": "gym",
+      "movementPattern": "hip_hinge",
+      "primaryMuscles": "Erectores espinales / glúteos",
+      "secondaryMuscles": "Isquiosurales",
+      "equipment": "Banco de hiperextensiones",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 10,
+      "defaultRepMax": 15,
+      "defaultRIR": "1–2",
+      "notes": "Si hay carga externa, registrar su peso; evitar hiperextensión lumbar.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "posterior_chain",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "back-extension",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 19,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "spinal_erectors",
+          "gluteus_maximus"
+        ],
+        "secondary": [
+          "hamstrings"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "hollow",
+      "name": "Hollow body hold",
+      "shortName": "Hollow body hold",
+      "type": "calisthenics",
+      "movementPattern": "core_anti_extension",
+      "primaryMuscles": "Core",
+      "secondaryMuscles": "",
+      "equipment": "Peso corporal",
+      "metricType": "time",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 15,
+      "defaultRepMax": 40,
+      "defaultRIR": "Técnica",
+      "notes": "Mantener la zona lumbar en contacto con el suelo.",
+      "enabled": 1,
+      "ownerId": null,
+      "stimulus": [
+        {
+          "group": "core",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "hollow",
+      "preference": 3,
+      "fatigueCost": 2,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 75,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "seconds",
+      "muscleTargets": {
+        "primary": [
+          "rectus_abdominis",
+          "deep_core"
+        ],
+        "secondary": []
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "rope-triceps-pushdown",
+      "name": "Jalones de tríceps con cuerda",
+      "shortName": "Tríceps cuerda",
+      "type": "gym",
+      "movementPattern": "elbow_extension",
+      "primaryMuscles": "Tríceps",
+      "secondaryMuscles": "",
+      "equipment": "Polea / cuerda",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 10,
+      "defaultRepMax": 15,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "triceps",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "cable_triceps_extension",
+      "preference": 3,
+      "fatigueCost": 1,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 33,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "triceps_brachii"
+        ],
+        "secondary": []
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "pulldown",
+      "name": "Jalón al pecho",
+      "shortName": "Jalón al pecho",
+      "type": "gym",
+      "movementPattern": "vertical_pull",
+      "primaryMuscles": "Dorsal ancho / espalda",
+      "secondaryMuscles": "Bíceps / braquial",
+      "equipment": "Gimnasio",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "Accesorio para mejorar dominadas.",
+      "enabled": 1,
+      "ownerId": null,
+      "stimulus": [
+        {
+          "group": "vertical_pull",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "biceps",
+          "weight": 0.35,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "pulldown",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 39,
+      "defaultRestSeconds": 180,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "latissimus_dorsi",
+          "upper_back"
+        ],
+        "secondary": [
+          "biceps_brachii",
+          "brachialis"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "neutral-close-pulldown-mag",
+      "name": "Jalón con agarre neutro cerrado (MAG)",
+      "shortName": "Jalón neutro MAG",
+      "type": "gym",
+      "movementPattern": "vertical_pull",
+      "primaryMuscles": "Dorsal ancho / espalda",
+      "secondaryMuscles": "Bíceps / braquial",
+      "equipment": "Polea / agarre MAG",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "vertical_pull",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "biceps",
+          "weight": 0.4,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "pulldown",
+      "preference": 4,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 12,
+      "defaultRestSeconds": 180,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "latissimus_dorsi",
+          "upper_back"
+        ],
+        "secondary": [
+          "biceps_brachii",
+          "brachialis"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "lsit",
+      "name": "L-sit",
+      "shortName": "L-sit",
+      "type": "calisthenics",
+      "movementPattern": "skill_core",
+      "primaryMuscles": "Core",
+      "secondaryMuscles": "",
+      "equipment": "Peso corporal",
+      "metricType": "time",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 5,
+      "defaultRepMax": 20,
+      "defaultRIR": "Técnica",
+      "notes": "Duración en segundos; habilidad avanzada opcional.",
+      "enabled": 1,
+      "ownerId": null,
+      "stimulus": [
+        {
+          "group": "core",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "lsit",
+      "preference": 2,
+      "fatigueCost": 3,
+      "planningStatus": "manual_only",
+      "autoSelectable": false,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 75,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "seconds",
+      "muscleTargets": {
+        "primary": [
+          "rectus_abdominis",
+          "hip_flexors"
+        ],
+        "secondary": [
+          "triceps_brachii"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "pallof-press",
+      "name": "Pallof press",
+      "shortName": "Pallof press",
+      "type": "gym",
+      "movementPattern": "core_anti_rotation",
+      "primaryMuscles": "Core / oblicuos",
+      "secondaryMuscles": "",
+      "equipment": "Gimnasio / polea",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 10,
+      "defaultRepMax": 15,
+      "defaultRIR": "Técnica",
+      "notes": "Anti-rotación en polea; repeticiones por lado. Baja preferencia histórica.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "core",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "pallof-press",
+      "preference": 2,
+      "fatigueCost": 1,
+      "planningStatus": "manual_only",
+      "autoSelectable": false,
+      "referenceExercise": false,
+      "historicalUsageCount": 4,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "obliques",
+          "deep_core"
+        ],
+        "secondary": []
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "db-deadlift",
+      "name": "Peso muerto con mancuernas",
+      "shortName": "Peso muerto mancuernas",
+      "type": "gym",
+      "movementPattern": "hip_hinge",
+      "primaryMuscles": "Isquios / glúteos",
+      "secondaryMuscles": "Erectores espinales",
+      "equipment": "Mancuernas",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "Mantener espalda neutra.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "posterior_chain",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "quads",
+          "weight": 0.25,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "db-deadlift",
+      "preference": 3,
+      "fatigueCost": 4,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 90,
+      "loadConvention": "per_dumbbell_kg",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "hamstrings",
+          "gluteus_maximus"
+        ],
+        "secondary": [
+          "spinal_erectors"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "rdl",
+      "name": "Peso muerto rumano",
+      "shortName": "Peso muerto rumano",
+      "type": "gym",
+      "movementPattern": "hip_hinge",
+      "primaryMuscles": "Isquios / glúteos",
+      "secondaryMuscles": "",
+      "equipment": "Gimnasio",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 10,
+      "defaultRIR": "2–3",
+      "notes": "Mantener espalda neutra.",
+      "enabled": 1,
+      "ownerId": null,
+      "selectionNotes": "Ejercicio genérico con implemento ambiguo; preferir variante específica. Alta fatiga reportada.",
+      "stimulus": [
+        {
+          "group": "posterior_chain",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "rdl",
+      "preference": 2,
+      "fatigueCost": 4,
+      "planningStatus": "manual_only",
+      "autoSelectable": false,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 180,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "hamstrings",
+          "gluteus_maximus"
+        ],
+        "secondary": [
+          "spinal_erectors"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "custom-a615276e-166e-4803-a565-d02e9fc9afbf",
+      "name": "Peso muerto rumano con mancuernas",
+      "shortName": "Peso muerto rumano con mancuernas",
+      "type": "gym",
+      "movementPattern": "hip_hinge",
+      "primaryMuscles": "Isquiosurales / glúteos",
+      "secondaryMuscles": "Erectores espinales",
+      "equipment": "Mancuernas",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 10,
+      "defaultRIR": "2–3",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "selectionNotes": "Alta fatiga general declarada; preferir curl femoral para trabajo de isquios si procede.",
+      "stimulus": [
+        {
+          "group": "posterior_chain",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "rdl",
+      "preference": 2,
+      "fatigueCost": 4,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 5,
+      "defaultRestSeconds": 180,
+      "loadConvention": "per_dumbbell_kg",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "hamstrings",
+          "gluteus_maximus"
+        ],
+        "secondary": [
+          "spinal_erectors"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "backpack-rdl",
+      "name": "Peso muerto rumano con mochila",
+      "shortName": "RDL mochila",
+      "type": "calisthenics",
+      "movementPattern": "hip_hinge",
+      "primaryMuscles": "Isquios / glúteos",
+      "secondaryMuscles": "Erectores espinales",
+      "equipment": "Casa / mochila",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 10,
+      "defaultRepMax": 15,
+      "defaultRIR": "2",
+      "notes": "Mantener espalda neutra y carga estable.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "posterior_chain",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "rdl",
+      "preference": 2,
+      "fatigueCost": 4,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "hamstrings",
+          "gluteus_maximus"
+        ],
+        "secondary": [
+          "spinal_erectors"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "pike",
+      "name": "Pike push-up",
+      "shortName": "Pike push-up",
+      "type": "calisthenics",
+      "movementPattern": "vertical_push",
+      "primaryMuscles": "Pecho / tríceps / deltoides",
+      "secondaryMuscles": "",
+      "equipment": "Peso corporal",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": null,
+      "stimulus": [
+        {
+          "group": "vertical_push",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "triceps",
+          "weight": 0.35,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "pike_pushup",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 90,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "anterior_deltoid"
+        ],
+        "secondary": [
+          "lateral_deltoid",
+          "triceps_brachii"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "pike-elevated",
+      "name": "Pike push-up con pies elevados",
+      "shortName": "Pike pies elevados",
+      "type": "calisthenics",
+      "movementPattern": "vertical_push",
+      "primaryMuscles": "Deltoides",
+      "secondaryMuscles": "Tríceps / core",
+      "equipment": "Peso corporal",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 5,
+      "defaultRepMax": 10,
+      "defaultRIR": "1–2",
+      "notes": "Progresión hacia handstand push-up.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "vertical_push",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "triceps",
+          "weight": 0.35,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "pike_pushup",
+      "preference": 3,
+      "fatigueCost": 4,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 90,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "anterior_deltoid"
+        ],
+        "secondary": [
+          "lateral_deltoid",
+          "triceps_brachii"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "plank",
+      "name": "Plancha abdominal",
+      "shortName": "Plancha",
+      "type": "calisthenics",
+      "movementPattern": "core_anti_extension",
+      "primaryMuscles": "Core",
+      "secondaryMuscles": "Glúteos / hombros",
+      "equipment": "Peso corporal",
+      "metricType": "time",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 30,
+      "defaultRepMax": 75,
+      "defaultRIR": "Técnica",
+      "notes": "Mantener pelvis neutra y evitar arquear la zona lumbar.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "core",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "plank",
+      "preference": 4,
+      "fatigueCost": 1,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 1,
+      "defaultRestSeconds": 75,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "seconds",
+      "muscleTargets": {
+        "primary": [
+          "rectus_abdominis",
+          "deep_core"
+        ],
+        "secondary": [
+          "gluteus_maximus"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "side-plank",
+      "name": "Plancha lateral",
+      "shortName": "Plancha lateral",
+      "type": "calisthenics",
+      "movementPattern": "core_anti_lateral_flexion",
+      "primaryMuscles": "Oblicuos / core",
+      "secondaryMuscles": "Glúteo medio / hombro",
+      "equipment": "Peso corporal",
+      "metricType": "time",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 20,
+      "defaultRepMax": 45,
+      "defaultRIR": "Técnica",
+      "notes": "Segundos por lado. Anti-inclinación lateral, no anti-extensión.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "core",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "side-plank",
+      "preference": 2,
+      "fatigueCost": 1,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 75,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "seconds",
+      "muscleTargets": {
+        "primary": [
+          "obliques",
+          "deep_core"
+        ],
+        "secondary": [
+          "gluteus_medius"
+        ]
+      },
+      "unilateralPerSide": true,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "leg-press",
+      "name": "Prensa de piernas",
+      "shortName": "Prensa",
+      "type": "gym",
+      "movementPattern": "knee_dominant",
+      "primaryMuscles": "Cuádriceps",
+      "secondaryMuscles": "Glúteos (participación relevante)",
+      "equipment": "Prensa de piernas",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "2–3",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "selectionNotes": "Alta adherencia; candidato principal de cuádriceps.",
+      "stimulus": [
+        {
+          "group": "quads",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "posterior_chain",
+          "weight": 0.25,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "leg-press",
+      "preference": 4,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 7,
+      "defaultRestSeconds": 180,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "quadriceps"
+        ],
+        "secondary": [
+          "gluteus_maximus"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "arnold-press-db",
+      "name": "Press Arnold con mancuernas",
+      "shortName": "Press Arnold",
+      "type": "gym",
+      "movementPattern": "vertical_push",
+      "primaryMuscles": "Deltoides",
+      "secondaryMuscles": "Tríceps",
+      "equipment": "Mancuernas",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "vertical_push",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "triceps",
+          "weight": 0.35,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "arnold-press-db",
+      "preference": 4,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 18,
+      "defaultRestSeconds": 90,
+      "loadConvention": "per_dumbbell_kg",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "anterior_deltoid"
+        ],
+        "secondary": [
+          "lateral_deltoid",
+          "triceps_brachii"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "bench-press-barbell",
+      "name": "Press banca con barra",
+      "shortName": "Press banca",
+      "type": "gym",
+      "movementPattern": "horizontal_push",
+      "primaryMuscles": "Pecho",
+      "secondaryMuscles": "Tríceps / deltoides anterior",
+      "equipment": "Gimnasio",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 5,
+      "defaultRepMax": 8,
+      "defaultRIR": "1–2",
+      "notes": "Movimiento principal de fuerza de empuje horizontal.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "chest",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "triceps",
+          "weight": 0.4,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "press_horiz",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 1,
+      "defaultRestSeconds": 180,
+      "loadConvention": "barbell_total_kg_verify_history",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "pectoralis_major"
+        ],
+        "secondary": [
+          "triceps_brachii",
+          "anterior_deltoid"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "board-bench-press",
+      "name": "Press de banca con tabla",
+      "shortName": "Press banca tabla",
+      "type": "gym",
+      "movementPattern": "horizontal_push",
+      "primaryMuscles": "Pecho / tríceps",
+      "secondaryMuscles": "Deltoides anterior",
+      "equipment": "Barra / banco / tabla",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 6,
+      "defaultRepMax": 10,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "selectionNotes": "Equipamiento específico; selección manual salvo confirmación de disponibilidad.",
+      "stimulus": [
+        {
+          "group": "chest",
+          "weight": 0.8,
+          "direct": true
+        },
+        {
+          "group": "triceps",
+          "weight": 0.55,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "board-bench-press",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "manual_only",
+      "autoSelectable": false,
+      "referenceExercise": false,
+      "historicalUsageCount": 19,
+      "defaultRestSeconds": 90,
+      "loadConvention": "barbell_total_kg_verify_history",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "pectoralis_major"
+        ],
+        "secondary": [
+          "triceps_brachii",
+          "anterior_deltoid"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "shoulder-press-machine",
+      "name": "Press de hombros en máquina",
+      "shortName": "Press hombros máquina",
+      "type": "gym",
+      "movementPattern": "vertical_push",
+      "primaryMuscles": "Deltoides",
+      "secondaryMuscles": "Tríceps",
+      "equipment": "Gimnasio",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 6,
+      "defaultRepMax": 10,
+      "defaultRIR": "2",
+      "notes": "Accesorio útil para ganar fuerza de empuje vertical.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "vertical_push",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "triceps",
+          "weight": 0.35,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "shoulder-press-machine",
+      "preference": 4,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 21,
+      "defaultRestSeconds": 180,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "anterior_deltoid"
+        ],
+        "secondary": [
+          "lateral_deltoid",
+          "triceps_brachii"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "chest-press-machine",
+      "name": "Press de pecho en máquina",
+      "shortName": "Press pecho máquina",
+      "type": "gym",
+      "movementPattern": "horizontal_push",
+      "primaryMuscles": "Pecho / tríceps",
+      "secondaryMuscles": "Deltoides anterior",
+      "equipment": "Gimnasio",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "Accesorio de empuje. No sustituye a fondos si el objetivo principal es calistenia.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "chest",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "triceps",
+          "weight": 0.4,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "press_horiz",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 19,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "pectoralis_major"
+        ],
+        "secondary": [
+          "triceps_brachii",
+          "anterior_deltoid"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "incline-db-press",
+      "name": "Press inclinado con mancuernas",
+      "shortName": "Press inclinado",
+      "type": "gym",
+      "movementPattern": "horizontal_push",
+      "primaryMuscles": "Pecho",
+      "secondaryMuscles": "Tríceps / deltoides anterior",
+      "equipment": "Gimnasio",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "chest",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "triceps",
+          "weight": 0.35,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "press_incline",
+      "preference": 4,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 7,
+      "defaultRestSeconds": 180,
+      "loadConvention": "per_dumbbell_kg",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "pectoralis_major"
+        ],
+        "secondary": [
+          "triceps_brachii",
+          "anterior_deltoid"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "smith-incline-press",
+      "name": "Press inclinado en máquina Smith",
+      "shortName": "Press inclinado Smith",
+      "type": "gym",
+      "movementPattern": "horizontal_push",
+      "primaryMuscles": "Pecho",
+      "secondaryMuscles": "Tríceps / deltoides anterior",
+      "equipment": "Máquina Smith",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "chest",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "triceps",
+          "weight": 0.35,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "press_incline",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 8,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "pectoralis_major"
+        ],
+        "secondary": [
+          "triceps_brachii",
+          "anterior_deltoid"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "flat-db-press",
+      "name": "Press plano con mancuernas",
+      "shortName": "Press plano mancuernas",
+      "type": "gym",
+      "movementPattern": "horizontal_push",
+      "primaryMuscles": "Pecho",
+      "secondaryMuscles": "Tríceps / deltoides anterior",
+      "equipment": "Mancuernas / banco",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "chest",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "triceps",
+          "weight": 0.4,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "press_horiz",
+      "preference": 4,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 20,
+      "defaultRestSeconds": 180,
+      "loadConvention": "per_dumbbell_kg",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "pectoralis_major"
+        ],
+        "secondary": [
+          "triceps_brachii",
+          "anterior_deltoid"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "glute-bridge",
+      "name": "Puente de glúteo",
+      "shortName": "Puente glúteo",
+      "type": "calisthenics",
+      "movementPattern": "hip_extension",
+      "primaryMuscles": "Glúteos",
+      "secondaryMuscles": "Isquiosurales / core",
+      "equipment": "Peso corporal",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 12,
+      "defaultRepMax": 20,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "posterior_chain",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "glute-bridge",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 90,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "gluteus_maximus"
+        ],
+        "secondary": [
+          "deep_core"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "reverse-pec-deck",
+      "name": "Pájaros / reverse pec-deck",
+      "shortName": "Reverse pec-deck",
+      "type": "gym",
+      "movementPattern": "rear_delt_isolation",
+      "primaryMuscles": "Deltoides posterior",
+      "secondaryMuscles": "Espalda alta",
+      "equipment": "Gimnasio",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 12,
+      "defaultRepMax": 20,
+      "defaultRIR": "1–2",
+      "notes": "Preferir carga que permita 12–20 repeticiones controladas; revisar 22,5 kg del histórico.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "lateral_rear_delts",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "horizontal_pull",
+          "weight": 0.15,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "rear_delt_fly",
+      "preference": 3,
+      "fatigueCost": 1,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 3,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "posterior_deltoid"
+        ],
+        "secondary": [
+          "mid_upper_back"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "one-arm-db-row",
+      "name": "Remo con mancuerna a una mano",
+      "shortName": "Remo mancuerna unilateral",
+      "type": "gym",
+      "movementPattern": "horizontal_pull",
+      "primaryMuscles": "Dorsal / espalda media",
+      "secondaryMuscles": "Bíceps",
+      "equipment": "Mancuerna",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "Repeticiones por brazo.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "horizontal_pull",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "biceps",
+          "weight": 0.35,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "one-arm-db-row",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 7,
+      "defaultRestSeconds": 90,
+      "loadConvention": "per_dumbbell_kg",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "mid_upper_back",
+          "latissimus_dorsi"
+        ],
+        "secondary": [
+          "biceps_brachii",
+          "posterior_deltoid"
+        ]
+      },
+      "unilateralPerSide": true,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "backpack-row",
+      "name": "Remo con mochila",
+      "shortName": "Remo mochila",
+      "type": "calisthenics",
+      "movementPattern": "horizontal_pull",
+      "primaryMuscles": "Dorsal / espalda media",
+      "secondaryMuscles": "Bíceps",
+      "equipment": "Casa / mochila",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 10,
+      "defaultRepMax": 15,
+      "defaultRIR": "1–2",
+      "notes": "Usar una mochila resistente y carga estable.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "horizontal_pull",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "biceps",
+          "weight": 0.35,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "backpack-row",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "mid_upper_back",
+          "latissimus_dorsi"
+        ],
+        "secondary": [
+          "biceps_brachii",
+          "posterior_deltoid"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "chest-supported-tbar-row",
+      "name": "Remo en T apoyado en pecho",
+      "shortName": "Remo T pecho",
+      "type": "gym",
+      "movementPattern": "horizontal_pull",
+      "primaryMuscles": "Dorsal / espalda media",
+      "secondaryMuscles": "Bíceps / deltoides posterior",
+      "equipment": "Remo en T",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "horizontal_pull",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "biceps",
+          "weight": 0.35,
+          "direct": false
+        },
+        {
+          "group": "lateral_rear_delts",
+          "weight": 0.2,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "chest-supported-tbar-row",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 7,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "mid_upper_back",
+          "latissimus_dorsi"
+        ],
+        "secondary": [
+          "biceps_brachii",
+          "posterior_deltoid"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "row",
+      "name": "Remo invertido",
+      "shortName": "Remo invertido",
+      "type": "calisthenics",
+      "movementPattern": "horizontal_pull",
+      "primaryMuscles": "Espalda media / dorsal",
+      "secondaryMuscles": "Bíceps / deltoides posterior",
+      "equipment": "Peso corporal",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": null,
+      "stimulus": [
+        {
+          "group": "horizontal_pull",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "biceps",
+          "weight": 0.35,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "row",
+      "preference": 4,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 2,
+      "defaultRestSeconds": 90,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "mid_upper_back",
+          "latissimus_dorsi"
+        ],
+        "secondary": [
+          "biceps_brachii",
+          "posterior_deltoid"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "seated-row",
+      "name": "Remo sentado",
+      "shortName": "Remo sentado",
+      "type": "gym",
+      "movementPattern": "horizontal_pull",
+      "primaryMuscles": "Dorsal ancho / espalda media",
+      "secondaryMuscles": "Bíceps / deltoides posterior",
+      "equipment": "Gimnasio",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": null,
+      "stimulus": [
+        {
+          "group": "horizontal_pull",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "biceps",
+          "weight": 0.35,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "seated-row",
+      "preference": 4,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 35,
+      "defaultRestSeconds": 180,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "mid_upper_back",
+          "latissimus_dorsi"
+        ],
+        "secondary": [
+          "biceps_brachii",
+          "posterior_deltoid"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "cable-external-rotation",
+      "name": "Rotación externa de hombro con polea",
+      "shortName": "Rotación externa polea",
+      "type": "gym",
+      "movementPattern": "shoulder_external_rotation",
+      "primaryMuscles": "Manguito rotador externo",
+      "secondaryMuscles": "Estabilizadores escapulares",
+      "equipment": "Polea",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 10,
+      "defaultRepMax": 20,
+      "defaultRIR": "Técnica",
+      "notes": "Ejercicio técnico; no computar como serie principal de espalda ni deltoides.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "lateral_rear_delts",
+          "weight": 0.15,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "cable-external-rotation",
+      "preference": 3,
+      "fatigueCost": 1,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 9,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "rotator_cuff_external"
+        ],
+        "secondary": [
+          "scapular_stabilizers"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "bulgarian",
+      "name": "Sentadilla búlgara",
+      "shortName": "Sentadilla búlgara",
+      "type": "gym",
+      "movementPattern": "unilateral_knee_dominant",
+      "primaryMuscles": "Cuádriceps / glúteos",
+      "secondaryMuscles": "Estabilizadores cadera / core",
+      "equipment": "Banco y mancuernas (opcionales)",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "2–3",
+      "notes": "Repeticiones por pierna.",
+      "enabled": 1,
+      "ownerId": null,
+      "selectionNotes": "Alto coste percibido de fatiga; no programar por defecto si hay alternativas.",
+      "stimulus": [
+        {
+          "group": "quads",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "posterior_chain",
+          "weight": 0.3,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "bulgarian",
+      "preference": 2,
+      "fatigueCost": 4,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 2,
+      "defaultRestSeconds": 90,
+      "loadConvention": "external_kg_equipment_specific",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "quadriceps",
+          "gluteus_maximus"
+        ],
+        "secondary": [
+          "gluteus_medius"
+        ]
+      },
+      "unilateralPerSide": true,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "id": "bodyweight-squat",
+      "name": "Sentadilla con peso corporal",
+      "shortName": "Sentadilla BW",
+      "type": "calisthenics",
+      "movementPattern": "knee_dominant",
+      "primaryMuscles": "Cuádriceps / glúteos",
+      "secondaryMuscles": "Core",
+      "equipment": "Peso corporal",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 12,
+      "defaultRepMax": 20,
+      "defaultRIR": "2",
+      "notes": "Si resulta fácil, progresar a tempo, pausa, zancadas o pistol squat.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "quads",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "posterior_chain",
+          "weight": 0.25,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "bodyweight-squat",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 90,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "quadriceps"
+        ],
+        "secondary": [
+          "gluteus_maximus"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "lunge",
+      "name": "Zancadas con peso corporal",
+      "shortName": "Zancadas",
+      "type": "calisthenics",
+      "movementPattern": "unilateral_knee_dominant",
+      "primaryMuscles": "Cuádriceps / glúteos",
+      "secondaryMuscles": "Estabilizadores cadera / core",
+      "equipment": "Peso corporal",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "Repeticiones por pierna. Pistol squat es una progresión distinta.",
+      "enabled": 1,
+      "ownerId": null,
+      "stimulus": [
+        {
+          "group": "quads",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "posterior_chain",
+          "weight": 0.3,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "lunge",
+      "preference": 3,
+      "fatigueCost": 4,
+      "planningStatus": "manual_only",
+      "autoSelectable": false,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 90,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "repetitions",
+      "muscleTargets": {
+        "primary": [
+          "quadriceps",
+          "gluteus_maximus"
+        ],
+        "secondary": [
+          "gluteus_medius"
+        ]
+      },
+      "unilateralPerSide": true,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "id": "custom-0b757bbe-431b-4620-9516-33f58107c111",
+      "name": "Plancha abdominal (ID histórico)",
+      "shortName": "Plancha histórica",
+      "type": "calisthenics",
+      "movementPattern": "core_anti_extension",
+      "primaryMuscles": "Core",
+      "secondaryMuscles": "Glúteos / hombros",
+      "equipment": "Peso corporal",
+      "metricType": "time",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 60,
+      "defaultRepMax": 90,
+      "defaultRIR": "Técnica",
+      "notes": "Mantener pelvis neutra y evitar arquear la zona lumbar.",
+      "enabled": 0,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "core",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "plank",
+      "preference": 4,
+      "fatigueCost": 1,
+      "planningStatus": "legacy_only",
+      "autoSelectable": false,
+      "referenceExercise": false,
+      "historicalUsageCount": 19,
+      "defaultRestSeconds": 75,
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "seconds",
+      "canonicalExerciseId": "plank",
+      "selectionNotes": "Referencia usada en 19 sesiones antiguas. Conservar como alias histórico sin generar nuevos entrenamientos con este ID.",
+      "muscleTargets": {
+        "primary": [
+          "rectus_abdominis",
+          "deep_core"
+        ],
+        "secondary": []
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "name": "Elevación de gemelos de pie en máquina",
+      "shortName": "Gemelos de pie máquina",
+      "type": "gym",
+      "movementPattern": "calf_raise",
+      "primaryMuscles": "Gemelos (gastrocnemio)",
+      "secondaryMuscles": "Sóleo",
+      "equipment": "Máquina de gemelos",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 10,
+      "defaultRepMax": 20,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "calves",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "calf_straight_knee",
+      "preference": 3,
+      "fatigueCost": 1,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 75,
+      "selectionNotes": "",
+      "loadConvention": "machine_kg",
+      "prescriptionUnit": "repetitions",
+      "id": "standing-calf-raise-machine",
+      "muscleTargets": {
+        "primary": [
+          "gastrocnemius",
+          "soleus"
+        ],
+        "secondary": []
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "name": "Elevación de gemelos sentado en máquina",
+      "shortName": "Gemelos sentado máquina",
+      "type": "gym",
+      "movementPattern": "calf_raise",
+      "primaryMuscles": "Gemelos (sóleo)",
+      "secondaryMuscles": "Gastrocnemio",
+      "equipment": "Máquina de gemelos sentado",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 12,
+      "defaultRepMax": 20,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "calves",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "calf_bent_knee",
+      "preference": 3,
+      "fatigueCost": 1,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 75,
+      "selectionNotes": "",
+      "loadConvention": "machine_kg",
+      "prescriptionUnit": "repetitions",
+      "id": "seated-calf-raise-machine",
+      "muscleTargets": {
+        "primary": [
+          "soleus"
+        ],
+        "secondary": [
+          "gastrocnemius"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "name": "Elevación de gemelos en prensa",
+      "shortName": "Gemelos en prensa",
+      "type": "gym",
+      "movementPattern": "calf_raise",
+      "primaryMuscles": "Gemelos",
+      "secondaryMuscles": "",
+      "equipment": "Prensa de piernas",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 10,
+      "defaultRepMax": 20,
+      "defaultRIR": "1–2",
+      "notes": "Solo si la prensa y su fabricante permiten esta ejecución con apoyo seguro del pie y control del recorrido.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "calves",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "calf_straight_knee",
+      "preference": 4,
+      "fatigueCost": 1,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 75,
+      "selectionNotes": "",
+      "loadConvention": "machine_kg",
+      "prescriptionUnit": "repetitions",
+      "id": "calf-raise-leg-press",
+      "muscleTargets": {
+        "primary": [
+          "gastrocnemius",
+          "soleus"
+        ],
+        "secondary": []
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "name": "Elevación de gemelos de pie",
+      "shortName": "Gemelos de pie",
+      "type": "calisthenics",
+      "movementPattern": "calf_raise",
+      "primaryMuscles": "Gemelos",
+      "secondaryMuscles": "",
+      "equipment": "Peso corporal / escalón opcional",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 12,
+      "defaultRepMax": 25,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "calves",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "calf_straight_knee",
+      "preference": 3,
+      "fatigueCost": 1,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 60,
+      "selectionNotes": "",
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "repetitions",
+      "id": "standing-calf-raise-bodyweight",
+      "muscleTargets": {
+        "primary": [
+          "gastrocnemius",
+          "soleus"
+        ],
+        "secondary": []
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "name": "Elevación de gemelos a una pierna",
+      "shortName": "Gemelo unilateral",
+      "type": "calisthenics",
+      "movementPattern": "calf_raise",
+      "primaryMuscles": "Gemelos",
+      "secondaryMuscles": "",
+      "equipment": "Peso corporal / apoyo estable",
+      "metricType": "reps",
+      "bodyweightExercise": 1,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 1,
+      "defaultRepMin": 10,
+      "defaultRepMax": 20,
+      "defaultRIR": "1–2",
+      "notes": "Repeticiones por lado.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "calves",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "calf_straight_knee",
+      "preference": 3,
+      "fatigueCost": 1,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 75,
+      "selectionNotes": "",
+      "loadConvention": "bodyweight_plus_last",
+      "prescriptionUnit": "repetitions",
+      "id": "single-leg-calf-raise",
+      "muscleTargets": {
+        "primary": [
+          "gastrocnemius",
+          "soleus"
+        ],
+        "secondary": []
+      },
+      "unilateralPerSide": true,
+      "autoSuggestRequiresEquipmentMatch": false
+    },
+    {
+      "name": "Curl femoral sentado en máquina",
+      "shortName": "Curl femoral sentado",
+      "type": "gym",
+      "movementPattern": "knee_flexion",
+      "primaryMuscles": "Isquiosurales",
+      "secondaryMuscles": "",
+      "equipment": "Máquina curl femoral sentado",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 15,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "posterior_chain",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "ham_knee_flexion",
+      "preference": 4,
+      "fatigueCost": 2,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 90,
+      "selectionNotes": "",
+      "loadConvention": "machine_kg",
+      "prescriptionUnit": "repetitions",
+      "id": "seated-leg-curl",
+      "muscleTargets": {
+        "primary": [
+          "hamstrings"
+        ],
+        "secondary": []
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "name": "Curl femoral tumbado en máquina",
+      "shortName": "Curl femoral tumbado",
+      "type": "gym",
+      "movementPattern": "knee_flexion",
+      "primaryMuscles": "Isquiosurales",
+      "secondaryMuscles": "",
+      "equipment": "Máquina curl femoral tumbado",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 15,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "posterior_chain",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "ham_knee_flexion",
+      "preference": 4,
+      "fatigueCost": 2,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 90,
+      "selectionNotes": "",
+      "loadConvention": "machine_kg",
+      "prescriptionUnit": "repetitions",
+      "id": "lying-leg-curl",
+      "muscleTargets": {
+        "primary": [
+          "hamstrings"
+        ],
+        "secondary": []
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "name": "Extensión de cuádriceps en máquina",
+      "shortName": "Extensión cuádriceps",
+      "type": "gym",
+      "movementPattern": "knee_extension",
+      "primaryMuscles": "Cuádriceps",
+      "secondaryMuscles": "",
+      "equipment": "Máquina extensión cuádriceps",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 10,
+      "defaultRepMax": 15,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "quads",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "quad_extension",
+      "preference": 4,
+      "fatigueCost": 2,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 90,
+      "selectionNotes": "",
+      "loadConvention": "machine_kg",
+      "prescriptionUnit": "repetitions",
+      "id": "leg-extension-machine",
+      "muscleTargets": {
+        "primary": [
+          "quadriceps"
+        ],
+        "secondary": []
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "name": "Hip thrust en máquina",
+      "shortName": "Hip thrust máquina",
+      "type": "gym",
+      "movementPattern": "hip_extension",
+      "primaryMuscles": "Glúteos",
+      "secondaryMuscles": "Core estabilizador; isquios no equivalentes a curl femoral",
+      "equipment": "Máquina hip thrust",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "posterior_chain",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "hip_thrust",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 120,
+      "selectionNotes": "",
+      "loadConvention": "machine_kg",
+      "prescriptionUnit": "repetitions",
+      "id": "hip-thrust-machine",
+      "muscleTargets": {
+        "primary": [
+          "gluteus_maximus"
+        ],
+        "secondary": [
+          "deep_core"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "name": "Hip thrust con barra",
+      "shortName": "Hip thrust barra",
+      "type": "gym",
+      "movementPattern": "hip_extension",
+      "primaryMuscles": "Glúteos",
+      "secondaryMuscles": "Core estabilizador; isquios no equivalentes a curl femoral",
+      "equipment": "Barra / banco",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "posterior_chain",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "hip_thrust",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 120,
+      "selectionNotes": "",
+      "loadConvention": "barbell_total_kg_verify_history",
+      "prescriptionUnit": "repetitions",
+      "id": "hip-thrust-barbell",
+      "muscleTargets": {
+        "primary": [
+          "gluteus_maximus"
+        ],
+        "secondary": [
+          "deep_core"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "name": "Sentadilla goblet con mancuerna",
+      "shortName": "Sentadilla goblet",
+      "type": "gym",
+      "movementPattern": "knee_dominant",
+      "primaryMuscles": "Cuádriceps / glúteos",
+      "secondaryMuscles": "Core",
+      "equipment": "Mancuerna / kettlebell",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 15,
+      "defaultRIR": "2",
+      "notes": "Carga de una única mancuerna o kettlebell, no por mancuerna.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "quads",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "posterior_chain",
+          "weight": 0.25,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "goblet-squat",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 120,
+      "selectionNotes": "",
+      "loadConvention": "single_implement_kg",
+      "prescriptionUnit": "repetitions",
+      "id": "goblet-squat",
+      "muscleTargets": {
+        "primary": [
+          "quadriceps"
+        ],
+        "secondary": [
+          "gluteus_maximus"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "name": "Sentadilla en máquina Smith",
+      "shortName": "Sentadilla Smith",
+      "type": "gym",
+      "movementPattern": "knee_dominant",
+      "primaryMuscles": "Cuádriceps / glúteos",
+      "secondaryMuscles": "Core",
+      "equipment": "Máquina Smith",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "2",
+      "notes": "Verificar peso efectivo de barra Smith antes de progresar cargas.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "quads",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "posterior_chain",
+          "weight": 0.25,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "smith-squat",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 120,
+      "selectionNotes": "",
+      "loadConvention": "smith_total_kg_verify_bar_weight",
+      "prescriptionUnit": "repetitions",
+      "id": "smith-squat",
+      "muscleTargets": {
+        "primary": [
+          "quadriceps"
+        ],
+        "secondary": [
+          "gluteus_maximus"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "name": "Sentadilla dividida asistida con apoyo",
+      "shortName": "Split squat asistida",
+      "type": "gym",
+      "movementPattern": "unilateral_knee_dominant",
+      "primaryMuscles": "Cuádriceps / glúteos",
+      "secondaryMuscles": "Estabilizadores cadera",
+      "equipment": "Apoyo estable / mancuernas opcionales",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "2",
+      "notes": "Repeticiones por lado.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "quads",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "posterior_chain",
+          "weight": 0.25,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "supported-split-squat",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 120,
+      "selectionNotes": "",
+      "loadConvention": "external_kg_optional",
+      "prescriptionUnit": "repetitions",
+      "id": "supported-split-squat",
+      "muscleTargets": {
+        "primary": [
+          "quadriceps",
+          "gluteus_maximus"
+        ],
+        "secondary": [
+          "gluteus_medius"
+        ]
+      },
+      "unilateralPerSide": true,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "name": "Subida a banco (step-up)",
+      "shortName": "Step-up",
+      "type": "gym",
+      "movementPattern": "unilateral_knee_dominant",
+      "primaryMuscles": "Cuádriceps / glúteos",
+      "secondaryMuscles": "Core",
+      "equipment": "Banco bajo / mancuernas opcionales",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "2",
+      "notes": "Repeticiones por lado.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "quads",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "posterior_chain",
+          "weight": 0.25,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "step-up",
+      "preference": 3,
+      "fatigueCost": 3,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 120,
+      "selectionNotes": "",
+      "loadConvention": "external_kg_optional",
+      "prescriptionUnit": "repetitions",
+      "id": "step-up",
+      "muscleTargets": {
+        "primary": [
+          "quadriceps",
+          "gluteus_maximus"
+        ],
+        "secondary": [
+          "gluteus_medius"
+        ]
+      },
+      "unilateralPerSide": true,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "name": "Curl inclinado con mancuernas",
+      "shortName": "Curl inclinado",
+      "type": "gym",
+      "movementPattern": "elbow_flexion",
+      "primaryMuscles": "Bíceps",
+      "secondaryMuscles": "Braquial",
+      "equipment": "Banco inclinado / mancuernas",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 8,
+      "defaultRepMax": 12,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "biceps",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "incline-db-curl",
+      "preference": 3,
+      "fatigueCost": 2,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 90,
+      "selectionNotes": "",
+      "loadConvention": "per_dumbbell_kg",
+      "prescriptionUnit": "repetitions",
+      "id": "incline-db-curl",
+      "muscleTargets": {
+        "primary": [
+          "biceps_brachii",
+          "brachialis"
+        ],
+        "secondary": [
+          "brachioradialis"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "name": "Curl bayesiano en polea",
+      "shortName": "Curl bayesiano",
+      "type": "gym",
+      "movementPattern": "elbow_flexion",
+      "primaryMuscles": "Bíceps",
+      "secondaryMuscles": "",
+      "equipment": "Polea baja",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 10,
+      "defaultRepMax": 15,
+      "defaultRIR": "1–2",
+      "notes": "Repeticiones por lado.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "biceps",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "cable_curl",
+      "preference": 3,
+      "fatigueCost": 2,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 90,
+      "selectionNotes": "",
+      "loadConvention": "cable_kg",
+      "prescriptionUnit": "repetitions",
+      "id": "bayesian-cable-curl",
+      "muscleTargets": {
+        "primary": [
+          "biceps_brachii",
+          "brachialis"
+        ],
+        "secondary": [
+          "brachioradialis"
+        ]
+      },
+      "unilateralPerSide": true,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "name": "Aperturas posteriores en polea",
+      "shortName": "Pájaros polea",
+      "type": "gym",
+      "movementPattern": "rear_delt_isolation",
+      "primaryMuscles": "Deltoides posterior",
+      "secondaryMuscles": "Espalda alta",
+      "equipment": "Poleas",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 12,
+      "defaultRepMax": 20,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "lateral_rear_delts",
+          "weight": 1.0,
+          "direct": true
+        },
+        {
+          "group": "horizontal_pull",
+          "weight": 0.15,
+          "direct": false
+        }
+      ],
+      "exerciseFamily": "rear_delt_fly",
+      "preference": 3,
+      "fatigueCost": 1,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 75,
+      "selectionNotes": "",
+      "loadConvention": "cable_kg",
+      "prescriptionUnit": "repetitions",
+      "id": "cable-rear-delt-fly",
+      "muscleTargets": {
+        "primary": [
+          "posterior_deltoid"
+        ],
+        "secondary": [
+          "mid_upper_back"
+        ]
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "name": "Elevación lateral unilateral en polea",
+      "shortName": "Lateral polea unilateral",
+      "type": "gym",
+      "movementPattern": "shoulder_abduction",
+      "primaryMuscles": "Deltoides lateral",
+      "secondaryMuscles": "",
+      "equipment": "Polea baja",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 12,
+      "defaultRepMax": 20,
+      "defaultRIR": "1–2",
+      "notes": "Repeticiones por lado.",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "lateral_rear_delts",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "lateral_raise",
+      "preference": 3,
+      "fatigueCost": 1,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 75,
+      "selectionNotes": "",
+      "loadConvention": "cable_kg",
+      "prescriptionUnit": "repetitions",
+      "id": "cable-lateral-raise-single",
+      "muscleTargets": {
+        "primary": [
+          "lateral_deltoid"
+        ],
+        "secondary": []
+      },
+      "unilateralPerSide": true,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "name": "Curl de muñeca con mancuerna",
+      "shortName": "Flexión muñeca",
+      "type": "gym",
+      "movementPattern": "wrist_flexion",
+      "primaryMuscles": "Flexores de muñeca / antebrazo",
+      "secondaryMuscles": "",
+      "equipment": "Mancuerna",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 12,
+      "defaultRepMax": 20,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "forearms_grip",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "wrist-curl",
+      "preference": 3,
+      "fatigueCost": 1,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 60,
+      "selectionNotes": "",
+      "loadConvention": "per_dumbbell_kg",
+      "prescriptionUnit": "repetitions",
+      "id": "wrist-curl",
+      "muscleTargets": {
+        "primary": [
+          "wrist_flexors"
+        ],
+        "secondary": []
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    },
+    {
+      "name": "Extensión de muñeca con mancuerna",
+      "shortName": "Extensión muñeca",
+      "type": "gym",
+      "movementPattern": "wrist_extension",
+      "primaryMuscles": "Extensores de muñeca / antebrazo",
+      "secondaryMuscles": "",
+      "equipment": "Mancuerna",
+      "metricType": "reps",
+      "bodyweightExercise": 0,
+      "supportsAssistance": 0,
+      "supportsAddedWeight": 0,
+      "defaultRepMin": 12,
+      "defaultRepMax": 20,
+      "defaultRIR": "1–2",
+      "notes": "",
+      "enabled": 1,
+      "ownerId": "danieta-gymtracker:real",
+      "stimulus": [
+        {
+          "group": "forearms_grip",
+          "weight": 1.0,
+          "direct": true
+        }
+      ],
+      "exerciseFamily": "reverse-wrist-curl",
+      "preference": 3,
+      "fatigueCost": 1,
+      "planningStatus": "active",
+      "autoSelectable": true,
+      "referenceExercise": false,
+      "historicalUsageCount": 0,
+      "defaultRestSeconds": 60,
+      "selectionNotes": "",
+      "loadConvention": "per_dumbbell_kg",
+      "prescriptionUnit": "repetitions",
+      "id": "reverse-wrist-curl",
+      "muscleTargets": {
+        "primary": [
+          "wrist_extensors"
+        ],
+        "secondary": []
+      },
+      "unilateralPerSide": false,
+      "autoSuggestRequiresEquipmentMatch": true
+    }
+  ]
+}

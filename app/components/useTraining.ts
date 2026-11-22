@@ -72,6 +72,8 @@ export function useTraining(demo: boolean, userId: string) {
         rationale: string[];
         context: AdaptiveContext;
         source: "llm" | "fallback";
+        fallbackReason?: string | null;
+        diagnosticCode?: string | null;
         error?: string;
       };
       if (!response.ok) throw new Error(body.error);

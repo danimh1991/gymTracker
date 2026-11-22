@@ -3,33 +3,41 @@
   "$id": "gym-tracker/v1/schemas/adaptive-session.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["exercises", "rationale"],
+  "required": ["schemaVersion", "exercises", "rationale"],
   "properties": {
+    "schemaVersion": { "const": "adaptive-session-1.1" },
     "exercises": {
-      "type": "array",
-      "minItems": 1,
-      "maxItems": 8,
+      "type": "array", "minItems": 1, "maxItems": 8,
       "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["exerciseId", "sets", "repMin", "repMax", "rir", "optional", "notes", "priority"],
+        "type": "object", "additionalProperties": false,
+        "required": ["exerciseId", "order", "targetGroup", "sets", "repMin", "repMax", "rir", "optional", "notes", "priority", "restSeconds", "suggestedLoad", "reason", "alternatives", "estimatedSeconds"],
         "properties": {
           "exerciseId": { "type": "string", "minLength": 1 },
+          "order": { "type": "integer", "minimum": 1, "maximum": 12 },
+          "targetGroup": { "enum": ["vertical_pull", "horizontal_pull", "chest", "vertical_push", "lateral_rear_delts", "biceps", "triceps", "quads", "posterior_chain", "core", "calves", "forearms_grip"] },
           "sets": { "type": "integer", "minimum": 1, "maximum": 5 },
           "repMin": { "type": "integer", "minimum": 0, "maximum": 1000 },
           "repMax": { "type": "integer", "minimum": 0, "maximum": 1000 },
           "rir": { "type": "string", "minLength": 1, "maxLength": 20 },
           "optional": { "type": "integer", "minimum": 0, "maximum": 1 },
           "notes": { "type": "string", "maxLength": 500 },
-          "priority": { "type": "string", "maxLength": 40 }
+          "priority": { "type": "string", "maxLength": 40 },
+          "restSeconds": { "type": "integer", "minimum": 30, "maximum": 600 },
+          "suggestedLoad": {
+            "type": "object", "additionalProperties": false,
+            "required": ["kind", "valueKg", "confidence"],
+            "properties": {
+              "kind": { "enum": ["bodyweight", "added_weight", "assistance", "external", "calibration"] },
+              "valueKg": { "type": ["number", "null"], "minimum": 0 },
+              "confidence": { "enum": ["low", "medium", "high"] }
+            }
+          },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 300 },
+          "alternatives": { "type": "array", "maxItems": 4, "items": { "type": "string" } },
+          "estimatedSeconds": { "type": "integer", "minimum": 30, "maximum": 3600 }
         }
       }
     },
-    "rationale": {
-      "type": "array",
-      "minItems": 1,
-      "maxItems": 8,
-      "items": { "type": "string", "maxLength": 300 }
-    }
+    "rationale": { "type": "array", "minItems": 1, "maxItems": 8, "items": { "type": "string", "maxLength": 300 } }
   }
 }

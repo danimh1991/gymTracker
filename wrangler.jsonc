@@ -36,6 +36,9 @@
       "jurisdiction": "eu",
     },
   ],
+  "ai": {
+    "binding": "AI",
+  },
   "rules": [
     {
       "type": "ESModule",

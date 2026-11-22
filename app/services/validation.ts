@@ -4,8 +4,8 @@ const positive = z.number().finite().min(0).max(2000).nullable();
 const dayKey = z.enum(["A", "B", "C", "D", "E", "F", "G"]);
 const muscleGroup = z.enum([
   "vertical_pull", "horizontal_pull", "chest", "vertical_push",
-  "lateral_rear_delts", "biceps", "triceps", "quadriceps",
-  "posterior_chain", "core", "calves",
+  "lateral_rear_delts", "biceps", "triceps", "quads",
+  "posterior_chain", "core", "calves", "forearms_grip",
 ]);
 const dateKey = z
   .string()
@@ -21,6 +21,17 @@ export const planExercise = z
     optional: z.number().int().min(0).max(1),
     notes: z.string().max(2000),
     priority: z.string().max(40),
+    order: z.number().int().min(1).max(40).optional(),
+    targetGroup: muscleGroup.optional(),
+    restSeconds: z.number().int().min(30).max(600).optional(),
+    suggestedLoad: z.object({
+      kind: z.enum(["bodyweight", "added_weight", "assistance", "external", "calibration"]),
+      valueKg: z.number().finite().min(0).max(2000).nullable(),
+      confidence: z.enum(["low", "medium", "high"]),
+    }).optional(),
+    reason: z.string().max(500).optional(),
+    alternatives: z.array(z.string().min(1)).max(4).optional(),
+    estimatedSeconds: z.number().int().min(30).max(3600).optional(),
   })
   .refine(
     (v) => v.repMax >= v.repMin,

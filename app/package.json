@@ -16,6 +16,7 @@
     "llm:r2:validate": "node scripts/upload-llm-data.mjs --dry-run",
     "llm:r2:upload": "node scripts/upload-llm-data.mjs",
     "db:generate": "drizzle-kit generate",
+    "catalog:generate": "node scripts/generate-adaptive-catalog.mjs",
     "test": "node scripts/test.mjs",
     "check": "tsc --noEmit"
   },

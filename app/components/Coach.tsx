@@ -15,10 +15,11 @@ const LABELS: Record<MuscleGroup, string> = {
   lateral_rear_delts: "Deltoides lateral/posterior",
   biceps: "Bíceps",
   triceps: "Tríceps",
-  quadriceps: "Cuádriceps",
+  quads: "Cuádriceps",
   posterior_chain: "Cadena posterior",
   core: "Core",
   calves: "Gemelos",
+  forearms_grip: "Antebrazo y agarre",
 };
 
 type Generated = {
@@ -27,6 +28,8 @@ type Generated = {
   rationale: string[];
   context: Snapshot["adaptiveProposals"][number]["context"];
   source: "llm" | "fallback";
+  fallbackReason?: string | null;
+  diagnosticCode?: string | null;
 };
 
 export function Coach({
@@ -62,6 +65,10 @@ export function Coach({
   const [preferences, setPreferences] = useState(data.settings.exercisePreferences);
   const totalSets = plan.reduce((sum, item) => sum + item.sets, 0);
   const topNeeds = useMemo(() => generated?.context.needs.slice(0, 5) ?? [], [generated]);
+  const coveredGroups = useMemo(() => [...new Set(plan.flatMap((row) =>
+    data.exercises.find((exercise) => exercise.id === row.exerciseId)?.stimulus
+      .filter((stimulus) => stimulus.weight > 0).map((stimulus) => stimulus.group) ?? [],
+  ))], [data.exercises, plan]);
 
   async function createSession() {
     const result = await generate({ durationMinutes: duration, energy, blockedExerciseIds: blocked, equipment: data.settings.availableEquipment });
@@ -121,7 +128,7 @@ export function Coach({
       <details className="coach-blocked"><summary>¿Algún ejercicio no está disponible hoy?</summary><div>{data.exercises.filter((e) => e.enabled).map((exercise) => <label key={exercise.id}><input type="checkbox" checked={blocked.includes(exercise.id)} onChange={(e) => setBlocked(e.target.checked ? [...blocked, exercise.id] : blocked.filter((id) => id !== exercise.id))} /> {exercise.name}</label>)}</div></details>
 
       {generated ? <>
-        <section className="coach-analysis"><div><p className="eyebrow">POR QUÉ ESTA SESIÓN</p><h2>Prioridades detectadas</h2></div><div className="need-grid">{topNeeds.map((need) => <article key={need.group}><span>{LABELS[need.group]}</span><strong>{need.score.toFixed(1)}</strong><small>{need.directSets10d} directas · 10 días</small></article>)}</div><ul>{generated.rationale.map((reason) => <li key={reason}>{reason}</li>)}</ul><p className="planner-source">Motor: {generated.source === "llm" ? "IA validada" : "respaldo determinista"}. Reglas versionadas y catálogo cerrado.</p></section>
+        <section className="coach-analysis"><div><p className="eyebrow">POR QUÉ ESTA SESIÓN</p><h2>Prioridades detectadas</h2></div><div className="need-grid">{topNeeds.map((need) => <article key={need.group}><span>{LABELS[need.group]}</span><strong>{need.score.toFixed(1)}</strong><small>{need.directSets10d}/{need.targetSets10d} directas · 10 días</small></article>)}</div><h3>Necesidades cubiertas</h3><p>{coveredGroups.map((group) => LABELS[group]).join(" · ")}</p><ul>{generated.rationale.map((reason) => <li key={reason}>{reason}</li>)}</ul><p className="planner-source">Motor: {generated.source === "llm" ? "IA validada" : "respaldo determinista"}. Reglas versionadas y catálogo cerrado.</p>{generated.fallbackReason && <p className="muted" title={generated.diagnosticCode ?? undefined}>{generated.fallbackReason}</p>}</section>
         <section className="coach-plan"><div className="section-title"><div><p className="eyebrow">PROPUESTA EDITABLE</p><h2>{plan.length} ejercicios · {totalSets} series · ~{duration} min</h2></div></div><PlanEditor plan={plan} exercises={data.exercises} onChange={setPlan} /><button className="primary coach-start" disabled={busy || !plan.length} onClick={() => void start()}><Play size={19} fill="currentColor" /> Empezar entrenamiento adaptativo</button></section>
       </> : <section className="coach-empty"><BrainCircuit size={34} /><h2>La sesión no existe hasta analizar tu contexto.</h2><p>Ya no hay un día A, B o C que “toque”. Cada propuesta parte de lo que realizaste de verdad.</p></section>}
     </>

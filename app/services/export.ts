@@ -1,7 +1,8 @@
 import type { Snapshot } from "../domain/types";
 export function workoutBackup(data: Snapshot) {
   return {
-    version: 1,
+    version: 2,
+    compatibleWith: 1,
     exportedAt: new Date().toISOString(),
     workouts: data.workouts
       .filter((workout) => workout.status === "completed")
@@ -15,6 +16,9 @@ export function workoutBackup(data: Snapshot) {
         templateName: workout.templateName,
         isFreeDay: workout.isFreeDay,
         sessionType: workout.sessionType,
+        adaptiveTrace: workout.proposalId
+          ? data.adaptiveProposals.find((proposal) => proposal.id === workout.proposalId) ?? null
+          : null,
         exercises: data.workoutExercises
           .filter((exercise) => exercise.workoutId === workout.id)
           .sort((a, b) => a.position - b.position)
@@ -107,7 +111,8 @@ export function exportData(
     kind === "json"
       ? JSON.stringify(
           {
-            version: 1,
+            version: 2,
+            compatibleWith: 1,
             exportedAt: new Date().toISOString(),
             space: demo ? "demo" : "real",
             ...data,

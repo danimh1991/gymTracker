@@ -1,5 +1,5 @@
 "use client";
-import { CopyPlus, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, CopyPlus, Plus, Trash2 } from "lucide-react";
 import type { Exercise, PlanExercise } from "../domain/types";
 
 export function PlanEditor({
@@ -15,6 +15,12 @@ export function PlanEditor({
 }) {
   const patch = (i: number, value: Partial<PlanExercise>) =>
     onChange(plan.map((row, n) => (n === i ? { ...row, ...value } : row)));
+  const move = (from: number, to: number) => {
+    if (to < 0 || to >= plan.length) return;
+    const next = [...plan], [row] = next.splice(from, 1);
+    next.splice(to, 0, row);
+    onChange(next.map((item, index) => ({ ...item, order: index + 1 })));
+  };
   return (
     <div className="plan-editor">
       {plan.map((row, i) => (
@@ -77,6 +83,13 @@ export function PlanEditor({
                 onChange={(e) => patch(i, { rir: e.target.value })}
               />
             </label>
+            <label>
+              Descanso
+              <input type="number" min="30" max="600" step="15" value={row.restSeconds ?? 90}
+                onChange={(e) => patch(i, { restSeconds: Number(e.target.value) })} />
+            </label>
+            <button className="icon-button" title="Subir" disabled={i === 0} onClick={() => move(i, i - 1)}><ChevronUp size={17} /></button>
+            <button className="icon-button" title="Bajar" disabled={i === plan.length - 1} onClick={() => move(i, i + 1)}><ChevronDown size={17} /></button>
             <button
               className="icon-button"
               title="Duplicar ejercicio"
@@ -99,6 +112,7 @@ export function PlanEditor({
               <Trash2 size={17} />
             </button>
           </div>
+          {row.reason && <p className="muted">{row.reason}</p>}
         </article>
       ))}
       <button
