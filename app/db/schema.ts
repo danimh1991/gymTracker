@@ -100,6 +100,8 @@ export const userSettings = sqliteTable("userSettings", {
   trainingDays: integer("trainingDays").notNull().default(3),
   adaptiveEnabled: integer("adaptiveEnabled").notNull().default(1),
   defaultDurationMinutes: integer("defaultDurationMinutes").notNull().default(50),
+  includeWarmupInDuration: integer("includeWarmupInDuration").notNull().default(0),
+  generalWarmupMinutes: integer("generalWarmupMinutes").notNull().default(7),
   usualFrequency: integer("usualFrequency").notNull().default(2),
   variationLevel: integer("variationLevel").notNull().default(2),
   priorities: text("priorities").notNull().default("{}"),

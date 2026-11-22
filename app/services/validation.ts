@@ -151,6 +151,8 @@ export const commandSchema = z.discriminatedUnion("action", [
     action: z.literal("setTrainerSettings"),
     settings: z.object({
       defaultDurationMinutes: z.number().int().min(30).max(75),
+      includeWarmupInDuration: z.number().int().min(0).max(1),
+      generalWarmupMinutes: z.number().int().min(0).max(20),
       usualFrequency: z.number().int().min(1).max(7),
       variationLevel: z.number().int().min(1).max(3),
       priorities: z.record(muscleGroup, z.number().int().min(1).max(5)),

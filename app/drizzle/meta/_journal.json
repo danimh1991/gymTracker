@@ -71,6 +71,13 @@
       "when": 1795388400000,
       "tag": "0009_adaptive_1_1",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1795392000000,
+      "tag": "0010_adaptive_time_budget",
+      "breakpoints": true
     }
   ]
 }

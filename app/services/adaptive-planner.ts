@@ -25,6 +25,7 @@ const WEEKLY_TARGETS: Record<MuscleGroup, number> = {
 export function defaultTrainerSettings(trainingDays = 3): TrainerSettings {
   return {
     trainingDays, adaptiveEnabled: 1, defaultDurationMinutes: 50,
+    includeWarmupInDuration: 0, generalWarmupMinutes: 7,
     usualFrequency: 2, variationLevel: 2, priorities: { ...DEFAULT_PRIORITIES },
     exercisePreferences: {}, availableEquipment: [], equipmentConfigured: 0,
   };
@@ -93,14 +94,20 @@ export function buildAdaptiveContext(data: Snapshot, now = new Date()): Adaptive
     const excessRatio = clamp((directSets10d - targetSets10d) / targetSets10d, 0, 2);
     const daysSinceExposure = latest ? Math.floor((nowMs - latest) / 86400000) : null;
     const recovery = clamp(1 - fatigue72h / 18, 0, 1);
+    // Need is driven by the missing stimulus. Priority and readiness may scale that
+    // need, but never manufacture urgency for an already-covered muscle group.
+    const volumeDeficit = Math.pow(deficitRatio, 1.25) * 52;
+    const overdueBase = daysSinceExposure === null ? 6 : clamp((daysSinceExposure - 4) * 1.5, 0, 12);
     const components = {
-      structural: priority * 3, deficit: deficitRatio * 42,
-      overdue: daysSinceExposure === null ? 15 : clamp((daysSinceExposure - 3) * 3, 0, 18),
-      readiness: recovery * 10, excessPenalty: excessRatio * 35,
-      recentPenalty: daysSinceExposure === 0 ? 25 : daysSinceExposure === 1 ? 14 : daysSinceExposure === 2 ? 6 : 0,
+      volumeDeficit,
+      overdue: overdueBase * (0.2 + deficitRatio * 0.8),
+      priorityMultiplier: 0.82 + priority * 0.075,
+      recoveryMultiplier: 0.25 + recovery * 0.75,
+      recentMultiplier: daysSinceExposure === 0 ? 0.2 : daysSinceExposure === 1 ? 0.45 : daysSinceExposure === 2 ? 0.72 : 1,
+      excessMultiplier: 1 / (1 + excessRatio * 3),
     };
-    const score = clamp(components.structural + components.deficit + components.overdue + components.readiness
-      - components.excessPenalty - components.recentPenalty, 0, 100);
+    const score = clamp((components.volumeDeficit + components.overdue) * components.priorityMultiplier
+      * components.recoveryMultiplier * components.recentMultiplier * components.excessMultiplier, 0, 75);
     return {
       group, score: round(score), priority, directSets10d: round(directSets10d), indirectSets10d,
       daysSinceExposure, recovery: round(recovery), targetSets10d: round(targetSets10d),
@@ -131,20 +138,22 @@ export function equipmentMatches(exercise: Exercise, constraints: AdaptiveConstr
 }
 
 function comparablePerformance(data: Snapshot, exerciseId: string) {
-  const latest = data.workoutExercises.filter((row) => row.exerciseId === exerciseId)
+  const recent = data.workoutExercises.filter((row) => row.exerciseId === exerciseId)
     .map((row) => ({ row, workout: data.workouts.find((workout) => workout.id === row.workoutId) }))
     .filter((item) => item.workout?.status === "completed")
-    .sort((a, b) => Date.parse(b.workout!.startedAt) - Date.parse(a.workout!.startedAt))[0];
-  if (!latest) return [];
-  return data.sets.filter((set) => set.workoutExerciseId === latest.row.id && set.completed).sort((a, b) => a.setNumber - b.setNumber);
+    .sort((a, b) => Date.parse(b.workout!.startedAt) - Date.parse(a.workout!.startedAt)).slice(0, 3);
+  const sessions = recent.map(({ row }) => data.sets
+    .filter((set) => set.workoutExerciseId === row.id && set.completed)
+    .sort((a, b) => a.setNumber - b.setNumber)).filter((sets) => sets.length);
+  return { latest: sessions[0] ?? [], all: sessions.flat(), sessionCount: sessions.length };
 }
 
 function prescribe(data: Snapshot, exercise: Exercise, energy: AdaptiveConstraints["energy"]) {
   const previous = comparablePerformance(data, exercise.id);
-  const reps = previous.map((set) => set.reps).filter((value): value is number => value != null);
+  const reps = previous.all.map((set) => set.reps).filter((value): value is number => value != null);
   let repMin = exercise.defaultRepMin, repMax = exercise.defaultRepMax;
   if (reps.length) { repMin = Math.max(1, Math.min(...reps)); repMax = Math.max(repMin, Math.max(...reps)); if (repMin === repMax) repMax += 2; }
-  const latest = previous[0];
+  const latest = previous.latest[0];
   const load = latest?.assistanceWeight != null && latest.assistanceWeight > 0
     ? { kind: "assistance" as const, valueKg: latest.assistanceWeight }
     : latest?.addedWeight != null && latest.addedWeight > 0
@@ -153,19 +162,31 @@ function prescribe(data: Snapshot, exercise: Exercise, energy: AdaptiveConstrain
         : exercise.bodyweightExercise ? { kind: "bodyweight" as const, valueKg: null }
           : { kind: "calibration" as const, valueKg: null };
   return {
-    repMin, repMax, rir: energy === "low" ? "3" : exercise.fatigueCost >= 3 ? "2–3" : "1–2",
-    suggestedLoad: { ...load, confidence: previous.length ? "medium" as const : "low" as const },
-    notes: previous.length ? "Mantén la carga comparable y progresa en repeticiones; aumenta solo al dominar el rango con el RIR previsto."
-      : "Calibra una carga técnica conservadora; no hay historial comparable suficiente.",
-    previousSetCount: previous.length,
+    repMin, repMax, rir: exercise.metricType === "time" ? "Técnica" : energy === "low" ? "3" : exercise.fatigueCost >= 3 ? "2–3" : "1–2",
+    suggestedLoad: { ...load, confidence: previous.sessionCount >= 3 ? "high" as const : previous.sessionCount ? "medium" as const : "low" as const },
+    notes: exercise.metricType === "time"
+      ? "Detén la serie cuando pierdas la posición o la respiración controlada; el tiempo es un techo técnico, no un objetivo a cualquier precio."
+      : previous.sessionCount ? "Mantén la carga comparable y progresa en repeticiones; aumenta solo al dominar el rango con el RIR previsto."
+        : "Calibra una carga técnica conservadora; no hay historial comparable suficiente.",
+    previousSetCount: previous.latest.length,
   };
 }
 
-function estimateExerciseSeconds(exercise: Exercise, sets: number) {
-  const work = exercise.metricType === "time" ? exercise.defaultRepMax : 35;
-  const warmup = exercise.fatigueCost >= 4 ? 180 : exercise.fatigueCost >= 3 ? 90 : 0;
-  return Math.round(75 + warmup + sets * work * (exercise.unilateralPerSide ? 1.6 : 1)
-    + Math.max(0, sets - 1) * exercise.defaultRestSeconds);
+function estimateExerciseSeconds(exercise: Exercise, sets: number, prescribedMax = exercise.defaultRepMax) {
+  const work = exercise.metricType === "time" ? prescribedMax : 35;
+  // Technical ramp-up sets remain attached to demanding exercises. They are not
+  // hypertrophy sets and are distinct from the optional general warm-up.
+  const rampUp = exercise.fatigueCost >= 4 ? 180 : exercise.fatigueCost >= 3 ? 90 : 0;
+  const efforts = sets * (exercise.unilateralPerSide ? 2 : 1);
+  const transitionAndSetup = 75;
+  return Math.round(transitionAndSetup + rampUp + efforts * work + Math.max(0, efforts - 1) * exercise.defaultRestSeconds);
+}
+
+export function adaptiveTimeBudget(data: Snapshot, constraints: AdaptiveConstraints) {
+  const totalSeconds = constraints.durationMinutes * 60;
+  const generalWarmupSeconds = data.settings.includeWarmupInDuration
+    ? clamp(data.settings.generalWarmupMinutes, 0, constraints.durationMinutes) * 60 : 0;
+  return { totalSeconds, generalWarmupSeconds, mainSessionSeconds: totalSeconds - generalWarmupSeconds };
 }
 
 export function deterministicPlan(data: Snapshot, constraints: AdaptiveConstraints, context = buildAdaptiveContext(data)) {
@@ -183,10 +204,14 @@ export function deterministicPlan(data: Snapshot, constraints: AdaptiveConstrain
     for (const row of data.workoutExercises.filter((item) => item.workoutId === workout.id))
       recentCounts.set(row.exerciseId, (recentCounts.get(row.exerciseId) ?? 0) + 1);
   const selected: { exercise: Exercise; plan: PlanExercise }[] = [];
-  const maxSeconds = constraints.durationMinutes * 60; let usedSeconds = 7 * 60;
+  const maxSeconds = adaptiveTimeBudget(data, constraints).mainSessionSeconds; let usedSeconds = 0;
   while (selected.length < (constraints.durationMinutes <= 30 ? 4 : 7)) {
     const candidates = eligible.filter((exercise) => !selected.some((item) => item.exercise.id === exercise.id)).map((exercise) => {
-      const coverage = exercise.stimulus.reduce((sum, item) => sum + (need.get(item.group) ?? 0) * item.weight * (item.direct ? 1 : 0.42), 0);
+      const direct = exercise.stimulus.filter((item) => item.direct);
+      const strongest = [...direct].sort((a, b) => (need.get(b.group) ?? 0) * b.weight - (need.get(a.group) ?? 0) * a.weight)[0];
+      const directCoverage = direct.reduce((sum, item) => sum + (need.get(item.group) ?? 0) * item.weight, 0);
+      const secondaryCoverage = exercise.stimulus.filter((item) => !item.direct)
+        .reduce((sum, item) => sum + (need.get(item.group) ?? 0) * item.weight * 0.12, 0);
       const preference = data.settings.exercisePreferences[exercise.id] ?? exercise.preference;
       const seen = recentIds.has(exercise.id);
       const continuity = data.settings.variationLevel === 1 ? (seen ? 4 : -0.5)
@@ -196,27 +221,33 @@ export function deterministicPlan(data: Snapshot, constraints: AdaptiveConstrain
       const directGroupRepeat = exercise.stimulus.some((stimulus) => stimulus.direct && selected.some((item) =>
         item.exercise.stimulus.some((selectedStimulus) => selectedStimulus.direct && selectedStimulus.group === stimulus.group))) ? 8 : 0;
       const fatiguePenalty = exercise.fatigueCost * (constraints.energy === "low" ? 5 : 1.5);
-      return { exercise, utility: coverage / 10 + preference * 2 + continuity + (exercise.referenceExercise ? 2 : 0)
+      return { exercise, strongest, utility: directCoverage / 8 + secondaryCoverage / 10 + (preference - 3) * 0.8
+        + continuity + (exercise.referenceExercise && strongest && (need.get(strongest.group) ?? 0) >= 8 ? 2 : 0)
         - familyRepeat - directGroupRepeat - fatiguePenalty - repetitionPenalty };
     }).sort((a, b) => b.utility - a.utility);
+    if (!candidates.some((candidate) => candidate.strongest && (need.get(candidate.strongest.group) ?? 0) >= 6)) break;
     let added = false;
     for (const candidate of candidates) {
       const prescription = prescribe(data, candidate.exercise, constraints.energy);
-      const strongest = [...candidate.exercise.stimulus].sort((a, b) => (need.get(b.group) ?? 0) * b.weight - (need.get(a.group) ?? 0) * a.weight)[0];
+      const strongest = candidate.strongest;
+      if (!strongest || (need.get(strongest.group) ?? 0) < 6) continue;
       const sets = constraints.energy === "low" ? 2 : candidate.exercise.referenceExercise && prescription.previousSetCount >= 3
-        ? clamp(prescription.previousSetCount, 3, 4) : strongest && (need.get(strongest.group) ?? 0) >= 55 ? 3 : 2;
-      const estimatedSeconds = estimateExerciseSeconds(candidate.exercise, sets);
-      if (usedSeconds + estimatedSeconds > maxSeconds && selected.length >= 3) continue;
+        ? clamp(prescription.previousSetCount, 3, 4) : (need.get(strongest.group) ?? 0) >= 45 ? 3 : 2;
+      const estimatedSeconds = estimateExerciseSeconds(candidate.exercise, sets, prescription.repMax);
+      if (usedSeconds + estimatedSeconds > maxSeconds) continue;
       const alternatives = candidates.filter((item) => item.exercise.id !== candidate.exercise.id
-        && item.exercise.stimulus.some((stimulus) => stimulus.group === strongest?.group)).slice(0, 3).map((item) => item.exercise.id);
+        && item.exercise.stimulus.some((stimulus) => stimulus.direct && stimulus.group === strongest.group)).slice(0, 3).map((item) => item.exercise.id);
+      const secondary = candidate.exercise.stimulus.filter((item) => !item.direct && (need.get(item.group) ?? 0) >= 6)
+        .map((item) => item.group);
+      const sideNote = candidate.exercise.unilateralPerSide ? " Series y descansos contabilizados por lado." : "";
       selected.push({ exercise: candidate.exercise, plan: {
         exerciseId: candidate.exercise.id, sets, repMin: prescription.repMin, repMax: prescription.repMax,
-        rir: prescription.rir, optional: selected.length >= 4 ? 1 : 0, notes: prescription.notes,
-        priority: strongest && (need.get(strongest.group) ?? 0) >= 55 ? "Prioritario" : "Cobertura",
-        targetGroup: strongest?.group, restSeconds: candidate.exercise.defaultRestSeconds,
+        rir: prescription.rir, optional: selected.length >= 4 ? 1 : 0, notes: prescription.notes + sideNote,
+        priority: (need.get(strongest.group) ?? 0) >= 45 ? "Prioritario" : "Cobertura",
+        targetGroup: strongest.group, restSeconds: candidate.exercise.defaultRestSeconds,
         suggestedLoad: prescription.suggestedLoad,
-        reason: strongest ? `Cubre ${strongest.group} con necesidad ${round(need.get(strongest.group) ?? 0)}.` : "Cobertura complementaria.",
-        alternatives, estimatedSeconds,
+        reason: `Estímulo principal: ${strongest.group} (necesidad ${round(need.get(strongest.group) ?? 0)}).${secondary.length ? ` Secundario: ${secondary.join(", ")}.` : ""}`,
+        alternatives, estimatedSeconds, unilateralPerSide: candidate.exercise.unilateralPerSide,
       }});
       usedSeconds += estimatedSeconds;
       for (const stimulus of candidate.exercise.stimulus)
@@ -232,7 +263,7 @@ export function deterministicPlan(data: Snapshot, constraints: AdaptiveConstrain
 function orderScore(exercise: Exercise, plan: PlanExercise, context: AdaptiveContext) {
   const need = context.needs.find((item) => item.group === plan.targetGroup)?.score ?? 0;
   const isolation = ["elbow_flexion", "elbow_extension", "shoulder_abduction", "rear_delt_isolation", "calf_raise"].includes(exercise.movementPattern);
-  return need + (exercise.referenceExercise ? 16 : 0) + (isolation ? -12 : 5) + exercise.fatigueCost * 2;
+  return need * 0.55 + (exercise.referenceExercise ? 28 : 0) + (isolation ? -12 : 8) + exercise.fatigueCost * 2;
 }
 
 const loadSchema = z.object({ kind: z.enum(["bodyweight", "added_weight", "assistance", "external", "calibration"]),
@@ -244,23 +275,65 @@ const llmExerciseSchema = z.object({
   rir: z.string().min(1).max(20), optional: z.number().int().min(0).max(1), notes: z.string().max(500),
   priority: z.string().max(40), restSeconds: z.number().int().min(30).max(600), suggestedLoad: loadSchema,
   reason: z.string().min(1).max(300), alternatives: z.array(z.string()).max(4), estimatedSeconds: z.number().int().min(30).max(3600),
+  unilateralPerSide: z.boolean().optional(),
 }).refine((value) => value.repMax >= value.repMin, "Rango de repeticiones invertido.");
 export const llmAdaptivePlanSchema = z.object({ schemaVersion: z.literal("adaptive-session-1.1"),
   exercises: z.array(llmExerciseSchema).min(1).max(8), rationale: z.array(z.string().max(300)).min(1).max(8) });
 
-export function validateAdaptivePlan(data: Snapshot, value: unknown, constraints: AdaptiveConstraints) {
+export function validateAdaptivePlan(data: Snapshot, value: unknown, constraints: AdaptiveConstraints, context = buildAdaptiveContext(data)) {
   const parsed = llmAdaptivePlanSchema.parse(value), catalog = new Map(data.exercises.map((exercise) => [exercise.id, exercise]));
-  const blocked = new Set(constraints.blockedExerciseIds); let seconds = 7 * 60;
-  for (const row of parsed.exercises) {
+  const blocked = new Set(constraints.blockedExerciseIds); let seconds = 0;
+  const canonicalExercises = parsed.exercises.map((row) => {
     const exercise = catalog.get(row.exerciseId);
     if (!exercise || !exercise.enabled || !exercise.autoSelectable || exercise.planningStatus !== "active" || blocked.has(row.exerciseId))
       throw new Error("El proveedor devolvió ejercicios no disponibles para selección automática.");
     if (!equipmentMatches(exercise, constraints)) throw new Error("El proveedor ignoró las restricciones de equipamiento.");
+    if (!exercise.stimulus.some((stimulus) => stimulus.direct && stimulus.group === row.targetGroup))
+      throw new Error("La justificación principal no corresponde a un estímulo directo del ejercicio.");
     if (exercise.metricType === "time" && exercise.prescriptionUnit !== "seconds") throw new Error("La unidad de prescripción no coincide con el ejercicio.");
-    seconds += row.estimatedSeconds;
-  }
-  if (seconds > constraints.durationMinutes * 60 * 1.08) throw new Error("La propuesta no cabe en el tiempo disponible.");
+    const estimatedSeconds = estimateExerciseSeconds(exercise, row.sets, row.repMax);
+    seconds += estimatedSeconds;
+    return { ...row, estimatedSeconds, unilateralPerSide: exercise.unilateralPerSide };
+  });
+  if (seconds > adaptiveTimeBudget(data, constraints).mainSessionSeconds) throw new Error("La propuesta no cabe en el tiempo disponible.");
   const orders = parsed.exercises.map((row) => row.order);
   if (new Set(orders).size !== orders.length) throw new Error("El orden de ejercicios está duplicado.");
-  return { ...parsed, exercises: [...parsed.exercises].sort((a, b) => a.order - b.order) };
+  const selectedGroups = new Set(parsed.exercises.map((row) => row.targetGroup));
+  const eligibleDirectGroups = new Set(data.exercises.filter((exercise) => exercise.enabled && exercise.autoSelectable
+    && exercise.planningStatus === "active" && !blocked.has(exercise.id) && equipmentMatches(exercise, constraints))
+    .flatMap((exercise) => exercise.stimulus.filter((stimulus) => stimulus.direct).map((stimulus) => stimulus.group)));
+  const uncoveredHigh = context.needs.filter((need) => eligibleDirectGroups.has(need.group) && !selectedGroups.has(need.group))
+    .sort((a, b) => b.score - a.score)[0];
+  if (uncoveredHigh && uncoveredHigh.score >= 20) {
+    const displaced = parsed.exercises.find((row) => (context.needs.find((need) => need.group === row.targetGroup)?.score ?? 0) < 8);
+    if (displaced) throw new Error(`La propuesta desplaza ${uncoveredHigh.group} por ${displaced.targetGroup} sin necesidad suficiente.`);
+  }
+  return { ...parsed, exercises: canonicalExercises.sort((a, b) => a.order - b.order) };
+}
+
+export function buildDecisionAudit(data: Snapshot, plan: PlanExercise[], context: AdaptiveContext, constraints: AdaptiveConstraints): NonNullable<AdaptiveContext["decisionAudit"]> {
+  const blocked = new Set(constraints.blockedExerciseIds);
+  const eligible = data.exercises.filter((exercise) => exercise.enabled && exercise.autoSelectable
+    && exercise.planningStatus === "active" && !blocked.has(exercise.id) && equipmentMatches(exercise, constraints));
+  const selectedGroups = new Set(plan.map((row) => row.targetGroup).filter(Boolean));
+  return {
+    exercises: plan.flatMap((row) => {
+      if (!row.targetGroup) return [];
+      const exercise = data.exercises.find((item) => item.id === row.exerciseId);
+      return [{ exerciseId: row.exerciseId, targetGroup: row.targetGroup,
+        targetNeed: round(context.needs.find((need) => need.group === row.targetGroup)?.score ?? 0),
+        direct: Boolean(exercise?.stimulus.some((stimulus) => stimulus.direct && stimulus.group === row.targetGroup)),
+        alternatives: row.alternatives ?? [] }];
+    }),
+    uncoveredNeeds: context.needs.filter((need) => need.score >= 6 && !selectedGroups.has(need.group)).map((need) => {
+      const candidates = eligible.filter((exercise) => exercise.stimulus.some((stimulus) => stimulus.direct && stimulus.group === need.group));
+      const hasAny = data.exercises.some((exercise) => exercise.enabled && exercise.autoSelectable && exercise.planningStatus === "active"
+        && exercise.stimulus.some((stimulus) => stimulus.direct && stimulus.group === need.group));
+      const reason = !hasAny ? "no_candidate" as const : !candidates.length ? "equipment" as const
+        : need.recovery < 0.45 ? "recovery" as const
+          : plan.reduce((sum, row) => sum + (row.estimatedSeconds ?? 0), 0) >= adaptiveTimeBudget(data, constraints).mainSessionSeconds * 0.9
+            ? "time" as const : "lower_priority" as const;
+      return { group: need.group, score: need.score, reason };
+    }),
+  };
 }

@@ -31,6 +31,7 @@ import { initialExercises } from "../database/seed";
 import { LlmWorkerClient } from "../integrations/llm/client";
 import {
   ADAPTIVE_RULES_VERSION,
+  adaptiveTimeBudget,
   buildAdaptiveContext,
   deterministicPlan,
   exerciseStimulus,
@@ -1332,6 +1333,10 @@ test("adaptive-1.1 penaliza exceso reciente y respeta equipamiento restringido",
   assert.ok(chest.score < baseline.score);
   assert.ok(chest.excessRatio > 0);
   const plan = deterministicPlan(data, { durationMinutes: 50, energy: "normal", blockedExerciseIds: [], equipment: ["Peso corporal", "Barra de dominadas", "Paralelas"] }, buildAdaptiveContext(data, now));
+  assert.ok(chest.score < 8, "un grupo excedido el mismo día no conserva urgencia artificial");
+  assert.ok(!plan.some((row) => row.exerciseId === "dip"), "la preferencia por fondos no desplaza necesidades reales");
+  assert.ok(plan.every((row) => data.exercises.find((exercise) => exercise.id === row.exerciseId)?.stimulus
+    .some((stimulus) => stimulus.direct && stimulus.group === row.targetGroup)));
   assert.ok(plan.every((row) => {
     const exercise = data.exercises.find((item) => item.id === row.exerciseId)!;
     return !exercise.autoSuggestRequiresEquipmentMatch || ["Peso corporal", "Barra de dominadas", "Paralelas"].includes(exercise.equipment);
@@ -1355,11 +1360,76 @@ test("la validación del LLM rechaza IDs inventados y sesiones imposibles", asyn
     exercises: [llmRow("inventado")],
     rationale: ["Prueba"],
   }, constraints), /no disponibles/);
+  const directTargets = { pullup: "vertical_pull", dip: "chest", row: "horizontal_pull", pushup: "chest" } as const;
   assert.throws(() => validateAdaptivePlan(data, {
     schemaVersion: "adaptive-session-1.1",
-    exercises: ["pullup", "dip", "row", "pushup"].map((exerciseId, index) => llmRow(exerciseId, index + 1)),
+    exercises: (["pullup", "dip", "row", "pushup"] as const).map((exerciseId, index) => ({
+      ...llmRow(exerciseId, index + 1), targetGroup: directTargets[exerciseId],
+    })),
     rationale: ["Prueba"],
   }, constraints), /tiempo disponible/);
+  assert.throws(() => validateAdaptivePlan(data, {
+    schemaVersion: "adaptive-session-1.1",
+    exercises: [{ ...llmRow("dip"), targetGroup: "forearms_grip" }],
+    rationale: ["Prueba"],
+  }, constraints), /estímulo directo/);
+  sql.close();
+});
+
+test("el presupuesto temporal solo descuenta el calentamiento general cuando se activa", async () => {
+  const { db, sql } = database();
+  const repo = new D1TrainingRepository(db, "adaptive-time:real");
+  let data = await repo.snapshot();
+  const constraints = { durationMinutes: 45 as const, energy: "normal" as const, blockedExerciseIds: [], equipment: [] };
+  assert.deepEqual(adaptiveTimeBudget(data, constraints), { totalSeconds: 2700, generalWarmupSeconds: 0, mainSessionSeconds: 2700 });
+  await repo.execute({ action: "setTrainerSettings", settings: {
+    defaultDurationMinutes: 45, includeWarmupInDuration: 1, generalWarmupMinutes: 7,
+    usualFrequency: data.settings.usualFrequency, variationLevel: data.settings.variationLevel,
+    priorities: data.settings.priorities, exercisePreferences: data.settings.exercisePreferences,
+    availableEquipment: data.settings.availableEquipment,
+  } });
+  data = await repo.snapshot();
+  assert.equal(data.settings.includeWarmupInDuration, 1);
+  assert.equal(data.settings.generalWarmupMinutes, 7);
+  assert.deepEqual(adaptiveTimeBudget(data, constraints), { totalSeconds: 2700, generalWarmupSeconds: 420, mainSessionSeconds: 2280 });
+  const plan = deterministicPlan(data, constraints, buildAdaptiveContext(data));
+  assert.ok(plan.reduce((sum, row) => sum + (row.estimatedSeconds ?? 0), 0) <= 2280);
+  sql.close();
+});
+
+test("la prescripción temporal usa calidad técnica y el cálculo unilateral cuenta ambos lados", async () => {
+  const { db, sql } = database();
+  const data = await new D1TrainingRepository(db, "adaptive-prescription:real").snapshot();
+  const base = buildAdaptiveContext(data, new Date("2026-11-22T20:00:00.000Z"));
+  const only = (group: "core" | "calves") => ({ ...base, needs: base.needs.map((need) => ({ ...need, score: need.group === group ? 50 : 0 })) });
+  const plankPlan = deterministicPlan(data, {
+    durationMinutes: 30, energy: "normal", equipment: [],
+    blockedExerciseIds: data.exercises.filter((exercise) => exercise.id !== "plank").map((exercise) => exercise.id),
+  }, only("core"));
+  assert.equal(plankPlan[0]?.exerciseId, "plank");
+  assert.equal(plankPlan[0]?.rir, "Técnica");
+  assert.match(plankPlan[0]?.notes ?? "", /posición|técnico/i);
+  const calfPlan = deterministicPlan(data, {
+    durationMinutes: 30, energy: "normal", equipment: [],
+    blockedExerciseIds: data.exercises.filter((exercise) => exercise.id !== "single-leg-calf-raise").map((exercise) => exercise.id),
+  }, only("calves"));
+  assert.equal(calfPlan[0]?.unilateralPerSide, true);
+  assert.match(calfPlan[0]?.notes ?? "", /por lado/);
+  assert.ok((calfPlan[0]?.estimatedSeconds ?? 0) >= 400);
+  sql.close();
+});
+
+test("los movimientos de referencia conservan un orden favorable frente a aislamientos", async () => {
+  const { db, sql } = database();
+  const data = await new D1TrainingRepository(db, "adaptive-order:real").snapshot();
+  const context = buildAdaptiveContext(data, new Date("2026-11-22T20:00:00.000Z"));
+  context.needs = context.needs.map((need) => ({ ...need,
+    score: need.group === "calves" ? 50 : need.group === "vertical_pull" ? 35 : 0 }));
+  const keep = new Set(["pullup", "single-leg-calf-raise"]);
+  const plan = deterministicPlan(data, { durationMinutes: 45, energy: "normal", equipment: [],
+    blockedExerciseIds: data.exercises.filter((exercise) => !keep.has(exercise.id)).map((exercise) => exercise.id) }, context);
+  assert.deepEqual(new Set(plan.map((row) => row.exerciseId)), keep);
+  assert.equal(plan[0].exerciseId, "pullup");
   sql.close();
 });
 

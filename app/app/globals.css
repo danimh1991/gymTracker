@@ -2087,6 +2087,10 @@ textarea {
 .coach-controls { display: grid; gap: 12px; padding: 20px; border: 1px solid #343936; border-radius: 18px; background: rgb(255 255 255 / 4%); }
 .coach-controls label { display: grid; gap: 7px; color: #cbd0cc; font-size: .78rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
 .coach-controls select { width: 100%; padding: 12px; border: 1px solid #3d433f; border-radius: 10px; background: #202421; color: #fff; }
+.coach-controls .warmup-time-toggle { gap: 5px; padding: 10px 0; text-transform: none; letter-spacing: 0; }
+.warmup-time-toggle > span { display: flex; align-items: center; gap: 9px; font-size: .85rem; }
+.warmup-time-toggle input { width: 17px; height: 17px; accent-color: var(--lime); }
+.warmup-time-toggle small { color: #8f9992; font-weight: 600; }
 .coach-generate { justify-content: center; margin-top: 4px; }
 .coach-settings-button { display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; background: transparent; color: #b9c0bb; cursor: pointer; }
 .coach-settings, .coach-analysis, .coach-plan, .coach-empty, .coach-resume { margin-top: 24px; padding: 26px; border: 1px solid var(--line); border-radius: 20px; background: #fff; }

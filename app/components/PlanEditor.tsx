@@ -2,6 +2,16 @@
 import { ChevronDown, ChevronUp, CopyPlus, Plus, Trash2 } from "lucide-react";
 import type { Exercise, PlanExercise } from "../domain/types";
 
+function loadText(row: PlanExercise) {
+  const load = row.suggestedLoad;
+  if (!load) return null;
+  const confidence = load.confidence === "high" ? "confianza alta" : load.confidence === "medium" ? "confianza media" : "por calibrar";
+  if (load.kind === "bodyweight") return `Peso corporal · ${confidence}`;
+  if (load.kind === "calibration") return `Carga técnica a calibrar · ${confidence}`;
+  const label = load.kind === "assistance" ? "Asistencia" : load.kind === "added_weight" ? "Lastre" : "Carga";
+  return `${label}: ${load.valueKg ?? "—"} kg · ${confidence}`;
+}
+
 export function PlanEditor({
   plan,
   exercises,
@@ -113,6 +123,8 @@ export function PlanEditor({
             </button>
           </div>
           {row.reason && <p className="muted">{row.reason}</p>}
+          <p className="muted">{loadText(row)}{row.unilateralPerSide ? " · Series y descansos por lado" : ""}{row.estimatedSeconds ? ` · ~${Math.ceil(row.estimatedSeconds / 60)} min` : ""}</p>
+          {row.notes && <p className="muted">{row.notes}</p>}
         </article>
       ))}
       <button

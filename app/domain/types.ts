@@ -27,6 +27,8 @@ export interface TrainerSettings {
   trainingDays: number;
   adaptiveEnabled: number;
   defaultDurationMinutes: number;
+  includeWarmupInDuration: number;
+  generalWarmupMinutes: number;
   usualFrequency: number;
   variationLevel: number;
   priorities: Record<MuscleGroup, number>;
@@ -103,6 +105,7 @@ export interface PlanExercise {
   reason?: string;
   alternatives?: string[];
   estimatedSeconds?: number;
+  unilateralPerSide?: boolean;
 }
 export interface RoutineDay {
   id: DayKey;
@@ -170,12 +173,12 @@ export interface AdaptiveNeed {
   fatigue72h: number;
   exposureCount28d: number;
   components: {
-    structural: number;
-    deficit: number;
+    volumeDeficit: number;
     overdue: number;
-    readiness: number;
-    excessPenalty: number;
-    recentPenalty: number;
+    priorityMultiplier: number;
+    recoveryMultiplier: number;
+    recentMultiplier: number;
+    excessMultiplier: number;
   };
 }
 export interface AdaptiveContext {
@@ -187,6 +190,25 @@ export interface AdaptiveContext {
   catalogVersion: string;
   rulesHash?: string;
   equipmentState: "configured" | "unknown";
+  timeBudget?: {
+    totalSeconds: number;
+    generalWarmupSeconds: number;
+    mainSessionSeconds: number;
+  };
+  decisionAudit?: {
+    exercises: Array<{
+      exerciseId: string;
+      targetGroup: MuscleGroup;
+      targetNeed: number;
+      direct: boolean;
+      alternatives: string[];
+    }>;
+    uncoveredNeeds: Array<{
+      group: MuscleGroup;
+      score: number;
+      reason: "time" | "recovery" | "equipment" | "lower_priority" | "no_candidate";
+    }>;
+  };
 }
 export interface WorkoutExercise extends RoutineExercise {
   workoutId: string;

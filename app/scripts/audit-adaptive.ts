@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
-import type { Exercise, PlanExercise, Snapshot, WorkoutExercise, WorkoutSet } from "../domain/types";
+import type { Exercise, Snapshot, WorkoutExercise, WorkoutSet } from "../domain/types";
 import {
   ADAPTIVE_RULES_VERSION,
   buildAdaptiveContext,
@@ -20,6 +20,7 @@ const dump = readFileSync(backupPath, "utf8").replace(
 );
 sqlite.exec(dump);
 sqlite.exec(readFileSync(new URL("../drizzle/0009_adaptive_1_1.sql", import.meta.url), "utf8"));
+sqlite.exec(readFileSync(new URL("../drizzle/0010_adaptive_time_budget.sql", import.meta.url), "utf8").replaceAll("--> statement-breakpoint", ""));
 
 const rows = <T>(table: string) => sqlite.prepare(`SELECT * FROM ${table}`).all() as T[];
 const ownerId = "danieta-gymtracker:real";
@@ -28,9 +29,18 @@ const exercises = sqlite.prepare(`SELECT e.*,m.metadataJson FROM exercises e
     const value = row as Record<string, unknown>;
     return { ...value, ...JSON.parse(String(value.metadataJson)) } as unknown as Exercise;
   });
-const settings = defaultTrainerSettings(3);
-settings.availableEquipment = [...new Set(exercises.map((exercise) => exercise.equipment))];
-settings.equipmentConfigured = 1;
+const storedSettings = sqlite.prepare("SELECT * FROM userSettings WHERE ownerId=?").get(ownerId) as Record<string, unknown> | undefined;
+const settings = defaultTrainerSettings(Number(storedSettings?.trainingDays ?? 3));
+settings.defaultDurationMinutes = Number(storedSettings?.defaultDurationMinutes ?? settings.defaultDurationMinutes);
+settings.includeWarmupInDuration = Number(storedSettings?.includeWarmupInDuration ?? settings.includeWarmupInDuration);
+settings.generalWarmupMinutes = Number(storedSettings?.generalWarmupMinutes ?? settings.generalWarmupMinutes);
+settings.usualFrequency = Number(storedSettings?.usualFrequency ?? settings.usualFrequency);
+settings.variationLevel = Number(storedSettings?.variationLevel ?? settings.variationLevel);
+settings.priorities = { ...settings.priorities, ...JSON.parse(String(storedSettings?.priorities ?? "{}")) };
+settings.exercisePreferences = JSON.parse(String(storedSettings?.exercisePreferences ?? "{}"));
+settings.availableEquipment = JSON.parse(String(storedSettings?.availableEquipment ?? "[]"));
+if (!settings.availableEquipment.length) settings.availableEquipment = [...new Set(exercises.map((exercise) => exercise.equipment))];
+settings.equipmentConfigured = settings.availableEquipment.length ? 1 : 0;
 const data = {
   users: [],
   activeUserId: "danieta-gymtracker",
@@ -59,6 +69,12 @@ const data = {
   externalActivities: rows("externalActivities"),
   adaptiveProposals: [],
 } as unknown as Snapshot;
+
+const reportedCaseGeneratedAt = "2026-11-22T20:56:14.206Z";
+const reportedCaseContext = buildAdaptiveContext(data, new Date(reportedCaseGeneratedAt));
+const reportedCasePlan = deterministicPlan(data, {
+  durationMinutes: 45, energy: "normal", blockedExerciseIds: [], equipment: settings.availableEquipment,
+}, reportedCaseContext);
 
 const enabled = exercises.filter((exercise) => exercise.enabled);
 const catalog = enabled
@@ -296,6 +312,11 @@ const report = {
   },
   rulesVersion: ADAPTIVE_RULES_VERSION,
   effectiveSettings: settings,
+  reportedCase: {
+    generatedAt: reportedCaseGeneratedAt,
+    priorities: reportedCaseContext.needs,
+    plan: reportedCasePlan,
+  },
   catalog,
   simulations,
   accumulated,
