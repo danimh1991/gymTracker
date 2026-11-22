@@ -23,6 +23,8 @@ worker directamente desde componentes React.
 
 Binding: `LLM_DATA`. Bucket compartido de producción: `llm-core-knowledge`
 (jurisdicción `eu`). GymTracker queda aislado bajo su prefijo propio.
+El binding de Wrangler declara también `jurisdiction: "eu"`; omitirlo haría
+que Cloudflare buscase un bucket distinto en la jurisdicción predeterminada.
 
 Todas las claves pertenecen a `gym-tracker/v1/` y el índice canónico vive en
 `gym-tracker/v1/manifest.json`. El manifiesto permite cambiar el contenido sin

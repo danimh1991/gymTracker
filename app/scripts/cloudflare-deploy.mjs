@@ -50,6 +50,7 @@ config.r2_buckets = [
   {
     binding: "LLM_DATA",
     bucket_name: "llm-core-knowledge",
+    jurisdiction: "eu",
   },
 ];
 writeFileSync(wranglerPath, `${JSON.stringify(config, null, 2)}\n`);

@@ -33,6 +33,7 @@
     {
       "binding": "LLM_DATA",
       "bucket_name": "llm-core-knowledge",
+      "jurisdiction": "eu",
     },
   ],
   "rules": [
