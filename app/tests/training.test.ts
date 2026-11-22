@@ -1373,6 +1373,33 @@ test("la validación del LLM rechaza IDs inventados y sesiones imposibles", asyn
     exercises: [{ ...llmRow("dip"), targetGroup: "forearms_grip" }],
     rationale: ["Prueba"],
   }, constraints), /estímulo directo/);
+  assert.throws(() => validateAdaptivePlan(data, {
+    schemaVersion: "adaptive-session-1.1",
+    exercises: [{ ...llmRow("pullup"), alternatives: ["dip"] }],
+    rationale: ["Prueba"],
+  }, constraints), /alternativas/);
+  sql.close();
+});
+
+test("IA validada rechaza baja necesidad que desplaza cobertura y un orden deportivo incoherente", async () => {
+  const { db, sql } = database();
+  const data = await new D1TrainingRepository(db, "adaptive-sports-validation:real").snapshot();
+  const constraints = { durationMinutes: 45 as const, energy: "normal" as const, blockedExerciseIds: [], equipment: [] };
+  const context = buildAdaptiveContext(data);
+  context.needs = context.needs.map((need) => ({ ...need,
+    score: need.group === "lateral_rear_delts" ? 19 : need.group === "chest" ? 0 : need.group === "vertical_pull" ? 35 : need.group === "calves" ? 45 : 5 }));
+  const row = (exerciseId: string, targetGroup: "chest" | "vertical_pull" | "calves", order: number) => ({
+    exerciseId, targetGroup, order, sets: 2, repMin: 5, repMax: 10, rir: "2", optional: 0,
+    notes: "", priority: "Cobertura", restSeconds: 90,
+    suggestedLoad: { kind: "bodyweight" as const, valueKg: null, confidence: "low" as const },
+    reason: "Prueba", alternatives: [], estimatedSeconds: 200,
+  });
+  assert.throws(() => validateAdaptivePlan(data, { schemaVersion: "adaptive-session-1.1",
+    exercises: [row("dip", "chest", 1)], rationale: ["Prueba"] }, constraints, context), /desplaza/);
+  const orderContext = { ...context, needs: context.needs.map((need) => ({ ...need,
+    score: need.group === "vertical_pull" ? 35 : need.group === "calves" ? 45 : 0 })) };
+  assert.throws(() => validateAdaptivePlan(data, { schemaVersion: "adaptive-session-1.1",
+    exercises: [row("single-leg-calf-raise", "calves", 1), row("pullup", "vertical_pull", 2)], rationale: ["Prueba"] }, constraints, orderContext), /orden relega/);
   sql.close();
 });
 

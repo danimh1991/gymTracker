@@ -290,6 +290,11 @@ export function validateAdaptivePlan(data: Snapshot, value: unknown, constraints
     if (!equipmentMatches(exercise, constraints)) throw new Error("El proveedor ignoró las restricciones de equipamiento.");
     if (!exercise.stimulus.some((stimulus) => stimulus.direct && stimulus.group === row.targetGroup))
       throw new Error("La justificación principal no corresponde a un estímulo directo del ejercicio.");
+    if (row.alternatives.some((id) => {
+      const alternative = catalog.get(id);
+      return !alternative || !alternative.enabled || alternative.planningStatus !== "active"
+        || !alternative.stimulus.some((stimulus) => stimulus.direct && stimulus.group === row.targetGroup);
+    })) throw new Error("Las alternativas no cubren directamente el mismo objetivo.");
     if (exercise.metricType === "time" && exercise.prescriptionUnit !== "seconds") throw new Error("La unidad de prescripción no coincide con el ejercicio.");
     const estimatedSeconds = estimateExerciseSeconds(exercise, row.sets, row.repMax);
     seconds += estimatedSeconds;
@@ -304,9 +309,25 @@ export function validateAdaptivePlan(data: Snapshot, value: unknown, constraints
     .flatMap((exercise) => exercise.stimulus.filter((stimulus) => stimulus.direct).map((stimulus) => stimulus.group)));
   const uncoveredHigh = context.needs.filter((need) => eligibleDirectGroups.has(need.group) && !selectedGroups.has(need.group))
     .sort((a, b) => b.score - a.score)[0];
-  if (uncoveredHigh && uncoveredHigh.score >= 20) {
-    const displaced = parsed.exercises.find((row) => (context.needs.find((need) => need.group === row.targetGroup)?.score ?? 0) < 8);
+  if (uncoveredHigh && uncoveredHigh.score >= 12) {
+    const displaced = parsed.exercises.find((row) => {
+      const selectedNeed = context.needs.find((need) => need.group === row.targetGroup)?.score ?? 0;
+      return selectedNeed < 8 && uncoveredHigh.score - selectedNeed >= 8;
+    });
     if (displaced) throw new Error(`La propuesta desplaza ${uncoveredHigh.group} por ${displaced.targetGroup} sin necesidad suficiente.`);
+  }
+  for (const referenceRow of canonicalExercises) {
+    const reference = catalog.get(referenceRow.exerciseId)!;
+    if (!reference.referenceExercise) continue;
+    const referenceNeed = context.needs.find((need) => need.group === referenceRow.targetGroup)?.score ?? 0;
+    const prematureIsolation = canonicalExercises.find((row) => {
+      if (row.order >= referenceRow.order) return false;
+      const exercise = catalog.get(row.exerciseId)!;
+      const isolation = ["elbow_flexion", "elbow_extension", "shoulder_abduction", "rear_delt_isolation", "calf_raise"].includes(exercise.movementPattern);
+      const isolationNeed = context.needs.find((need) => need.group === row.targetGroup)?.score ?? 0;
+      return isolation && isolationNeed < referenceNeed + 20;
+    });
+    if (prematureIsolation) throw new Error("El orden relega un movimiento de referencia sin una prioridad suficiente que lo justifique.");
   }
   return { ...parsed, exercises: canonicalExercises.sort((a, b) => a.order - b.order) };
 }
