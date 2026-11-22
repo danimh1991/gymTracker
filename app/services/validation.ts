@@ -153,6 +153,8 @@ export const commandSchema = z.discriminatedUnion("action", [
       defaultDurationMinutes: z.number().int().min(30).max(75),
       includeWarmupInDuration: z.number().int().min(0).max(1),
       generalWarmupMinutes: z.number().int().min(0).max(20),
+      equipmentProfile: z.enum(["full_gym", "custom"]),
+      excludedExerciseIds: z.array(z.string().min(1)).max(120),
       usualFrequency: z.number().int().min(1).max(7),
       variationLevel: z.number().int().min(1).max(3),
       priorities: z.record(muscleGroup, z.number().int().min(1).max(5)),

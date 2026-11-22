@@ -33,8 +33,12 @@ import {
   ADAPTIVE_RULES_VERSION,
   adaptiveTimeBudget,
   buildAdaptiveContext,
+  buildEquipmentAudit,
   deterministicPlan,
+  equipmentMatches,
   exerciseStimulus,
+  repairUnderfilledPlan,
+  summarizePlanTime,
   validateAdaptivePlan,
 } from "../services/adaptive-planner";
 import {
@@ -1345,6 +1349,62 @@ test("adaptive-1.1 penaliza exceso reciente y respeta equipamiento restringido",
   sql.close();
 });
 
+test("el perfil gimnasio completo normaliza equipamiento y respeta estados y exclusiones", async () => {
+  const { db, sql } = database();
+  const data = await new D1TrainingRepository(db, "adaptive-full-gym:real").snapshot();
+  const fullGym = { durationMinutes: 45 as const, energy: "normal" as const, blockedExerciseIds: [],
+    equipment: [], equipmentProfile: "full_gym" as const };
+  const ids = ["lateral-raise", "lateral-raise-db", "lateral-raise-cable", "rear-delt-fly", "reverse-pec-deck", "face-pull", "cable-rear-delt-fly"];
+  const byId = new Map(data.exercises.filter((exercise) => ids.includes(exercise.id)).map((exercise) => [exercise.id, exercise]));
+  assert.equal(equipmentMatches(byId.get("lateral-raise-db")!, fullGym), true);
+  assert.equal(equipmentMatches(byId.get("lateral-raise-cable")!, fullGym), true);
+  assert.equal(equipmentMatches(byId.get("reverse-pec-deck")!, fullGym), true);
+  assert.equal(equipmentMatches(byId.get("face-pull")!, fullGym), true);
+  assert.equal(equipmentMatches(byId.get("cable-rear-delt-fly")!, fullGym), true);
+  assert.equal(byId.get("lateral-raise")!.planningStatus, "manual_only");
+  assert.equal(byId.get("rear-delt-fly")!.planningStatus, "manual_only");
+  const customDumbbells = { ...fullGym, equipmentProfile: "custom" as const, equipment: ["Mancuernas y banco"] };
+  assert.equal(equipmentMatches(byId.get("lateral-raise-db")!, customDumbbells), true);
+  assert.equal(equipmentMatches(byId.get("lateral-raise-cable")!, customDumbbells), false);
+  const context = buildAdaptiveContext(data);
+  context.needs = context.needs.map((need) => ({ ...need, score: need.group === "lateral_rear_delts" ? 20 : 0 }));
+  const audit = buildEquipmentAudit(data, context, { ...fullGym, blockedExerciseIds: ["face-pull"] });
+  assert.equal(audit.find((item) => item.exerciseId === "face-pull")?.reason, "blocked");
+  assert.equal(audit.find((item) => item.exerciseId === "lateral-raise")?.reason, "manual_only");
+  assert.equal(audit.find((item) => item.exerciseId === "lateral-raise-db")?.reason, "eligible");
+  sql.close();
+});
+
+test("30, 45, 60 y 75 minutos producen tiempos coherentes y reparan propuestas cortas", async () => {
+  const { db, sql } = database();
+  const data = await new D1TrainingRepository(db, "adaptive-duration-matrix:real").snapshot();
+  const context = buildAdaptiveContext(data, new Date("2026-11-22T10:00:00.000Z"));
+  context.needs = context.needs.map((need) => ({ ...need, score: Math.max(12, need.score), recovery: 1 }));
+  let previousSeconds = 0;
+  for (const durationMinutes of [30, 45, 60, 75] as const) {
+    const constraints = { durationMinutes, energy: "normal" as const, blockedExerciseIds: [], equipment: [], equipmentProfile: "full_gym" as const };
+    const plan = deterministicPlan(data, constraints, context);
+    const summary = summarizePlanTime(data, constraints, plan);
+    assert.equal(summary.plannedMainSeconds, plan.reduce((sum, row) => sum + (row.estimatedSeconds ?? 0), 0));
+    assert.ok(summary.plannedMainSeconds <= summary.mainSessionSeconds);
+    assert.equal(summary.remainingSeconds, summary.mainSessionSeconds - summary.plannedMainSeconds);
+    assert.ok(summary.plannedMainSeconds >= previousSeconds);
+    previousSeconds = summary.plannedMainSeconds;
+    if (durationMinutes === 45) {
+      const short = plan.slice(0, 2);
+      const repaired = repairUnderfilledPlan(data, short, plan, constraints, context);
+      assert.equal(repaired.repaired, true);
+      assert.ok(repaired.plan.length > short.length);
+      assert.ok(repaired.plan.reduce((sum, row) => sum + (row.estimatedSeconds ?? 0), 0) <= summary.mainSessionSeconds);
+    }
+  }
+  data.settings.includeWarmupInDuration = 1;
+  data.settings.generalWarmupMinutes = 7;
+  const warm = adaptiveTimeBudget(data, { durationMinutes: 45, energy: "normal", blockedExerciseIds: [], equipment: [], equipmentProfile: "full_gym" });
+  assert.deepEqual(warm, { totalSeconds: 2700, generalWarmupSeconds: 420, mainSessionSeconds: 2280 });
+  sql.close();
+});
+
 test("la validación del LLM rechaza IDs inventados y sesiones imposibles", async () => {
   const { db, sql } = database();
   const data = await new D1TrainingRepository(db, "adaptive-validation:real").snapshot();
@@ -1411,6 +1471,7 @@ test("el presupuesto temporal solo descuenta el calentamiento general cuando se 
   assert.deepEqual(adaptiveTimeBudget(data, constraints), { totalSeconds: 2700, generalWarmupSeconds: 0, mainSessionSeconds: 2700 });
   await repo.execute({ action: "setTrainerSettings", settings: {
     defaultDurationMinutes: 45, includeWarmupInDuration: 1, generalWarmupMinutes: 7,
+    equipmentProfile: "full_gym", excludedExerciseIds: [],
     usualFrequency: data.settings.usualFrequency, variationLevel: data.settings.variationLevel,
     priorities: data.settings.priorities, exercisePreferences: data.settings.exercisePreferences,
     availableEquipment: data.settings.availableEquipment,

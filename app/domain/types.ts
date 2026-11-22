@@ -29,6 +29,8 @@ export interface TrainerSettings {
   defaultDurationMinutes: number;
   includeWarmupInDuration: number;
   generalWarmupMinutes: number;
+  equipmentProfile: "full_gym" | "custom";
+  excludedExerciseIds: string[];
   usualFrequency: number;
   variationLevel: number;
   priorities: Record<MuscleGroup, number>;
@@ -105,6 +107,12 @@ export interface PlanExercise {
   reason?: string;
   alternatives?: string[];
   estimatedSeconds?: number;
+  timing?: {
+    workSeconds: number;
+    restSeconds: number;
+    transitionSeconds: number;
+    rampUpSeconds: number;
+  };
   unilateralPerSide?: boolean;
 }
 export interface RoutineDay {
@@ -158,6 +166,7 @@ export interface AdaptiveConstraints {
   energy: "low" | "normal" | "high";
   blockedExerciseIds: string[];
   equipment: string[];
+  equipmentProfile?: "full_gym" | "custom";
 }
 export interface AdaptiveNeed {
   group: MuscleGroup;
@@ -194,7 +203,23 @@ export interface AdaptiveContext {
     totalSeconds: number;
     generalWarmupSeconds: number;
     mainSessionSeconds: number;
+    workSeconds?: number;
+    restSeconds?: number;
+    transitionSeconds?: number;
+    rampUpSeconds?: number;
+    plannedMainSeconds?: number;
+    plannedTotalSeconds?: number;
+    remainingSeconds?: number;
   };
+  qualityRepairApplied?: boolean;
+  equipmentAudit?: Array<{
+    exerciseId: string;
+    name: string;
+    group: MuscleGroup;
+    equipment: string;
+    eligible: boolean;
+    reason: "eligible" | "blocked" | "disabled" | "manual_only" | "legacy_only" | "not_auto_selectable" | "equipment";
+  }>;
   decisionAudit?: {
     exercises: Array<{
       exerciseId: string;

@@ -21,6 +21,8 @@
 - Mantén principales varias semanas, rota accesorios según el nivel de variación y evita redundancias de familia.
 - Coloca normalmente los movimientos de referencia y técnicamente exigentes en posiciones favorables. Adelanta un aislamiento solo cuando la prioridad específica del día lo justifique.
 - Con energía baja elige alternativas de menor fatiga, reduce series y eleva RIR. No descartes una necesidad porque su primer candidato sea fatigante.
+- Con `equipmentProfile: full_gym`, considera disponibles mancuernas, barras, bancos, poleas, máquinas generales, prensa, barra de dominadas y paralelas, salvo IDs bloqueados. Una etiqueta genérica `Gimnasio` describe el entorno y no un aparato independiente.
+- Con perfil personalizado usa capacidades normalizadas: singular/plural y descripciones compuestas como `Gimnasio / polea` no requieren coincidencia literal.
 
 ## Prescripción y tiempo
 
@@ -29,6 +31,7 @@
 - Respeta `loadConvention`; cargas de máquinas, variantes o implementos distintos no son intercambiables.
 - Compuestos exigentes suelen usar RIR 2–3 y 120–240 s; accesorios RIR 1–2 y 60–120 s. No programes fallo sistemático.
 - Usa exactamente `timeBudget.mainSessionSeconds`. Incluye ejecución, descansos entre esfuerzos, cambios/preparación de equipo, unilateralidad y aproximaciones técnicas necesarias.
+- La duración estimada es la suma de esos componentes, no el tiempo solicitado. Si la primera propuesta queda materialmente corta, evalúa más series o ejercicios con necesidad residual y recuperación suficiente; no rellenes con grupos fatigados o sin utilidad.
 - El calentamiento general consume tiempo únicamente cuando `timeBudget.generalWarmupSeconds` es mayor que cero. Si vale cero, no lo añadas como ejercicio ni lo descuentes del tiempo principal.
 - Las aproximaciones técnicas de compuestos no son calentamiento general ni series efectivas de hipertrofia, pero sí consumen tiempo.
 - En ejercicios unilaterales, deja claro que las series y descansos son por lado y contabiliza ambos lados.

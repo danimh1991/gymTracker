@@ -268,6 +268,8 @@ export class D1TrainingRepository implements TrainingRepository {
       defaultDurationMinutes: Number(settingsRow?.defaultDurationMinutes ?? defaults.defaultDurationMinutes),
       includeWarmupInDuration: Number(settingsRow?.includeWarmupInDuration ?? defaults.includeWarmupInDuration),
       generalWarmupMinutes: Number(settingsRow?.generalWarmupMinutes ?? defaults.generalWarmupMinutes),
+      equipmentProfile: settingsRow?.equipmentProfile === "custom" ? "custom" : "full_gym",
+      excludedExerciseIds: parseJsonArray(settingsRow?.excludedExerciseIds),
       usualFrequency: Number(settingsRow?.usualFrequency ?? defaults.usualFrequency),
       variationLevel: Number(settingsRow?.variationLevel ?? defaults.variationLevel),
       priorities: { ...defaults.priorities, ...parseJsonObject(settingsRow?.priorities) },
@@ -335,10 +337,12 @@ export class D1TrainingRepository implements TrainingRepository {
     await this.seed();
     if (c.action === "setTrainerSettings") {
       await this.query(
-        "UPDATE userSettings SET adaptiveEnabled=1,defaultDurationMinutes=?,includeWarmupInDuration=?,generalWarmupMinutes=?,usualFrequency=?,variationLevel=?,priorities=?,exercisePreferences=?,availableEquipment=? WHERE ownerId=?",
+        "UPDATE userSettings SET adaptiveEnabled=1,defaultDurationMinutes=?,includeWarmupInDuration=?,generalWarmupMinutes=?,equipmentProfile=?,excludedExerciseIds=?,usualFrequency=?,variationLevel=?,priorities=?,exercisePreferences=?,availableEquipment=? WHERE ownerId=?",
         c.settings.defaultDurationMinutes,
         c.settings.includeWarmupInDuration,
         c.settings.generalWarmupMinutes,
+        c.settings.equipmentProfile,
+        JSON.stringify(c.settings.excludedExerciseIds),
         c.settings.usualFrequency,
         c.settings.variationLevel,
         JSON.stringify(c.settings.priorities),

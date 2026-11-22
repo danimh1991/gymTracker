@@ -102,6 +102,8 @@ export const userSettings = sqliteTable("userSettings", {
   defaultDurationMinutes: integer("defaultDurationMinutes").notNull().default(50),
   includeWarmupInDuration: integer("includeWarmupInDuration").notNull().default(0),
   generalWarmupMinutes: integer("generalWarmupMinutes").notNull().default(7),
+  equipmentProfile: text("equipmentProfile").notNull().default("full_gym"),
+  excludedExerciseIds: text("excludedExerciseIds").notNull().default("[]"),
   usualFrequency: integer("usualFrequency").notNull().default(2),
   variationLevel: integer("variationLevel").notNull().default(2),
   priorities: text("priorities").notNull().default("{}"),
