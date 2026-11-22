@@ -1,6 +1,7 @@
 "use client";
 import { ChevronDown, ChevronUp, CopyPlus, Plus, Trash2 } from "lucide-react";
 import type { Exercise, PlanExercise } from "../domain/types";
+import { MuscleExercisePicker } from "./MuscleExercisePicker";
 
 function loadText(row: PlanExercise) {
   const load = row.suggestedLoad;
@@ -39,22 +40,12 @@ export function PlanEditor({
             <span className="exercise-index">
               {String(i + 1).padStart(2, "0")}
             </span>
-            <label>
-              Ejercicio
-              <select
-                value={row.exerciseId}
-                disabled={lockedIds.has(i)}
-                onChange={(e) => patch(i, { exerciseId: e.target.value })}
-              >
-                {exercises
-                  .filter((e) => e.enabled)
-                  .map((e) => (
-                    <option value={e.id} key={e.id}>
-                      {e.name}
-                    </option>
-                  ))}
-              </select>
-            </label>
+            <MuscleExercisePicker
+              exercises={exercises}
+              value={row.exerciseId}
+              disabled={lockedIds.has(i)}
+              onChange={(exerciseId) => patch(i, { exerciseId })}
+            />
           </div>
           <div className="plan-targets">
             <label>

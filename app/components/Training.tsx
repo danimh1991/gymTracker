@@ -11,6 +11,7 @@ import {
   Plus,
   Save,
   Scale,
+  SlidersHorizontal,
   Timer,
   Trash2,
   X,
@@ -29,6 +30,11 @@ import {
   stats,
 } from "../services/training";
 import { SetEditor } from "./SetEditor";
+import {
+  MuscleExercisePicker,
+  MuscleGroupIcon,
+  primaryMuscleGroup,
+} from "./MuscleExercisePicker";
 import { closeOnBackdrop, useHistoryView } from "./navigation";
 export type Execute = (command: Command) => Promise<Snapshot | null>;
 
@@ -67,23 +73,11 @@ function WorkoutExerciseEditor({
       repMax < repMin;
   return (
     <div className="active-exercise-editor">
-      <label>
-        Ejercicio
-        <select
-          value={draft.exerciseId}
-          onChange={(event) =>
-            setDraft({ ...draft, exerciseId: event.target.value })
-          }
-        >
-          {data.exercises
-            .filter((item) => item.enabled)
-            .map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-        </select>
-      </label>
+      <MuscleExercisePicker
+        exercises={data.exercises}
+        value={draft.exerciseId}
+        onChange={(exerciseId) => setDraft({ ...draft, exerciseId })}
+      />
       <label>
         Series
         <input
@@ -260,28 +254,25 @@ export function Training({
   };
   return (
     <>
-      <div className="page-heading">
+      <section className="training-hero">
         <div>
-          <p className="eyebrow">ENTRENAMIENTO EN CURSO</p>
+          <p className="eyebrow"><span className="live-pulse" /> EN CURSO</p>
           <h1>
             {workout.sessionType === "adaptive"
               ? "Sesión adaptativa"
               : workout.isFreeDay
                 ? "Día libre"
                 : `Día ${workout.dayId}`}
-            <span className="muted"> / A tu ritmo</span>
           </h1>
-          <p className="muted">
-            {Math.floor((now - Date.parse(workout.startedAt)) / 60000)} min ·{" "}
-            {summary.sets} de {total} series guardadas
-            {workout.bodyweight
-              ? ` · ${workout.bodyweight} kg de peso corporal`
-              : ""}
-          </p>
+          <div className="training-stats">
+            <span><strong>{Math.floor((now - Date.parse(workout.startedAt)) / 60000)}</strong> min</span>
+            <span><strong>{summary.sets}</strong> / {total} series</span>
+            {workout.bodyweight ? <span><strong>{workout.bodyweight}</strong> kg</span> : null}
+          </div>
         </div>
-        <div className="button-row">
+        <div className="training-actions">
           <button
-            className="secondary"
+            className={`training-action ${editSession ? "active" : ""}`}
             onClick={() =>
               editSession
                 ? sessionEditorView.close()
@@ -289,22 +280,18 @@ export function Training({
             }
             disabled={busy}
           >
-            <Edit3 size={17} />
-            {editSession ? "Cerrar edición" : "Editar sesión"}
+            <SlidersHorizontal size={17} />
+            <span>{editSession ? "Cerrar" : "Editar"}</span>
           </button>
-          <button className="secondary" onClick={copyPrevious} disabled={busy}>
+          <button className={`training-action ${copy ? "active" : ""}`} onClick={copyPrevious} disabled={busy}>
             <Copy size={17} />
-            {copy
-              ? "Cargas anteriores precargadas"
-              : "Copiar entrenamiento anterior"}
+            <span>{copy ? "Copiado" : "Copiar cargas"}</span>
           </button>
         </div>
-      </div>
-      <progress
-        aria-label="Series completadas"
-        value={summary.sets}
-        max={total}
-      />
+        <div className="training-progress">
+          <span style={{ width: `${total ? Math.min(100, (summary.sets / total) * 100) : 0}%` }} />
+        </div>
+      </section>
       {copy && (
         <p className="notice">
           Solo se copian pesos, lastres y asistencias de cada serie.
@@ -312,7 +299,7 @@ export function Training({
         </p>
       )}
       <div className="rest-controls">
-        <Timer size={18} />
+        <span className="rest-icon"><Timer size={17} /></span>
         <label>
           <input
             type="checkbox"
@@ -332,30 +319,19 @@ export function Training({
             </option>
           ))}
         </select>
-        <span className="small muted">Dominadas y fondos: 2:30–3:00</span>
+        <span className="small muted">Descanso entre series</span>
       </div>
       <div className="training-list">
         {editSession && (
           <div className="session-editor">
-            <p>
-              Puedes sustituir ejercicios y cambiar objetivos. Los ejercicios
-              con series guardadas se pueden ajustar, pero no quitar.
-            </p>
-            <div className="inline-add">
-              <select
-                value={newExercise}
-                onChange={(e) => setNewExercise(e.target.value)}
-              >
-                {data.exercises
-                  .filter((e) => e.enabled)
-                  .map((e) => (
-                    <option value={e.id} key={e.id}>
-                      {e.name}
-                    </option>
-                  ))}
-              </select>
+            <div className="session-editor-heading">
+              <div><p className="eyebrow">EDITAR SESIÓN</p><h2>Añade o ajusta ejercicios</h2></div>
+              <p>Los ejercicios con series guardadas se pueden ajustar, pero no quitar.</p>
+            </div>
+            <div className="inline-add visual-add">
+              <MuscleExercisePicker exercises={data.exercises} value={newExercise} onChange={setNewExercise} label="Nuevo ejercicio" />
               <button
-                className="secondary"
+                className="primary"
                 onClick={() =>
                   void execute({
                     action: "addWorkoutExercise",
@@ -374,12 +350,12 @@ export function Training({
                 }
               >
                 <Plus size={17} />
-                Añadir a la sesión
+                Añadir
               </button>
             </div>
           </div>
         )}
-        {exercises.map((e, i) => {
+        {exercises.map((e) => {
           const done = sets
               .filter((s) => s.workoutExerciseId === e.id)
               .sort((a, b) => a.setNumber - b.setNumber),
@@ -412,12 +388,8 @@ export function Training({
                     if (editing !== null) setView.replace(null);
                   }}
                 >
-                  <span className="exercise-index">
-                    {done.length === e.sets ? (
-                      <Check size={20} />
-                    ) : (
-                      String(i + 1).padStart(2, "0")
-                    )}
+                  <span className={`exercise-muscle ${done.length === e.sets ? "complete" : ""}`}>
+                    {done.length === e.sets ? <Check size={20} /> : <MuscleGroupIcon group={primaryMuscleGroup(library)} size={42} />}
                   </span>
                   <div>
                     <h2>{e.name}</h2>
@@ -429,7 +401,7 @@ export function Training({
                     </p>
                   </div>
                   <span className="set-count">
-                    {done.length}/{e.sets}
+                    <strong>{done.length}</strong>/{e.sets}
                   </span>
                   <ChevronDown size={20} />
                 </button>

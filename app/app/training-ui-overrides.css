@@ -1,0 +1,34 @@
+/* Final cascade layer for the redesigned training surfaces. */
+.training-list { gap: 8px; }
+.training-card { border-color: #e0e5dc; border-radius: 14px; box-shadow: 0 1px 2px rgb(28 36 25 / 3%); }
+.training-card.expanded { border-color: #b3c993; box-shadow: 0 8px 28px rgb(40 55 30 / 7%); }
+.exercise-toggle { gap: 12px; min-height: 72px; padding: 11px 13px; }
+.exercise-toggle h2 { font-size: 16px; line-height: 1.2; }
+.exercise-toggle p { margin-top: 4px; font-size: 12px; line-height: 1.25; }
+.exercise-edit-shortcut { width: 64px; }
+.exercise-body { padding: 2px 16px 18px; }
+.reference { gap: 12px; margin-bottom: 10px; padding: 10px 12px; overflow-x: auto; border-radius: 9px; background: #f3f5f1; }
+.set-editor { max-width: none; margin-top: 12px; padding-top: 14px; }
+.inputs-row { margin: 13px 0; }
+.rest-controls { gap: 9px; min-height: 48px; margin: 0 0 12px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 13px; background: #fff; }
+.rest-controls select { min-height: 34px; margin-left: auto; border-radius: 8px; font-weight: 750; }
+.session-editor { margin: 0 0 10px; padding: 18px; border: 1px solid #cbdab7; border-radius: 14px; background: #f3f7ed; }
+.plan-row { border-radius: 13px; }
+.plan-main { align-items: stretch; }
+.exercise-picker-sheet.searching { grid-template-rows: auto auto minmax(0, 1fr); }
+
+@media (max-width: 600px) {
+  .exercise-toggle { min-height: 66px; padding: 8px 9px; gap: 9px; }
+  .exercise-toggle h2 { font-size: 15px; }
+  .exercise-toggle p { font-size: 11px; }
+  .exercise-edit-shortcut { width: 42px; }
+  .exercise-body { padding: 1px 10px 13px; }
+  .rest-controls { flex-wrap: nowrap; }
+  .rest-controls .small { display: none; }
+  .rest-controls label { margin-right: auto; font-size: 13px; }
+  .rest-controls select { margin-left: 0; }
+  .active-exercise-editor > .muscle-picker-field { grid-column: 1 / -1; }
+  .active-exercise-editor label:first-of-type { grid-column: auto; }
+  .session-editor { padding: 14px 11px; }
+  .plan-row { padding: 10px; gap: 10px; }
+}
