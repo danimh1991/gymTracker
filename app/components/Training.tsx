@@ -264,7 +264,11 @@ export function Training({
         <div>
           <p className="eyebrow">ENTRENAMIENTO EN CURSO</p>
           <h1>
-            {workout.isFreeDay ? "Día libre" : `Día ${workout.dayId}`}
+            {workout.sessionType === "adaptive"
+              ? "Sesión adaptativa"
+              : workout.isFreeDay
+                ? "Día libre"
+                : `Día ${workout.dayId}`}
             <span className="muted"> / A tu ritmo</span>
           </h1>
           <p className="muted">

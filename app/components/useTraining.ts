@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Snapshot } from "../domain/types";
+import type { AdaptiveConstraints, AdaptiveContext, PlanExercise, Snapshot } from "../domain/types";
 import type { Command } from "../services/validation";
 import { appPath } from "../lib/base-path";
 export function useTraining(demo: boolean, userId: string) {
@@ -56,5 +56,33 @@ export function useTraining(demo: boolean, userId: string) {
       setBusy(false);
     }
   };
-  return { data, error, busy, execute, refresh };
+  const generateAdaptive = async (constraints: AdaptiveConstraints) => {
+    setBusy(true);
+    setError("");
+    try {
+      const endpoint = `${appPath("/api/adaptive")}${query ? `?${query}` : ""}`;
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(constraints),
+      });
+      const body = (await response.json()) as {
+        id: string;
+        plan: PlanExercise[];
+        rationale: string[];
+        context: AdaptiveContext;
+        source: "llm" | "fallback";
+        error?: string;
+      };
+      if (!response.ok) throw new Error(body.error);
+      await refresh();
+      return body;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo generar la sesión.");
+      return null;
+    } finally {
+      setBusy(false);
+    }
+  };
+  return { data, error, busy, execute, refresh, generateAdaptive };
 }

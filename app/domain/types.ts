@@ -3,6 +3,29 @@ export type DayKey = "A" | "B" | "C" | "D" | "E" | "F" | "G";
 export type Metric = "reps" | "time";
 export type LoadDecision = "increase" | "maintain";
 export type ActivityIntensity = "easy" | "moderate" | "hard";
+export type SessionType = "legacy" | "template" | "adaptive" | "manual";
+export type MuscleGroup =
+  | "vertical_pull"
+  | "horizontal_pull"
+  | "chest"
+  | "vertical_push"
+  | "lateral_rear_delts"
+  | "biceps"
+  | "triceps"
+  | "quadriceps"
+  | "posterior_chain"
+  | "core"
+  | "calves";
+export interface TrainerSettings {
+  trainingDays: number;
+  adaptiveEnabled: number;
+  defaultDurationMinutes: number;
+  usualFrequency: number;
+  variationLevel: number;
+  priorities: Record<MuscleGroup, number>;
+  exercisePreferences: Record<string, number>;
+  availableEquipment: string[];
+}
 export interface UserProfile {
   id: string;
   name: string;
@@ -76,6 +99,44 @@ export interface Workout {
   notes: string;
   templateName: string;
   isFreeDay: number;
+  sessionType: SessionType;
+  proposalId: string | null;
+}
+export interface AdaptiveProposal {
+  id: string;
+  status: "proposed" | "accepted" | "superseded";
+  createdAt: string;
+  updatedAt: string;
+  constraints: AdaptiveConstraints;
+  context: AdaptiveContext;
+  originalPlan: PlanExercise[];
+  currentPlan: PlanExercise[];
+  rationale: string[];
+  rulesVersion: string;
+  source: "llm" | "fallback";
+  latencyMs: number | null;
+  errorCode: string | null;
+}
+export interface AdaptiveConstraints {
+  durationMinutes: 30 | 45 | 50 | 60 | 75;
+  energy: "low" | "normal" | "high";
+  blockedExerciseIds: string[];
+  equipment: string[];
+}
+export interface AdaptiveNeed {
+  group: MuscleGroup;
+  score: number;
+  priority: number;
+  directSets10d: number;
+  indirectSets10d: number;
+  daysSinceExposure: number | null;
+  recovery: number;
+}
+export interface AdaptiveContext {
+  generatedAt: string;
+  recentWorkoutCount: number;
+  completedSets10d: number;
+  needs: AdaptiveNeed[];
 }
 export interface WorkoutExercise extends RoutineExercise {
   workoutId: string;
@@ -133,9 +194,7 @@ export interface ExternalActivity {
 export interface Snapshot {
   users: UserProfile[];
   activeUserId: string;
-  settings: {
-    trainingDays: number;
-  };
+  settings: TrainerSettings;
   routines: { id: string; name: string }[];
   skills: { id: string; name: string }[];
   skillProgressions: {
@@ -171,4 +230,5 @@ export interface Snapshot {
   templates: Template[];
   templateExercises: TemplateExercise[];
   externalActivities: ExternalActivity[];
+  adaptiveProposals: AdaptiveProposal[];
 }

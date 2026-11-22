@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://danieta.com/gymtracker/schemas/session-context.v1.json",
+  "title": "Gym Tracker session context",
+  "description": "Borrador del contexto mínimo que podría recibir el worker LLM. No define todavía una operación de creación de sesiones.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profileId", "timeZone"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "profileId": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "timeZone": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "workoutId": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "mode": {
+      "type": "string",
+      "enum": ["planning", "active", "summary"]
+    }
+  }
+}

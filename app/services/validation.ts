@@ -2,6 +2,11 @@ import { z } from "zod";
 import { SPORT_KEYS } from "../domain/sports";
 const positive = z.number().finite().min(0).max(2000).nullable();
 const dayKey = z.enum(["A", "B", "C", "D", "E", "F", "G"]);
+const muscleGroup = z.enum([
+  "vertical_pull", "horizontal_pull", "chest", "vertical_push",
+  "lateral_rear_delts", "biceps", "triceps", "quadriceps",
+  "posterior_chain", "core", "calves",
+]);
 const dateKey = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -90,6 +95,7 @@ const importedWorkout = z.object({
   notes: z.string().max(4000).default(""),
   templateName: z.string().max(100).default("Sesión importada"),
   isFreeDay: z.number().int().min(0).max(1).default(0),
+  sessionType: z.enum(["legacy", "template", "adaptive", "manual"]).optional(),
   exercises: z.array(importedWorkoutExercise).min(1).max(40),
 });
 export const commandSchema = z.discriminatedUnion("action", [
@@ -107,6 +113,39 @@ export const commandSchema = z.discriminatedUnion("action", [
     templateName: z.string().min(1).max(100),
     exercises: z.array(planExercise).min(1).max(40),
     isFreeDay: z.boolean().optional(),
+    sessionType: z.enum(["template", "adaptive", "manual"]).optional(),
+    proposalId: z.string().uuid().optional(),
+  }),
+  z.object({
+    action: z.literal("saveAdaptiveProposal"),
+    proposal: z.object({
+      id: z.string().uuid(),
+      constraintsJson: z.string().max(10000),
+      contextJson: z.string().max(50000),
+      originalPlanJson: z.string().max(50000),
+      currentPlanJson: z.string().max(50000),
+      rationaleJson: z.string().max(20000),
+      rulesVersion: z.string().max(40),
+      source: z.enum(["llm", "fallback"]),
+      latencyMs: z.number().int().min(0).max(120000).nullable(),
+      errorCode: z.string().max(100).nullable(),
+    }),
+  }),
+  z.object({
+    action: z.literal("updateAdaptiveProposal"),
+    proposalId: z.string().uuid(),
+    plan: z.array(planExercise).min(1).max(20),
+  }),
+  z.object({
+    action: z.literal("setTrainerSettings"),
+    settings: z.object({
+      defaultDurationMinutes: z.number().int().min(30).max(75),
+      usualFrequency: z.number().int().min(1).max(7),
+      variationLevel: z.number().int().min(1).max(3),
+      priorities: z.record(muscleGroup, z.number().int().min(1).max(5)),
+      exercisePreferences: z.record(z.string(), z.number().int().min(1).max(5)),
+      availableEquipment: z.array(z.string().trim().min(1).max(80)).max(30),
+    }),
   }),
   z.object({ action: z.literal("saveSet"), set: setInput }),
   z.object({

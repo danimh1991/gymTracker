@@ -15,6 +15,10 @@ Este comando reutiliza las dependencias ya instaladas. Para una instalación nue
 
 El proyecto genera un Worker ESM compatible con Cloudflare y declara su base D1 como `DB`. Las migraciones están versionadas en `app/drizzle/`; consulta `app/README.md` para el build y el despliegue.
 
+La infraestructura para conectar un worker LLM y almacenar su conocimiento en
+R2 está preparada, pero aislada del flujo de sesiones hasta definir el caso de
+uso. El contrato y la guía operativa están en `app/integrations/llm/README.md`.
+
 ## Cloudflare Builds desde Git
 
 La raíz del repositorio contiene un `package.json` puente y `wrangler.jsonc`, por lo que la integración de Git puede mantener sus comandos predeterminados:

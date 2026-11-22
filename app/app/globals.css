@@ -2065,6 +2065,67 @@ textarea {
     font-size: 35px;
   }
 }
+
+/* Adaptive coach */
+.coach-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, .65fr);
+  gap: 28px;
+  padding: clamp(26px, 5vw, 58px);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 12% 10%, color-mix(in srgb, var(--lime) 15%, transparent), transparent 34%),
+    var(--surface-dark, #171a18);
+  color: #fff;
+  overflow: hidden;
+}
+.coach-hero-copy { align-self: center; }
+.coach-hero h1 { max-width: 780px; margin: 20px 0 14px; font-size: clamp(2.2rem, 5vw, 5.2rem); line-height: .94; letter-spacing: -.06em; }
+.coach-hero h1 span { color: var(--lime); }
+.coach-hero-copy > p { max-width: 650px; color: #b9c0bb; font-size: 1.05rem; line-height: 1.65; }
+.coach-controls { display: grid; gap: 12px; padding: 20px; border: 1px solid #343936; border-radius: 18px; background: rgb(255 255 255 / 4%); }
+.coach-controls label { display: grid; gap: 7px; color: #cbd0cc; font-size: .78rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.coach-controls select { width: 100%; padding: 12px; border: 1px solid #3d433f; border-radius: 10px; background: #202421; color: #fff; }
+.coach-generate { justify-content: center; margin-top: 4px; }
+.coach-settings-button { display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; background: transparent; color: #b9c0bb; cursor: pointer; }
+.coach-settings, .coach-analysis, .coach-plan, .coach-empty, .coach-resume { margin-top: 24px; padding: 26px; border: 1px solid var(--line); border-radius: 20px; background: #fff; }
+.priority-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 20px 0; }
+.priority-grid label { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 10px; background: var(--paper); font-weight: 700; }
+.priority-grid select { width: 58px; }
+.coach-setting-basics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 20px 0 26px; }
+.coach-setting-basics label { display: grid; gap: 7px; font-weight: 750; }
+.coach-setting-basics input, .coach-setting-basics select { min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: 9px; background: #fff; color: inherit; }
+.exercise-preferences { margin: 18px 0; }
+.exercise-preferences summary { cursor: pointer; font-weight: 800; }
+.coach-blocked { margin: 18px 0; padding: 14px 18px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.coach-blocked summary { cursor: pointer; font-weight: 750; }
+.coach-blocked > div { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 14px; max-height: 280px; margin-top: 14px; overflow: auto; }
+.coach-blocked label { font-size: .9rem; }
+.need-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin: 20px 0; }
+.need-grid article { display: grid; gap: 4px; min-height: 108px; padding: 14px; border-radius: 14px; background: var(--paper); }
+.need-grid span { font-size: .8rem; font-weight: 800; }
+.need-grid strong { color: var(--lime-dark, #597b12); font-size: 1.7rem; }
+.need-grid small, .planner-source { color: var(--muted); }
+.coach-analysis ul { padding-left: 20px; line-height: 1.65; }
+.planner-source { margin-top: 14px; font-size: .82rem; }
+.coach-start { width: 100%; justify-content: center; margin-top: 18px; }
+.coach-empty { display: grid; justify-items: center; padding-block: 56px; text-align: center; }
+.coach-empty p { max-width: 600px; color: var(--muted); }
+.coach-resume { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 20px; }
+.coach-orb { display: grid; place-items: center; width: 58px; height: 58px; border-radius: 50%; background: var(--lime); color: #172000; }
+
+@media (max-width: 900px) {
+  .coach-hero { grid-template-columns: 1fr; }
+  .priority-grid, .coach-blocked > div, .coach-setting-basics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .need-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .coach-hero { padding: 24px 18px; border-radius: 16px; }
+  .coach-hero h1 { font-size: 2.65rem; }
+  .priority-grid, .coach-blocked > div, .need-grid, .coach-setting-basics { grid-template-columns: 1fr; }
+  .coach-resume { grid-template-columns: 1fr; }
+}
 @media (max-width: 800px) {
   .session-progress-grid {
     grid-template-columns: 1fr;

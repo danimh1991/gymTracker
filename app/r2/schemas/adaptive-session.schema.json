@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gym-tracker/v1/schemas/adaptive-session.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["exercises", "rationale"],
+  "properties": {
+    "exercises": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["exerciseId", "sets", "repMin", "repMax", "rir", "optional", "notes", "priority"],
+        "properties": {
+          "exerciseId": { "type": "string", "minLength": 1 },
+          "sets": { "type": "integer", "minimum": 1, "maximum": 5 },
+          "repMin": { "type": "integer", "minimum": 0, "maximum": 1000 },
+          "repMax": { "type": "integer", "minimum": 0, "maximum": 1000 },
+          "rir": { "type": "string", "minLength": 1, "maxLength": 20 },
+          "optional": { "type": "integer", "minimum": 0, "maximum": 1 },
+          "notes": { "type": "string", "maxLength": 500 },
+          "priority": { "type": "string", "maxLength": 40 }
+        }
+      }
+    },
+    "rationale": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": { "type": "string", "maxLength": 300 }
+    }
+  }
+}

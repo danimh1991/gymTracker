@@ -7,7 +7,6 @@ import {
   Dumbbell,
   History as HistoryIcon,
   House,
-  LayoutTemplate,
   LockKeyhole,
   RefreshCw,
   Settings,
@@ -19,7 +18,7 @@ import {
 } from "../services/training";
 import { appPath } from "../lib/base-path";
 import { useTraining } from "./useTraining";
-import { Home } from "./Home";
+import { Coach } from "./Coach";
 import { Training } from "./Training";
 import { More } from "./More";
 import { Progress } from "./Progress";
@@ -28,11 +27,10 @@ import { Templates } from "./Templates";
 import { Exercises } from "./Exercises";
 import { useAppNavigation, useHistoryView, type AppPage } from "./navigation";
 const navigation = [
-  { id: "home", name: "Inicio", icon: House },
+  { id: "home", name: "Entrenador", icon: House },
   { id: "train", name: "Entrenar", icon: Dumbbell },
   { id: "history", name: "Histórico", icon: HistoryIcon },
   { id: "progress", name: "Progreso", icon: ChartNoAxesCombined },
-  { id: "templates", name: "Plantillas", icon: LayoutTemplate },
   { id: "exercises", name: "Ejercicios", icon: BookOpen },
   { id: "more", name: "Ajustes", icon: Settings },
 ] as const;
@@ -63,7 +61,7 @@ export default function Tracker({ onLock }: { onLock?: () => void }) {
       sessionStorage.setItem("gym-demo", value ? "1" : "0");
     } catch {}
   };
-  const { data, error, busy, execute, refresh } = useTraining(demo, userId),
+  const { data, error, busy, execute, refresh, generateAdaptive } = useTraining(demo, userId),
     active = data?.workouts.find((w) => w.status === "active"),
     last = data ? completedRoutineWorkouts(data)[0] : undefined,
     summaryWorkout = data?.workouts.find((w) => w.id === summary);
@@ -84,6 +82,7 @@ export default function Tracker({ onLock }: { onLock?: () => void }) {
     plan: PlanExercise[],
     templateName: string,
     isFreeDay = false,
+    proposalId?: string,
   ) {
     if (active) {
       navigate("train");
@@ -95,6 +94,8 @@ export default function Tracker({ onLock }: { onLock?: () => void }) {
       templateName,
       exercises: plan,
       isFreeDay,
+      sessionType: proposalId ? "adaptive" : isFreeDay ? "manual" : "template",
+      proposalId,
     });
     if (result) navigate("train");
   }
@@ -218,16 +219,15 @@ export default function Tracker({ onLock }: { onLock?: () => void }) {
           ) : (
             <>
               {(page === "home" || (page === "train" && !active)) && (
-                <Home
+                <Coach
                   data={data}
-                  onUserSelect={selectUser}
-                  selected={selected}
-                  onSelect={setSelected}
-                  onStart={(plan, name, isFreeDay) =>
-                    void start(plan, name, isFreeDay)
-                  }
                   execute={execute}
                   busy={busy}
+                  generate={generateAdaptive}
+                  onContinue={() => navigate("train")}
+                  onStart={(plan, proposalId) =>
+                    void start(plan, "Sesión adaptativa", false, proposalId)
+                  }
                 />
               )}{" "}
               {page === "train" && active && (

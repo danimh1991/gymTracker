@@ -335,7 +335,11 @@ export function WorkoutDetail({
           <p className="eyebrow">ENTRENAMIENTO COMPLETADO</p>
           <h1>Un paso más.</h1>
           <p>
-            {workout.isFreeDay ? workout.templateName : `Día ${workout.dayId}`}{" "}
+            {workout.sessionType === "adaptive"
+              ? "Sesión adaptativa"
+              : workout.isFreeDay
+                ? workout.templateName
+                : `Día ${workout.dayId}`}{" "}
             · {dateLabel(workout.startedAt)}
           </p>
         </div>
@@ -785,14 +789,16 @@ export function History({
             >
               <span className="day-badge">
                 <Dumbbell size={17} />
-                {w.isFreeDay ? "LIBRE" : w.dayId}
+                {w.sessionType === "adaptive" ? "IA" : w.isFreeDay ? "LIBRE" : w.dayId}
               </span>
               <div>
                 <h2>{dateLabel(w.startedAt)}</h2>
                 <p>
-                  {w.isFreeDay
-                    ? w.templateName
-                    : data.days.find((d) => d.id === w.dayId)?.title}
+                  {w.sessionType === "adaptive"
+                    ? "Entrenamiento adaptativo"
+                    : w.isFreeDay
+                      ? w.templateName
+                      : data.days.find((d) => d.id === w.dayId)?.title}
                 </p>
               </div>
               <span className="history-meta">

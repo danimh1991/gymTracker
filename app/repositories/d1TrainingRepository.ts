@@ -1,10 +1,12 @@
 import type { TrainingRepository } from "./trainingRepository";
 import type {
+  AdaptiveProposal,
   Exercise,
   Snapshot,
   Workout,
   WorkoutExercise,
 } from "../domain/types";
+import { defaultTrainerSettings } from "../services/adaptive-planner";
 import type { Command } from "../services/validation";
 import { sportDefinition } from "../domain/sports";
 import {
@@ -173,6 +175,7 @@ export class D1TrainingRepository implements TrainingRepository {
   }
   async snapshot(): Promise<Snapshot> {
     await this.seed();
+    const adaptiveReady = await this.adaptiveSchemaReady();
     const result = await this.db.batch([
       this.query("SELECT * FROM exercises ORDER BY name"),
       this.query(
@@ -209,13 +212,19 @@ export class D1TrainingRepository implements TrainingRepository {
         "SELECT e.* FROM templateExercises e JOIN workoutTemplates t ON t.id=e.templateId WHERE t.id=(SELECT t2.id FROM workoutTemplates t2 WHERE t2.dayId=t.dayId AND LOWER(TRIM(t2.name))=LOWER(TRIM(t.name)) ORDER BY t2.createdAt,t2.id LIMIT 1) ORDER BY e.position",
       ),
       this.query(
-        "SELECT trainingDays FROM userSettings WHERE ownerId=?",
+        "SELECT * FROM userSettings WHERE ownerId=?",
         this.ownerId,
       ),
       this.query(
         "SELECT id,sport,date,durationMinutes,distanceKm,laps,elevationGainM,intensity,notes,createdAt FROM externalActivities WHERE ownerId=? ORDER BY date DESC,createdAt DESC",
         this.ownerId,
       ),
+      adaptiveReady
+        ? this.query(
+            "SELECT id,status,createdAt,updatedAt,constraintsJson,contextJson,originalPlanJson,currentPlanJson,rationaleJson,rulesVersion,source,latencyMs,errorCode FROM adaptiveProposals WHERE ownerId=? ORDER BY createdAt DESC LIMIT 20",
+            this.ownerId,
+          )
+        : this.query("SELECT NULL AS id WHERE 0"),
     ]);
     const snapshot = Object.fromEntries(
       [
@@ -236,13 +245,38 @@ export class D1TrainingRepository implements TrainingRepository {
         "templateExercises",
       ].map((key, i) => [key, result[i].results]),
     ) as unknown as Snapshot;
+    snapshot.workouts = snapshot.workouts.map((workout) => ({
+      ...workout,
+      sessionType:
+        workout.sessionType ??
+        (workout.dayId === "G" ? "legacy" : workout.isFreeDay ? "manual" : "template"),
+      proposalId: workout.proposalId ?? null,
+    }));
+    const settingsRow = result[15].results[0] as Record<string, unknown> | undefined;
+    const defaults = defaultTrainerSettings(Number(settingsRow?.trainingDays ?? 3));
     snapshot.settings = {
-      trainingDays:
-        (result[15].results[0] as { trainingDays?: number } | undefined)
-          ?.trainingDays ?? 3,
+      ...defaults,
+      adaptiveEnabled: Number(settingsRow?.adaptiveEnabled ?? defaults.adaptiveEnabled),
+      defaultDurationMinutes: Number(settingsRow?.defaultDurationMinutes ?? defaults.defaultDurationMinutes),
+      usualFrequency: Number(settingsRow?.usualFrequency ?? defaults.usualFrequency),
+      variationLevel: Number(settingsRow?.variationLevel ?? defaults.variationLevel),
+      priorities: { ...defaults.priorities, ...parseJsonObject(settingsRow?.priorities) },
+      exercisePreferences: { ...defaults.exercisePreferences, ...parseJsonObject(settingsRow?.exercisePreferences) },
+      availableEquipment: parseJsonArray(settingsRow?.availableEquipment),
     };
     snapshot.externalActivities = result[16]
       .results as unknown as Snapshot["externalActivities"];
+    snapshot.adaptiveProposals = result[17].results.map((row) => {
+      const value = row as Record<string, unknown>;
+      return {
+        id: String(value.id), status: value.status, createdAt: value.createdAt,
+        updatedAt: value.updatedAt, constraints: JSON.parse(String(value.constraintsJson)),
+        context: JSON.parse(String(value.contextJson)), originalPlan: JSON.parse(String(value.originalPlanJson)),
+        currentPlan: JSON.parse(String(value.currentPlanJson)), rationale: JSON.parse(String(value.rationaleJson)),
+        rulesVersion: value.rulesVersion, source: value.source, latencyMs: value.latencyMs,
+        errorCode: value.errorCode,
+      } as AdaptiveProposal;
+    });
     snapshot.users =
       this.profileId === undefined
         ? [
@@ -276,8 +310,45 @@ export class D1TrainingRepository implements TrainingRepository {
       id,
     ).first<Exercise>();
   }
+  private async adaptiveSchemaReady() {
+    return Boolean(await this.query(
+      "SELECT 1 FROM sqlite_master WHERE type='table' AND name='adaptiveProposals'",
+    ).first());
+  }
   async execute(c: Command): Promise<void> {
     await this.seed();
+    if (c.action === "setTrainerSettings") {
+      await this.query(
+        "UPDATE userSettings SET adaptiveEnabled=1,defaultDurationMinutes=?,usualFrequency=?,variationLevel=?,priorities=?,exercisePreferences=?,availableEquipment=? WHERE ownerId=?",
+        c.settings.defaultDurationMinutes,
+        c.settings.usualFrequency,
+        c.settings.variationLevel,
+        JSON.stringify(c.settings.priorities),
+        JSON.stringify(c.settings.exercisePreferences),
+        JSON.stringify(c.settings.availableEquipment),
+        this.ownerId,
+      ).run();
+      return;
+    }
+    if (c.action === "saveAdaptiveProposal") {
+      const now = new Date().toISOString();
+      await this.insert("adaptiveProposals", {
+        ...c.proposal,
+        ownerId: this.ownerId,
+        status: "proposed",
+        createdAt: now,
+        updatedAt: now,
+      }, true).run();
+      return;
+    }
+    if (c.action === "updateAdaptiveProposal") {
+      const result = await this.query(
+        "UPDATE adaptiveProposals SET currentPlanJson=?,updatedAt=? WHERE id=? AND ownerId=? AND status='proposed'",
+        JSON.stringify(c.plan), new Date().toISOString(), c.proposalId, this.ownerId,
+      ).run();
+      if (!result.meta.changes) throw new Error("La propuesta ya no está disponible.");
+      return;
+    }
     if (c.action === "addUser") {
       if (this.profileId === undefined)
         throw new Error("La gestión de usuarios no está disponible aquí.");
@@ -328,6 +399,11 @@ export class D1TrainingRepository implements TrainingRepository {
         ),
         this.query(
           "DELETE FROM workouts WHERE ownerId IN (?,?)",
+          realOwner,
+          demoOwner,
+        ),
+        this.query(
+          "DELETE FROM adaptiveProposals WHERE ownerId IN (?,?)",
           realOwner,
           demoOwner,
         ),
@@ -506,6 +582,7 @@ export class D1TrainingRepository implements TrainingRepository {
       return;
     }
     if (c.action === "start") {
+      const adaptiveReady = await this.adaptiveSchemaReady();
       const enabledDay = await this.query(
         "SELECT d.id FROM days d JOIN userSettings s ON d.position < s.trainingDays WHERE d.id=? AND s.ownerId=?",
         c.dayId,
@@ -549,6 +626,12 @@ export class D1TrainingRepository implements TrainingRepository {
           notes: "",
           templateName: c.templateName,
           ...(c.isFreeDay ? { isFreeDay: 1 } : {}),
+          ...(adaptiveReady
+            ? {
+                sessionType: c.sessionType ?? (c.isFreeDay ? "manual" : "template"),
+                proposalId: c.proposalId ?? null,
+              }
+            : {}),
         }),
         ...rows.map((row) =>
           this.insert("workoutExercises", {
@@ -572,6 +655,12 @@ export class D1TrainingRepository implements TrainingRepository {
             variant: row.exerciseId === "handstand" ? "Wall handstand" : "",
           }),
         ),
+        ...(c.proposalId
+          ? [this.query(
+              "UPDATE adaptiveProposals SET status='accepted',updatedAt=? WHERE id=? AND ownerId=? AND status='proposed'",
+              now, c.proposalId, this.ownerId,
+            )]
+          : []),
       ]);
       return;
     }
@@ -735,6 +824,7 @@ export class D1TrainingRepository implements TrainingRepository {
       return;
     }
     if (c.action === "importWorkouts") {
+      const adaptiveReady = await this.adaptiveSchemaReady();
       for (const imported of c.workouts) {
         if (
           await this.query(
@@ -811,6 +901,13 @@ export class D1TrainingRepository implements TrainingRepository {
             notes: imported.notes,
             templateName: imported.templateName,
             ...(imported.isFreeDay ? { isFreeDay: 1 } : {}),
+            ...(adaptiveReady
+              ? {
+                  sessionType:
+                    imported.sessionType ??
+                    (imported.dayId === "G" ? "legacy" : imported.isFreeDay ? "manual" : "template"),
+                }
+              : {}),
           }),
         );
         for (const [position, row] of rows.entries()) {
@@ -1268,5 +1365,27 @@ export class D1TrainingRepository implements TrainingRepository {
       }
       return;
     }
+  }
+}
+
+function parseJsonObject(value: unknown): Record<string, number> {
+  try {
+    const parsed = JSON.parse(typeof value === "string" ? value : "{}");
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, number>)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function parseJsonArray(value: unknown): string[] {
+  try {
+    const parsed = JSON.parse(typeof value === "string" ? value : "[]");
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === "string")
+      : [];
+  } catch {
+    return [];
   }
 }

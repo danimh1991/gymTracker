@@ -7,6 +7,14 @@ import {
 } from "recharts";
 import type { Snapshot, WorkoutSet } from "../domain/types";
 import { completedWorkouts, effectiveLoad, estimatedOneRepMax, stats } from "../services/training";
+import { buildAdaptiveContext } from "../services/adaptive-planner";
+
+const MUSCLE_LABEL: Record<string, string> = {
+  vertical_pull: "Tracción vertical", horizontal_pull: "Tracción horizontal",
+  chest: "Pecho", vertical_push: "Empuje vertical", lateral_rear_delts: "Deltoides",
+  biceps: "Bíceps", triceps: "Tríceps", quadriceps: "Cuádriceps",
+  posterior_chain: "Cadena posterior", core: "Core", calves: "Gemelos",
+};
 
 const DAY = 86_400_000;
 const shortDate = (value: string) => new Date(value).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
@@ -35,6 +43,7 @@ export function Progress({ data }: { data: Snapshot }) {
   const [now] = useState(() => Date.now());
   const recent = completed.filter((workout) => Date.parse(workout.startedAt) > now - 30 * DAY);
   const [today] = useState(() => new Date());
+  const muscleContext = useMemo(() => buildAdaptiveContext(data, today), [data, today]);
   const startOfWeek = new Date(today);
   startOfWeek.setHours(0, 0, 0, 0);
   startOfWeek.setDate(startOfWeek.getDate() - ((startOfWeek.getDay() + 6) % 7));
@@ -116,6 +125,19 @@ export function Progress({ data }: { data: Snapshot }) {
               <Bar dataKey="sesiones" fill="#252c22" radius={[4, 4, 0, 0]} maxBarSize={26} />
             </BarChart>
           </ResponsiveContainer>
+        </div>
+      </section>
+
+      <section className="coach-analysis muscle-volume-card">
+        <div><p className="eyebrow">COBERTURA MUSCULAR · 10 DÍAS</p><h2>Estímulo directo e indirecto</h2><p className="muted">El trabajo compuesto aporta estímulo secundario, pero no se cuenta como una serie directa completa.</p></div>
+        <div className="need-grid">
+          {muscleContext.needs.map((need) => (
+            <article key={need.group}>
+              <span>{MUSCLE_LABEL[need.group]}</span>
+              <strong>{need.directSets10d}</strong>
+              <small>directas · {need.indirectSets10d} indirectas</small>
+            </article>
+          ))}
         </div>
       </section>
 

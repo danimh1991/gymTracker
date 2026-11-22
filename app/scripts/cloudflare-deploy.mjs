@@ -46,6 +46,12 @@ config.d1_databases = [
     migrations_dir: "../../drizzle",
   },
 ];
+config.r2_buckets = [
+  {
+    binding: "LLM_DATA",
+    bucket_name: "llm-core-knowledge",
+  },
+];
 writeFileSync(wranglerPath, `${JSON.stringify(config, null, 2)}\n`);
 
 if (command === "build") {
@@ -67,16 +73,20 @@ if (!databaseId) {
 const wranglerCli = fileURLToPath(
   new URL("../node_modules/wrangler/bin/wrangler.js", import.meta.url),
 );
-run(process.execPath, [
-  wranglerCli,
-  "d1",
-  "migrations",
-  "apply",
-  "gym-tracker-db",
-  "--remote",
-  "--config",
-  wranglerPath,
-], { CI: "true" });
+run(
+  process.execPath,
+  [
+    wranglerCli,
+    "d1",
+    "migrations",
+    "apply",
+    "gym-tracker-db",
+    "--remote",
+    "--config",
+    wranglerPath,
+  ],
+  { CI: "true" },
+);
 run(process.execPath, [wranglerCli, "deploy", "--config", wranglerPath]);
 
 function run(executable, args, extraEnv = {}) {

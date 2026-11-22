@@ -1,8 +1,19 @@
 # Gym Tracker
 
-Aplicación personal de gimnasio hacia calistenia. Primera entrega centrada en la Fase 1.
+Entrenador personal adaptativo para hipertrofia, fuerza relativa y equilibrio.
 
 ## Incluido
+
+- Generación dinámica por necesidad muscular, recuperación, déficit reciente,
+  preferencias, energía y tiempo disponible; no depende de una rotación A/B/C.
+- Integración LLM con JSON estricto, catálogo cerrado, timeout y respaldo
+  determinista. Las notas históricas no se incorporan como instrucciones.
+- Propuestas versionadas, editables y persistidas antes de iniciar; se conserva
+  por separado lo propuesto y lo ejecutado.
+- Configuración efectiva de prioridades, frecuencia, variación, equipamiento y
+  preferencia por ejercicio.
+- Histórico G y A/B/C conservado sin conversión, con tipo explícito para las
+  nuevas sesiones adaptativas y exportación compatible.
 
 - Ciclo configurable de 1 a 7 días, secuencia basada exclusivamente en sesiones terminadas y selección manual.
 - Inicio idempotente, registro por serie, RIR, reps o segundos, peso, lastre y asistencia separados.

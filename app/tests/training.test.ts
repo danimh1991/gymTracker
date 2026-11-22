@@ -28,6 +28,17 @@ import {
 } from "../services/request";
 import { reconcileTemplateExercises } from "../services/template-import";
 import { initialExercises } from "../database/seed";
+import { LlmWorkerClient } from "../integrations/llm/client";
+import {
+  ADAPTIVE_RULES_VERSION,
+  buildAdaptiveContext,
+  deterministicPlan,
+  validateAdaptivePlan,
+} from "../services/adaptive-planner";
+import {
+  knowledgeKey,
+  LLM_MANIFEST_KEY,
+} from "../integrations/llm/knowledge-store";
 function sets(reps: number[], rir = 1): WorkoutSet[] {
   return reps.map((r, i) => ({
     id: String(i),
@@ -49,6 +60,41 @@ function sets(reps: number[], rir = 1): WorkoutSet[] {
     timestamp: new Date().toISOString(),
   }));
 }
+test("el cliente LLM distingue una integración no configurada", async () => {
+  const status = await new LlmWorkerClient({}).status();
+  assert.deepEqual(status, {
+    configured: false,
+    reachable: false,
+    transport: "none",
+  });
+});
+test("el cliente LLM comprueba el worker mediante el transporte inyectado", async () => {
+  let received: Request | undefined;
+  const client = new LlmWorkerClient({
+    transportKind: "service-binding",
+    transport: {
+      async fetch(request) {
+        received = request;
+        return Response.json({ ok: true });
+      },
+    },
+  });
+  const status = await client.status();
+  assert.equal(status.configured, true);
+  assert.equal(status.reachable, true);
+  assert.equal(status.transport, "service-binding");
+  assert.equal(status.statusCode, 200);
+  assert.equal(new URL(received!.url).pathname, "/health");
+});
+test("las claves R2 del LLM quedan aisladas bajo un prefijo versionado", () => {
+  assert.equal(
+    knowledgeKey("catalog/exercises.json"),
+    "gym-tracker/v1/catalog/exercises.json",
+  );
+  assert.equal(LLM_MANIFEST_KEY, "gym-tracker/v1/manifest.json");
+  assert.throws(() => knowledgeKey("../private.json"));
+  assert.throws(() => knowledgeKey(""));
+});
 test("la fuerza estimada combina carga, repeticiones y RIR", () => {
   const set = {
     ...sets([8], 2)[0],
@@ -1229,5 +1275,91 @@ test("una migración de personalizaciones pendiente no bloquea la aplicación", 
   data = await repo.snapshot();
   assert.equal(data.workouts.length, 1);
   assert.equal(data.workoutExercises[0].name, "Flexiones");
+  sql.close();
+});
+
+test("el plan adaptativo respeta tiempo, bloqueos y funciona sin historial", async () => {
+  const { db, sql } = database();
+  const repo = new D1TrainingRepository(db, "adaptive-empty:real");
+  const data = await repo.snapshot();
+  const context = buildAdaptiveContext(data, new Date("2026-11-22T10:00:00.000Z"));
+  assert.equal(context.recentWorkoutCount, 0);
+  assert.ok(context.needs.every((need) => need.daysSinceExposure === null));
+  const short = deterministicPlan(data, {
+    durationMinutes: 30,
+    energy: "normal",
+    blockedExerciseIds: ["pullup"],
+    equipment: [],
+  }, context);
+  const long = deterministicPlan(data, {
+    durationMinutes: 60,
+    energy: "normal",
+    blockedExerciseIds: [],
+    equipment: [],
+  }, context);
+  assert.ok(short.length > 0);
+  assert.ok(!short.some((exercise) => exercise.exerciseId === "pullup"));
+  assert.ok(short.reduce((sum, exercise) => sum + exercise.sets, 0) <= 11);
+  assert.ok(long.reduce((sum, exercise) => sum + exercise.sets, 0) >= short.reduce((sum, exercise) => sum + exercise.sets, 0));
+  sql.close();
+});
+
+test("la validación del LLM rechaza IDs inventados y sesiones imposibles", async () => {
+  const { db, sql } = database();
+  const data = await new D1TrainingRepository(db, "adaptive-validation:real").snapshot();
+  const constraints = { durationMinutes: 30 as const, energy: "normal" as const, blockedExerciseIds: [], equipment: [] };
+  assert.throws(() => validateAdaptivePlan(data, {
+    exercises: [{ exerciseId: "inventado", sets: 3, repMin: 8, repMax: 12, rir: "2", optional: 0, notes: "", priority: "Prioritario" }],
+    rationale: ["Prueba"],
+  }, constraints), /no disponibles/);
+  assert.throws(() => validateAdaptivePlan(data, {
+    exercises: ["pullup", "dip", "row", "pushup"].map((exerciseId) => ({ exerciseId, sets: 5, repMin: 5, repMax: 10, rir: "2", optional: 0, notes: "", priority: "Prioritario" })),
+    rationale: ["Prueba"],
+  }, constraints), /tiempo disponible/);
+  sql.close();
+});
+
+test("la propuesta queda versionada y la sesión adaptativa no reescribe el histórico", async () => {
+  const { db, sql } = database();
+  const repo = new D1TrainingRepository(db, "adaptive-persistence:real");
+  await repo.execute({
+    action: "importWorkouts",
+    workouts: [{
+      sourceId: "historical-g",
+      dayId: "G",
+      startedAt: "2025-01-02T10:00:00.000Z",
+      finishedAt: "2025-01-02T10:45:00.000Z",
+      bodyweight: 75,
+      notes: "Histórico intacto",
+      templateName: "Rutina anterior",
+      isFreeDay: 0,
+      exercises: [{
+        exerciseId: "pullup", name: "Dominadas pronas", sets: 1,
+        repMin: 1, repMax: 10, rir: "2", optional: 0, notes: "", priority: "Principal",
+        metricType: "reps", bodyweightExercise: 1, supportsAssistance: 0,
+        supportsAddedWeight: 1, variant: "", setsDone: [{ setNumber: 1, reps: 6,
+          weight: null, assistanceWeight: null, addedWeight: null, RIR: 1,
+          durationSeconds: null, notes: "Serie original" }],
+      }],
+    }],
+  });
+  const before = await repo.snapshot();
+  const historical = before.workouts.find((workout) => workout.dayId === "G")!;
+  const historicalSet = before.sets.find((set) => set.workoutId === historical.id)!;
+  const id = "00000000-0000-4000-8000-000000000001";
+  const plan = [{ exerciseId: "dip", sets: 3, repMin: 5, repMax: 10, rir: "1–2", optional: 0, notes: "", priority: "Prioritario" }];
+  await repo.execute({ action: "saveAdaptiveProposal", proposal: {
+    id, constraintsJson: JSON.stringify({ durationMinutes: 45, energy: "normal", blockedExerciseIds: [], equipment: [] }),
+    contextJson: JSON.stringify(buildAdaptiveContext(before)), originalPlanJson: JSON.stringify(plan),
+    currentPlanJson: JSON.stringify(plan), rationaleJson: JSON.stringify(["Tríceps pendiente"]),
+    rulesVersion: ADAPTIVE_RULES_VERSION, source: "fallback", latencyMs: 4, errorCode: null,
+  } });
+  await repo.execute({ action: "start", dayId: "A", templateName: "Sesión adaptativa", exercises: plan, sessionType: "adaptive", proposalId: id });
+  const after = await repo.snapshot();
+  assert.equal(after.adaptiveProposals[0].status, "accepted");
+  assert.equal(after.workouts.find((workout) => workout.status === "active")?.sessionType, "adaptive");
+  assert.equal(after.workouts.find((workout) => workout.id === historical.id)?.dayId, "G");
+  assert.equal(after.sets.find((set) => set.id === historicalSet.id)?.reps, 6);
+  assert.equal(after.sets.find((set) => set.id === historicalSet.id)?.notes, "Serie original");
   sql.close();
 });

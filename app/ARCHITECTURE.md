@@ -1,6 +1,20 @@
 # Gym Tracker — decisiones antes de implementar
 
-## Alcance
+## Entrenador adaptativo
+
+La experiencia principal ya no rota A/B/C. El backend calcula necesidades por
+grupo y patrón sobre ventanas recientes, produce un plan determinista limitado
+por tiempo y permite al worker LLM refinarlo dentro de un esquema cerrado. Los
+IDs, el presupuesto de series y los bloqueos se revalidan; ante timeout o JSON
+inválido se usa el plan determinista.
+
+`adaptiveProposals` conserva propuesta original, edición aceptada, contexto,
+justificación, fuente, latencia y versión de reglas. `workouts.sessionType`
+distingue histórico, plantilla, manual y adaptativo, mientras `proposalId`
+enlaza la intención con la ejecución. Las migraciones son aditivas: los `dayId`
+G/A/B/C, ejercicios y series históricos no se transforman.
+
+## Alcance anterior
 
 Primera entrega: Fase 1 completa (inicio, ciclo de entrenamiento configurable, sesión recuperable, series, referencia anterior, finalización e histórico). Se añaden las funciones puras de progresión y sus pruebas, peso corporal, gestión de plantillas y exportación JSON por su utilidad inmediata. El resto se mantiene en el plan, sin simular funciones terminadas.
 

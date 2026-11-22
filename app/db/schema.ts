@@ -87,7 +87,34 @@ export const routines = sqliteTable("routines", {
 export const userSettings = sqliteTable("userSettings", {
   ownerId: text("ownerId").primaryKey(),
   trainingDays: integer("trainingDays").notNull().default(3),
+  adaptiveEnabled: integer("adaptiveEnabled").notNull().default(1),
+  defaultDurationMinutes: integer("defaultDurationMinutes").notNull().default(50),
+  usualFrequency: integer("usualFrequency").notNull().default(2),
+  variationLevel: integer("variationLevel").notNull().default(2),
+  priorities: text("priorities").notNull().default("{}"),
+  exercisePreferences: text("exercisePreferences").notNull().default("{}"),
+  availableEquipment: text("availableEquipment").notNull().default("[]"),
 });
+export const adaptiveProposals = sqliteTable(
+  "adaptiveProposals",
+  {
+    id: text("id").primaryKey(),
+    ownerId: owner(),
+    status: text("status").notNull(),
+    createdAt: text("createdAt").notNull(),
+    updatedAt: text("updatedAt").notNull(),
+    constraintsJson: text("constraintsJson").notNull(),
+    contextJson: text("contextJson").notNull(),
+    originalPlanJson: text("originalPlanJson").notNull(),
+    currentPlanJson: text("currentPlanJson").notNull(),
+    rationaleJson: text("rationaleJson").notNull(),
+    rulesVersion: text("rulesVersion").notNull(),
+    source: text("source").notNull(),
+    latencyMs: integer("latencyMs"),
+    errorCode: text("errorCode"),
+  },
+  (t) => [index("adaptive_proposals_owner_created").on(t.ownerId, t.createdAt)],
+);
 export const externalActivities = sqliteTable(
   "externalActivities",
   {
@@ -147,6 +174,8 @@ export const workouts = sqliteTable(
     notes: text("notes").notNull(),
     templateName: text("templateName").notNull().default(""),
     isFreeDay: integer("isFreeDay").notNull().default(0),
+    sessionType: text("sessionType").notNull().default("legacy"),
+    proposalId: text("proposalId").references(() => adaptiveProposals.id),
   },
   (t) => [
     uniqueIndex("one_active_per_owner")
