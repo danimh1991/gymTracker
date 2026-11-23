@@ -259,6 +259,10 @@ export class D1TrainingRepository implements TrainingRepository {
         workout.sessionType ??
         (workout.dayId === "G" ? "legacy" : workout.isFreeDay ? "manual" : "template"),
       proposalId: workout.proposalId ?? null,
+      trainingLocation: workout.trainingLocation ?? null,
+      sessionModality: workout.sessionModality ?? null,
+      muscleFocus: workout.muscleFocus ?? null,
+      equipmentProfileVersion: workout.equipmentProfileVersion ?? null,
     }));
     const settingsRow = result[15].results[0] as Record<string, unknown> | undefined;
     const defaults = defaultTrainerSettings(Number(settingsRow?.trainingDays ?? 3));
@@ -270,6 +274,10 @@ export class D1TrainingRepository implements TrainingRepository {
       generalWarmupMinutes: Number(settingsRow?.generalWarmupMinutes ?? defaults.generalWarmupMinutes),
       equipmentProfile: settingsRow?.equipmentProfile === "custom" ? "custom" : "full_gym",
       excludedExerciseIds: parseJsonArray(settingsRow?.excludedExerciseIds),
+      defaultTrainingLocation: (["gym", "calisthenics_park", "home", "outdoors", "hotel", "custom"].includes(String(settingsRow?.defaultTrainingLocation))
+        ? settingsRow?.defaultTrainingLocation : defaults.defaultTrainingLocation) as typeof defaults.defaultTrainingLocation,
+      locationEquipmentOverrides: parseJsonValue(settingsRow?.locationEquipmentOverrides, defaults.locationEquipmentOverrides),
+      customEquipmentProfiles: parseJsonValue(settingsRow?.customEquipmentProfiles, defaults.customEquipmentProfiles),
       usualFrequency: Number(settingsRow?.usualFrequency ?? defaults.usualFrequency),
       variationLevel: Number(settingsRow?.variationLevel ?? defaults.variationLevel),
       priorities: { ...defaults.priorities, ...parseJsonObject(settingsRow?.priorities) },
@@ -337,12 +345,15 @@ export class D1TrainingRepository implements TrainingRepository {
     await this.seed();
     if (c.action === "setTrainerSettings") {
       await this.query(
-        "UPDATE userSettings SET adaptiveEnabled=1,defaultDurationMinutes=?,includeWarmupInDuration=?,generalWarmupMinutes=?,equipmentProfile=?,excludedExerciseIds=?,usualFrequency=?,variationLevel=?,priorities=?,exercisePreferences=?,availableEquipment=? WHERE ownerId=?",
+        "UPDATE userSettings SET adaptiveEnabled=1,defaultDurationMinutes=?,includeWarmupInDuration=?,generalWarmupMinutes=?,equipmentProfile=?,excludedExerciseIds=?,defaultTrainingLocation=?,locationEquipmentOverrides=?,customEquipmentProfiles=?,usualFrequency=?,variationLevel=?,priorities=?,exercisePreferences=?,availableEquipment=? WHERE ownerId=?",
         c.settings.defaultDurationMinutes,
         c.settings.includeWarmupInDuration,
         c.settings.generalWarmupMinutes,
         c.settings.equipmentProfile,
         JSON.stringify(c.settings.excludedExerciseIds),
+        c.settings.defaultTrainingLocation,
+        JSON.stringify(c.settings.locationEquipmentOverrides),
+        JSON.stringify(c.settings.customEquipmentProfiles),
         c.settings.usualFrequency,
         c.settings.variationLevel,
         JSON.stringify(c.settings.priorities),
@@ -623,6 +634,18 @@ export class D1TrainingRepository implements TrainingRepository {
         return;
       const id = crypto.randomUUID(),
         now = new Date().toISOString();
+      let adaptiveMetadata: Record<string, unknown> = {};
+      if (c.proposalId && adaptiveReady) {
+        const proposal = await this.query("SELECT constraintsJson FROM adaptiveProposals WHERE id=? AND ownerId=?", c.proposalId, this.ownerId)
+          .first<{ constraintsJson: string }>();
+        const constraints = parseJsonValue<Record<string, unknown>>(proposal?.constraintsJson, {});
+        adaptiveMetadata = {
+          trainingLocation: constraints.location ?? null,
+          sessionModality: constraints.modality ?? null,
+          muscleFocus: constraints.muscleFocus ?? null,
+          equipmentProfileVersion: constraints.equipmentProfileVersion ?? null,
+        };
+      }
       const rows = [] as WorkoutExercise[];
       for (const [position, plan] of c.exercises.entries()) {
         const exercise = await this.libraryExercise(plan.exerciseId);
@@ -655,6 +678,7 @@ export class D1TrainingRepository implements TrainingRepository {
             ? {
                 sessionType: c.sessionType ?? (c.isFreeDay ? "manual" : "template"),
                 proposalId: c.proposalId ?? null,
+                ...adaptiveMetadata,
               }
             : {}),
         }),
@@ -931,6 +955,10 @@ export class D1TrainingRepository implements TrainingRepository {
                   sessionType:
                     imported.sessionType ??
                     (imported.dayId === "G" ? "legacy" : imported.isFreeDay ? "manual" : "template"),
+                  trainingLocation: imported.trainingLocation ?? null,
+                  sessionModality: imported.sessionModality ?? null,
+                  muscleFocus: imported.muscleFocus ?? null,
+                  equipmentProfileVersion: imported.equipmentProfileVersion ?? null,
                 }
               : {}),
           }),
@@ -1425,6 +1453,14 @@ function parseJsonArray(value: unknown): string[] {
       : [];
   } catch {
     return [];
+  }
+}
+
+function parseJsonValue<T>(value: unknown, fallback: T): T {
+  try {
+    return ((typeof value === "string" ? JSON.parse(value) : value) as T) ?? fallback;
+  } catch {
+    return fallback;
   }
 }
 

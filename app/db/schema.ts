@@ -104,6 +104,9 @@ export const userSettings = sqliteTable("userSettings", {
   generalWarmupMinutes: integer("generalWarmupMinutes").notNull().default(7),
   equipmentProfile: text("equipmentProfile").notNull().default("full_gym"),
   excludedExerciseIds: text("excludedExerciseIds").notNull().default("[]"),
+  defaultTrainingLocation: text("defaultTrainingLocation").notNull().default("gym"),
+  locationEquipmentOverrides: text("locationEquipmentOverrides").notNull().default("{}"),
+  customEquipmentProfiles: text("customEquipmentProfiles").notNull().default("[]"),
   usualFrequency: integer("usualFrequency").notNull().default(2),
   variationLevel: integer("variationLevel").notNull().default(2),
   priorities: text("priorities").notNull().default("{}"),
@@ -191,6 +194,10 @@ export const workouts = sqliteTable(
     isFreeDay: integer("isFreeDay").notNull().default(0),
     sessionType: text("sessionType").notNull().default("legacy"),
     proposalId: text("proposalId").references(() => adaptiveProposals.id),
+    trainingLocation: text("trainingLocation"),
+    sessionModality: text("sessionModality"),
+    muscleFocus: text("muscleFocus"),
+    equipmentProfileVersion: text("equipmentProfileVersion"),
   },
   (t) => [
     uniqueIndex("one_active_per_owner")

@@ -18,6 +18,20 @@ export type MuscleGroup =
   | "calves"
   | "forearms_grip";
 export type PlanningStatus = "active" | "manual_only" | "legacy_only";
+export type TrainingLocation = "gym" | "calisthenics_park" | "home" | "outdoors" | "hotel" | "custom";
+export type SessionModality = "general" | "hypertrophy" | "calisthenics" | "strength" | "muscular_endurance" | "functional_mobility";
+export type MuscleFocus = "automatic" | "full_body" | "upper_body" | "lower_body" | "push" | "pull" | "back" | "chest" | "shoulders" | "arms" | "biceps" | "triceps" | "quads" | "posterior_chain" | "calves" | "core";
+export interface LocationEquipmentOverride {
+  available: string[];
+  unavailable: string[];
+  excludedExerciseIds: string[];
+}
+export interface CustomEquipmentProfile extends LocationEquipmentOverride {
+  id: string;
+  name: string;
+  baseLocation: Exclude<TrainingLocation, "custom">;
+  exercisePreferences: Record<string, number>;
+}
 export interface ExerciseStimulus {
   group: MuscleGroup;
   weight: number;
@@ -31,6 +45,9 @@ export interface TrainerSettings {
   generalWarmupMinutes: number;
   equipmentProfile: "full_gym" | "custom";
   excludedExerciseIds: string[];
+  defaultTrainingLocation: TrainingLocation;
+  locationEquipmentOverrides: Partial<Record<Exclude<TrainingLocation, "custom">, LocationEquipmentOverride>>;
+  customEquipmentProfiles: CustomEquipmentProfile[];
   usualFrequency: number;
   variationLevel: number;
   priorities: Record<MuscleGroup, number>;
@@ -145,6 +162,10 @@ export interface Workout {
   isFreeDay: number;
   sessionType: SessionType;
   proposalId: string | null;
+  trainingLocation?: TrainingLocation | null;
+  sessionModality?: SessionModality | null;
+  muscleFocus?: MuscleFocus | null;
+  equipmentProfileVersion?: string | null;
 }
 export interface AdaptiveProposal {
   id: string;
@@ -167,10 +188,18 @@ export interface AdaptiveConstraints {
   blockedExerciseIds: string[];
   equipment: string[];
   equipmentProfile?: "full_gym" | "custom";
+  unavailableEquipment?: string[];
+  location?: TrainingLocation;
+  customEquipmentProfileId?: string | null;
+  equipmentProfileVersion?: string;
+  modality?: SessionModality;
+  muscleFocus?: MuscleFocus;
 }
 export interface AdaptiveNeed {
   group: MuscleGroup;
   score: number;
+  baseScore?: number;
+  objectiveMultiplier?: number;
   priority: number;
   directSets10d: number;
   indirectSets10d: number;
@@ -212,6 +241,8 @@ export interface AdaptiveContext {
     remainingSeconds?: number;
   };
   qualityRepairApplied?: boolean;
+  remainingTimeExplanation?: string;
+  warnings?: string[];
   equipmentAudit?: Array<{
     exerciseId: string;
     name: string;

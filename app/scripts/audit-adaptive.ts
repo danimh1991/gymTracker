@@ -3,11 +3,13 @@ import { DatabaseSync } from "node:sqlite";
 import type { Exercise, Snapshot, WorkoutExercise, WorkoutSet } from "../domain/types";
 import {
   ADAPTIVE_RULES_VERSION,
+  applySessionObjective,
   buildAdaptiveContext,
   defaultTrainerSettings,
   deterministicPlan,
   exerciseStimulus,
   MUSCLE_GROUPS,
+  resolveEquipmentForLocation,
   summarizePlanTime,
 } from "../services/adaptive-planner";
 
@@ -23,6 +25,7 @@ sqlite.exec(dump);
 sqlite.exec(readFileSync(new URL("../drizzle/0009_adaptive_1_1.sql", import.meta.url), "utf8"));
 sqlite.exec(readFileSync(new URL("../drizzle/0010_adaptive_time_budget.sql", import.meta.url), "utf8").replaceAll("--> statement-breakpoint", ""));
 sqlite.exec(readFileSync(new URL("../drizzle/0011_equipment_profile.sql", import.meta.url), "utf8").replaceAll("--> statement-breakpoint", ""));
+sqlite.exec(readFileSync(new URL("../drizzle/0012_adaptive_1_2.sql", import.meta.url), "utf8").replaceAll("--> statement-breakpoint", ""));
 
 const rows = <T>(table: string) => sqlite.prepare(`SELECT * FROM ${table}`).all() as T[];
 const ownerId = "danieta-gymtracker:real";
@@ -38,6 +41,10 @@ settings.includeWarmupInDuration = Number(storedSettings?.includeWarmupInDuratio
 settings.generalWarmupMinutes = Number(storedSettings?.generalWarmupMinutes ?? settings.generalWarmupMinutes);
 settings.equipmentProfile = storedSettings?.equipmentProfile === "custom" ? "custom" : "full_gym";
 settings.excludedExerciseIds = JSON.parse(String(storedSettings?.excludedExerciseIds ?? "[]"));
+settings.defaultTrainingLocation = (["gym", "calisthenics_park", "home", "outdoors", "hotel", "custom"].includes(String(storedSettings?.defaultTrainingLocation))
+  ? storedSettings?.defaultTrainingLocation : "gym") as typeof settings.defaultTrainingLocation;
+settings.locationEquipmentOverrides = JSON.parse(String(storedSettings?.locationEquipmentOverrides ?? "{}"));
+settings.customEquipmentProfiles = JSON.parse(String(storedSettings?.customEquipmentProfiles ?? "[]"));
 settings.usualFrequency = Number(storedSettings?.usualFrequency ?? settings.usualFrequency);
 settings.variationLevel = Number(storedSettings?.variationLevel ?? settings.variationLevel);
 settings.priorities = { ...settings.priorities, ...JSON.parse(String(storedSettings?.priorities ?? "{}")) };
@@ -75,15 +82,16 @@ const data = {
 } as unknown as Snapshot;
 
 const reportedCaseGeneratedAt = "2026-11-22T20:56:14.206Z";
-const reportedCaseContext = buildAdaptiveContext(data, new Date(reportedCaseGeneratedAt));
-const reportedCasePlan = deterministicPlan(data, {
-  durationMinutes: 45, energy: "normal", blockedExerciseIds: settings.excludedExerciseIds,
-  equipment: settings.availableEquipment, equipmentProfile: settings.equipmentProfile,
-}, reportedCaseContext);
-const reportedCaseTiming = summarizePlanTime(data, {
-  durationMinutes: 45, energy: "normal", blockedExerciseIds: settings.excludedExerciseIds,
-  equipment: settings.availableEquipment, equipmentProfile: settings.equipmentProfile,
-}, reportedCasePlan);
+const reportedEquipment = resolveEquipmentForLocation(settings, "gym");
+const reportedConstraints = {
+  durationMinutes: 45 as const, energy: "normal" as const, blockedExerciseIds: reportedEquipment.excludedExerciseIds,
+  equipment: reportedEquipment.available, unavailableEquipment: reportedEquipment.unavailable,
+  equipmentProfile: reportedEquipment.equipmentProfile, location: "gym" as const,
+  modality: "general" as const, muscleFocus: "automatic" as const,
+};
+const reportedCaseContext = applySessionObjective(buildAdaptiveContext(data, new Date(reportedCaseGeneratedAt)), reportedConstraints);
+const reportedCasePlan = deterministicPlan(data, reportedConstraints, reportedCaseContext);
+const reportedCaseTiming = summarizePlanTime(data, reportedConstraints, reportedCasePlan);
 
 const enabled = exercises.filter((exercise) => exercise.enabled);
 const catalog = enabled
@@ -152,18 +160,23 @@ const simulations: Array<Record<string, unknown>> = [];
 const simulatedSetIds = new Set<string>();
 
 for (const [sessionIndex, generatedAt] of simulationDates.entries()) {
-  const contextBefore = buildAdaptiveContext(data, new Date(generatedAt));
+  const simulationLocation = sessionIndex === 4 ? "calisthenics_park" as const : "gym" as const;
+  const simulationEquipment = resolveEquipmentForLocation(settings, simulationLocation);
+  const simulationConstraints = {
+    durationMinutes: 50 as const,
+    energy: sessionIndex === 3 ? "low" as const : "normal" as const,
+    blockedExerciseIds: simulationEquipment.excludedExerciseIds,
+    equipment: simulationEquipment.available,
+    unavailableEquipment: simulationEquipment.unavailable,
+    equipmentProfile: simulationEquipment.equipmentProfile,
+    location: simulationLocation,
+    modality: sessionIndex === 4 ? "calisthenics" as const : "general" as const,
+    muscleFocus: "automatic" as const,
+  };
+  const contextBefore = applySessionObjective(buildAdaptiveContext(data, new Date(generatedAt)), simulationConstraints);
   const plan = deterministicPlan(
     data,
-    {
-      durationMinutes: 50,
-      energy: sessionIndex === 3 ? "low" : "normal",
-      blockedExerciseIds: [],
-      equipment: sessionIndex === 4
-        ? ["Peso corporal", "Barra de dominadas", "Paralelas"]
-        : settings.availableEquipment,
-      equipmentProfile: sessionIndex === 4 ? "custom" : settings.equipmentProfile,
-    },
+    simulationConstraints,
     contextBefore,
   );
   const scenario = scenarios[sessionIndex];
@@ -185,6 +198,10 @@ for (const [sessionIndex, generatedAt] of simulationDates.entries()) {
     isFreeDay: 0,
     sessionType: "adaptive",
     proposalId: null,
+    trainingLocation: simulationLocation,
+    sessionModality: simulationConstraints.modality,
+    muscleFocus: simulationConstraints.muscleFocus,
+    equipmentProfileVersion: simulationEquipment.version,
   });
 
   for (const [position, item] of plan.entries()) {

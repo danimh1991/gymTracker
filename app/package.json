@@ -17,6 +17,7 @@
     "llm:r2:upload": "node scripts/upload-llm-data.mjs",
     "db:generate": "drizzle-kit generate",
     "catalog:generate": "node scripts/generate-adaptive-catalog.mjs",
+    "adaptive:simulate": "node scripts/simulate-adaptive-1-2.mjs",
     "test": "node scripts/test.mjs",
     "check": "tsc --noEmit"
   },

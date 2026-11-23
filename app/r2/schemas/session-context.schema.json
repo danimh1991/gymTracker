@@ -3,13 +3,38 @@
   "$id": "gym-tracker/v1/schemas/session-context.schema.json",
   "type": "object",
   "additionalProperties": true,
-  "required": ["rulesVersion", "catalogVersion", "rulesHash", "objectives", "constraints", "needs", "catalog", "deterministicReference"],
+  "required": ["rulesVersion", "catalogVersion", "rulesHash", "objectives", "constraints", "sessionIntent", "timeBudget", "needs", "catalog", "deterministicReference"],
   "properties": {
-    "rulesVersion": { "const": "adaptive-1.1" },
+    "rulesVersion": { "const": "adaptive-1.2" },
     "catalogVersion": { "const": "adaptive-2.0-full-2026-11-22" },
     "rulesHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
     "objectives": { "type": "object", "required": ["hypertrophy", "strengthCalisthenics", "functionalHealth"] },
-    "constraints": { "type": "object" },
+    "constraints": {
+      "type": "object",
+      "required": ["durationMinutes", "energy", "location", "modality", "muscleFocus", "equipment", "unavailableEquipment", "equipmentProfileVersion"],
+      "properties": {
+        "durationMinutes": { "enum": [30, 45, 50, 60, 75] },
+        "energy": { "enum": ["low", "normal", "high"] },
+        "location": { "enum": ["gym", "calisthenics_park", "home", "outdoors", "hotel", "custom"] },
+        "modality": { "enum": ["general", "hypertrophy", "calisthenics", "strength", "muscular_endurance", "functional_mobility"] },
+        "muscleFocus": { "enum": ["automatic", "full_body", "upper_body", "lower_body", "push", "pull", "back", "chest", "shoulders", "arms", "biceps", "triceps", "quads", "posterior_chain", "calves", "core"] },
+        "equipment": { "type": "array", "items": { "type": "string" } },
+        "unavailableEquipment": { "type": "array", "items": { "type": "string" } },
+        "equipmentProfileVersion": { "type": "string" }
+      }
+    },
+    "sessionIntent": {
+      "type": "object",
+      "required": ["location", "modality", "muscleFocus", "equipmentProfile", "equipmentProfileVersion"],
+      "properties": {
+        "location": { "enum": ["gym", "calisthenics_park", "home", "outdoors", "hotel", "custom"] },
+        "modality": { "enum": ["general", "hypertrophy", "calisthenics", "strength", "muscular_endurance", "functional_mobility"] },
+        "muscleFocus": { "enum": ["automatic", "full_body", "upper_body", "lower_body", "push", "pull", "back", "chest", "shoulders", "arms", "biceps", "triceps", "quads", "posterior_chain", "calves", "core"] },
+        "equipmentProfile": { "type": "string" },
+        "equipmentProfileVersion": { "type": "string" }
+      }
+    },
+    "timeBudget": { "type": "object", "required": ["totalSeconds", "generalWarmupSeconds", "mainSessionSeconds"] },
     "needs": { "type": "array" },
     "recentSessions": { "type": "array", "maxItems": 8 },
     "catalog": { "type": "array", "minItems": 1 },

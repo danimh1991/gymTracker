@@ -16,6 +16,10 @@ export function workoutBackup(data: Snapshot) {
         templateName: workout.templateName,
         isFreeDay: workout.isFreeDay,
         sessionType: workout.sessionType,
+        trainingLocation: workout.trainingLocation,
+        sessionModality: workout.sessionModality,
+        muscleFocus: workout.muscleFocus,
+        equipmentProfileVersion: workout.equipmentProfileVersion,
         adaptiveTrace: workout.proposalId
           ? data.adaptiveProposals.find((proposal) => proposal.id === workout.proposalId) ?? null
           : null,

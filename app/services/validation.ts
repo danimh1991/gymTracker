@@ -7,6 +7,14 @@ const muscleGroup = z.enum([
   "lateral_rear_delts", "biceps", "triceps", "quads",
   "posterior_chain", "core", "calves", "forearms_grip",
 ]);
+const trainingLocation = z.enum(["gym", "calisthenics_park", "home", "outdoors", "hotel", "custom"]);
+const sessionModality = z.enum(["general", "hypertrophy", "calisthenics", "strength", "muscular_endurance", "functional_mobility"]);
+const muscleFocus = z.enum(["automatic", "full_body", "upper_body", "lower_body", "push", "pull", "back", "chest", "shoulders", "arms", "biceps", "triceps", "quads", "posterior_chain", "calves", "core"]);
+const locationOverride = z.object({
+  available: z.array(z.string().trim().min(1).max(80)).max(40),
+  unavailable: z.array(z.string().trim().min(1).max(80)).max(40),
+  excludedExerciseIds: z.array(z.string().min(1)).max(120),
+});
 const dateKey = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -107,6 +115,10 @@ const importedWorkout = z.object({
   templateName: z.string().max(100).default("Sesión importada"),
   isFreeDay: z.number().int().min(0).max(1).default(0),
   sessionType: z.enum(["legacy", "template", "adaptive", "manual"]).optional(),
+  trainingLocation: trainingLocation.nullable().optional(),
+  sessionModality: sessionModality.nullable().optional(),
+  muscleFocus: muscleFocus.nullable().optional(),
+  equipmentProfileVersion: z.string().max(80).nullable().optional(),
   exercises: z.array(importedWorkoutExercise).min(1).max(40),
 });
 export const commandSchema = z.discriminatedUnion("action", [
@@ -155,6 +167,13 @@ export const commandSchema = z.discriminatedUnion("action", [
       generalWarmupMinutes: z.number().int().min(0).max(20),
       equipmentProfile: z.enum(["full_gym", "custom"]),
       excludedExerciseIds: z.array(z.string().min(1)).max(120),
+      defaultTrainingLocation: trainingLocation,
+      locationEquipmentOverrides: z.record(z.string(), locationOverride),
+      customEquipmentProfiles: z.array(locationOverride.extend({
+        id: z.string().min(1).max(100), name: z.string().trim().min(1).max(80),
+        baseLocation: z.enum(["gym", "calisthenics_park", "home", "outdoors", "hotel"]),
+        exercisePreferences: z.record(z.string(), z.number().int().min(1).max(5)),
+      })).max(20),
       usualFrequency: z.number().int().min(1).max(7),
       variationLevel: z.number().int().min(1).max(3),
       priorities: z.record(muscleGroup, z.number().int().min(1).max(5)),
