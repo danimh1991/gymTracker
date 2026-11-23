@@ -141,11 +141,13 @@ export function SetEditor({
       !!exercise.supportsAddedWeight;
   return (
     <div className="set-editor">
-      <div className="section-title">
-        <strong>
-          Serie {number} <span className="muted">de {exercise.sets}</span>
-        </strong>
-        <span className="small muted">
+      <div className="set-editor-heading">
+        <div className="set-position">
+          <span>SERIE</span>
+          <strong>{number}</strong>
+          <small>de {exercise.sets}</small>
+        </div>
+        <span className="set-previous">
           {previous
             ? `Anterior: ${previous.reps ?? `${previous.durationSeconds}s`} · RIR ${previous.RIR ?? "—"}`
             : "Primera referencia"}
@@ -182,38 +184,42 @@ export function SetEditor({
           />
         ) : null}
       </div>
-      <div className="rir-label">
-        <span>Repeticiones en reserva</span>
-        <span className="muted">Objetivo {exercise.rir}</span>
+      <div className="set-effort">
+        <div className="rir-label">
+          <span>¿Cuántas repeticiones te quedaban?</span>
+          <span className="rir-target">Objetivo {exercise.rir}</span>
+        </div>
+        <div className="rir-buttons">
+          {[3, 2, 1, 0].map((n) => (
+            <button
+              type="button"
+              key={n}
+              aria-pressed={draft.rir === n}
+              className={`${draft.rir === n ? "chosen" : ""} ${n === 0 ? "failure-option" : ""}`}
+              onClick={() =>
+                setDraft({ ...draft, rir: draft.rir === n ? null : n })
+              }
+            >
+              <strong>{n === 3 ? "3+" : n}</strong>
+              <small>{n === 3 ? "Cómoda" : n === 2 ? "Objetivo" : n === 1 ? "Exigente" : "Fallo"}</small>
+            </button>
+          ))}
+        </div>
       </div>
-      <div className="rir-buttons">
-        {[3, 2, 1, 0].map((n) => (
-          <button
-            type="button"
-            key={n}
-            aria-pressed={draft.rir === n}
-            className={`${draft.rir === n ? "chosen" : ""} ${n === 0 ? "failure-option" : ""}`}
-            onClick={() =>
-              setDraft({ ...draft, rir: draft.rir === n ? null : n })
-            }
-          >
-            {n === 3 ? "3+" : n === 0 ? "0 · Fallo" : n}
-          </button>
-        ))}
-      </div>
-      <details className="set-notes">
-        <summary>Nota de esta serie</summary>
-        <textarea
-          aria-label="Nota de esta serie"
-          maxLength={2000}
-          value={draft.notes}
-          onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
-        />
-      </details>
-      <button
-        className="primary save-set"
-        disabled={busy || draft.value === "" || Number(draft.value) < 0}
-        onClick={async () => {
+      <div className="set-editor-footer">
+        <details className="set-notes">
+          <summary>+ Añadir nota</summary>
+          <textarea
+            aria-label="Nota de esta serie"
+            maxLength={2000}
+            value={draft.notes}
+            onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
+          />
+        </details>
+        <button
+          className="primary save-set"
+          disabled={busy || draft.value === "" || Number(draft.value) < 0}
+          onClick={async () => {
           const v = Number(draft.value),
             load = draft.load === "" ? null : Number(draft.load);
           const success = await onSave({
@@ -233,11 +239,12 @@ export function SetEditor({
               localStorage.removeItem(key);
             } catch {}
           }
-        }}
-      >
-        <Check size={19} />
-        {busy ? "Guardando…" : saved ? "Actualizar serie" : "Guardar serie"}
-      </button>
+          }}
+        >
+          <Check size={19} />
+          {busy ? "Guardando…" : saved ? "Actualizar serie" : `Guardar serie ${number}`}
+        </button>
+      </div>
     </div>
   );
 }

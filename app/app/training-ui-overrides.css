@@ -180,6 +180,117 @@ main { max-width: 1180px; padding: 28px calc(32px + var(--safe-right)) 42px 32px
 .training-card.expanded { box-shadow: 0 12px 34px rgb(31 43 31 / 8%); }
 .exercise-body .technique, .exercise-body .notice { border-radius: 10px; }
 
+/* Active set workspace: compact, thumb-friendly and intentionally unlike a form. */
+.training-card.expanded .exercise-body > :not(.active-exercise-editor) {
+  width: min(100%, 820px);
+  margin-right: auto;
+  margin-left: auto;
+}
+.training-card.expanded .technique {
+  margin-top: 4px;
+  margin-bottom: 9px;
+  padding: 0 2px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.training-card.expanded .reference {
+  gap: 10px;
+  margin-bottom: 7px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: #f2f5f0;
+}
+.training-card.expanded .reference strong { font-size: 12px; }
+.training-card.expanded .reference-set small { font-size: 9px; }
+.training-card.expanded .load-reminder {
+  gap: 8px;
+  margin: 6px auto 4px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--lime-soft);
+}
+.training-card.expanded .load-reminder svg { width: 15px; height: 15px; }
+.training-card.expanded .load-reminder span { display: none; }
+.training-card.expanded .load-reminder strong { font-size: 12px; }
+.set-editor {
+  width: min(100%, 820px);
+  max-width: none;
+  margin: 9px auto 0;
+  padding: 15px;
+  border: 0;
+  border-radius: 16px;
+  background: #f7f9f6;
+}
+.set-editor-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 11px;
+  border-bottom: 1px solid #e2e7df;
+}
+.set-position { display: flex; align-items: baseline; gap: 6px; }
+.set-position > span { color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .13em; }
+.set-position strong { font-size: 26px; line-height: 1; letter-spacing: -.04em; }
+.set-position small { color: var(--muted); font-size: 12px; }
+.set-previous { padding: 5px 8px; border-radius: 999px; background: #e9eee6; color: #5f695e; font-size: 10px; font-weight: 650; }
+.set-editor .inputs-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+.set-editor .number-field {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 7px 7px 7px 11px;
+  border: 1px solid #dfe5dc;
+  border-radius: 13px;
+  background: #fff;
+}
+.set-editor .number-field > span {
+  max-width: 82px;
+  margin: 0;
+  color: #4f5b4e;
+  font-size: 11px;
+  font-weight: 720;
+  line-height: 1.15;
+}
+.set-editor .stepper { min-height: 42px; border: 0; border-radius: 9px; background: #f2f5f0; }
+.set-editor .stepper button { min-width: 38px; background: transparent; color: #536052; }
+.set-editor .stepper input { background: transparent; font-size: 20px; }
+.set-effort { padding-top: 1px; }
+.set-editor .rir-label { align-items: center; margin-bottom: 7px; font-size: 11px; font-weight: 720; }
+.rir-target { padding: 4px 7px; border-radius: 999px; background: var(--lime-soft); color: #45651e; font-size: 9px; }
+.set-editor .rir-buttons { gap: 5px; }
+.set-editor .rir-buttons button {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  justify-content: center;
+  gap: 5px;
+  min-height: 43px;
+  padding: 5px;
+  border: 1px solid #dfe5dc;
+  border-radius: 10px;
+  background: #fff;
+}
+.set-editor .rir-buttons strong { font-size: 15px; }
+.set-editor .rir-buttons small { color: var(--muted); font-size: 9px; }
+.set-editor .rir-buttons .chosen { border-color: var(--deep); background: var(--deep); color: var(--lime); }
+.set-editor .rir-buttons .chosen small { color: #dbe8ce; }
+.set-editor-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+.set-editor .set-notes { flex: 1; margin: 0; font-size: 11px; }
+.set-editor .set-notes summary { color: #657064; cursor: pointer; font-weight: 700; }
+.set-editor .set-notes textarea { margin-top: 8px; }
+.set-editor .set-notes[open] { align-self: stretch; }
+.set-editor .save-set { width: auto; min-width: 200px; min-height: 43px; margin: 0; }
+
 /* Lists and settings become content rows rather than stacked boxes. */
 .settings-grid { gap: 14px; margin-bottom: 14px; }
 .settings-card { margin-bottom: 14px; padding: 20px; border-radius: var(--radius-md); box-shadow: 0 1px 2px rgb(24 34 24 / 2%); }
@@ -271,6 +382,33 @@ main { max-width: 1180px; padding: 28px calc(32px + var(--safe-right)) 42px 32px
   .training-action { width: 39px; justify-content: center; padding: 0; }
   .rest-controls { top: calc(62px + var(--safe-top)); margin-right: -3px; margin-left: -3px; }
   .exercise-edit-shortcut span { display: none; }
+  .exercise-body { padding: 0 8px 10px; }
+  .training-card.expanded .technique { display: none; }
+  .training-card.expanded .reference {
+    margin-bottom: 5px;
+    padding: 7px 8px;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .training-card.expanded .reference > span { position: sticky; left: 0; background: #f2f5f0; }
+  .training-card.expanded .load-reminder { margin-bottom: 5px; }
+  .set-editor { margin-top: 5px; padding: 12px 10px 10px; border-radius: 13px; }
+  .set-editor-heading { padding-bottom: 9px; }
+  .set-position strong { font-size: 22px; }
+  .set-previous { max-width: 58%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .set-editor .inputs-row { gap: 6px; margin: 9px 0 11px; }
+  .set-editor .number-field { grid-template-columns: 1fr; gap: 4px; padding: 7px; }
+  .set-editor .number-field > span { max-width: none; padding-left: 2px; font-size: 10px; }
+  .set-editor .stepper { min-height: 44px; }
+  .set-editor .stepper button { min-width: 34px; }
+  .set-editor .stepper input { font-size: 19px; }
+  .set-editor .rir-label > span:first-child { font-size: 10px; }
+  .set-editor .rir-buttons { grid-template-columns: repeat(4, 1fr); }
+  .set-editor .rir-buttons button { grid-template-columns: 1fr; gap: 0; min-height: 48px; }
+  .set-editor .rir-buttons small { font-size: 8px; }
+  .set-editor-footer { align-items: stretch; flex-direction: column-reverse; gap: 8px; margin-top: 10px; }
+  .set-editor .save-set { width: 100%; min-height: 48px; }
+  .set-editor .set-notes { width: 100%; padding-left: 2px; }
   .settings-card { padding: 16px 14px; border-radius: 14px; }
   .settings-card h2 { font-size: 17px; }
   .settings-card > p { margin: 8px 0 13px; }

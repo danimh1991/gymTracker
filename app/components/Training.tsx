@@ -371,7 +371,8 @@ export function Training({
                 : Array.from({ length: e.sets }, (_, i) => i + 1).find(
                     (n) => !done.some((s) => s.setNumber === n),
                   ),
-            library = data.exercises.find((x) => x.id === e.exerciseId);
+            library = data.exercises.find((x) => x.id === e.exerciseId),
+            techniqueText = [...new Set([library?.notes?.trim(), e.notes?.trim()].filter(Boolean))].join(" ");
           return (
             <section
               className={`training-card ${open === e.id ? "expanded" : ""}`}
@@ -438,9 +439,9 @@ export function Training({
                       }}
                     />
                   )}
-                  {(e.notes || library?.notes) && (
+                  {techniqueText && (
                     <p className="technique">
-                      {library?.notes} {e.notes}
+                      {techniqueText}
                     </p>
                   )}
                   <div className="reference">
