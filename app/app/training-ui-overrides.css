@@ -44,11 +44,11 @@
   --lime-soft: #e9f9d1;
   --deep: #1b211c;
   --surface: #ffffff;
-  --block-history: #eef2ef;
-  --block-recommendation: #e8f6d2;
-  --block-values: #eaf3f6;
-  --block-effort: #faf1dd;
-  --block-series: #f1edf7;
+  --block-history: #f0f2ed;
+  --block-recommendation: #e7f5cf;
+  --block-values: #e8f1e6;
+  --block-effort: #f1f2df;
+  --block-series: #edf1e8;
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 22px;
@@ -327,6 +327,7 @@ main { max-width: 1180px; padding: 28px calc(32px + var(--safe-right)) 42px 32px
   border: 0;
   border-radius: 10px;
   background: var(--block-series);
+  box-shadow: inset 3px 0 #91a875;
 }
 .set-position { display: flex; align-items: baseline; gap: 6px; }
 .set-position > span { color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .13em; }
@@ -342,6 +343,7 @@ main { max-width: 1180px; padding: 28px calc(32px + var(--safe-right)) 42px 32px
   padding: 9px 11px;
   border-radius: 12px;
   background: var(--block-values);
+  box-shadow: inset 3px 0 #719071;
 }
 .set-editor .number-field {
   flex: 0 0 auto;
@@ -377,6 +379,7 @@ main { max-width: 1180px; padding: 28px calc(32px + var(--safe-right)) 42px 32px
   padding: 9px 11px;
   border-radius: 12px;
   background: var(--block-effort);
+  box-shadow: inset 3px 0 #a3a75d;
 }
 .set-editor .rir-label { align-items: center; gap: 8px; justify-content: flex-start; margin-bottom: 4px; font-size: 9px; font-weight: 720; }
 .rir-target { padding: 2px 6px; border-radius: 999px; background: var(--lime-soft); color: #45651e; font-size: 8px; }
@@ -390,7 +393,7 @@ main { max-width: 1180px; padding: 28px calc(32px + var(--safe-right)) 42px 32px
   padding: 4px 10px;
   border: 1px solid #dfe5dc;
   border-radius: 999px;
-  background: #fffdf8;
+  background: #fbfcf7;
   line-height: 1;
   text-align: center;
 }
