@@ -242,7 +242,7 @@ export function SetEditor({
           }}
         >
           <Check size={19} />
-          {busy ? "Guardando…" : saved ? "Actualizar serie" : `Guardar serie ${number}`}
+          {busy ? "Guardando…" : saved ? "Actualizar" : "Guardar"}
         </button>
       </div>
     </div>

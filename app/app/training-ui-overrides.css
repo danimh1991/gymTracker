@@ -152,6 +152,8 @@ main { max-width: 1180px; padding: 28px calc(32px + var(--safe-right)) 42px 32px
   box-shadow: 0 1px 0 rgb(22 31 22 / 2%);
 }
 .coach-empty { grid-template-columns: auto 1fr; justify-items: start; align-items: center; column-gap: 15px; padding-block: 20px; text-align: left; }
+.coach-empty > div { min-width: 0; }
+.coach-empty h2 { margin: 0; }
 .coach-empty p { margin-top: 4px; }
 .coach-blocked { margin: 12px 0; border-radius: 12px; background: transparent; }
 .need-grid { gap: 7px; margin: 14px 0; }
@@ -162,6 +164,14 @@ main { max-width: 1180px; padding: 28px calc(32px + var(--safe-right)) 42px 32px
 .plan-row { grid-template-columns: 1fr; align-items: stretch; gap: 8px; padding: 11px 12px; border-radius: 14px; }
 .plan-main { align-items: center; min-width: 0; }
 .plan-main .muscle-picker-field { min-width: 0; flex: 1; }
+.plan-main .muscle-picker-trigger { min-height: 58px; height: auto; }
+.plan-main .muscle-picker-trigger > span { overflow: visible; }
+.plan-main .muscle-picker-trigger strong {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  line-height: 1.2;
+}
 .plan-summary { flex: 0 0 auto; padding: 6px 9px; border-radius: 999px; background: var(--paper); color: var(--muted); font-size: 11px; font-weight: 700; }
 .plan-details { border-top: 1px solid #edf0eb; }
 .plan-details summary { padding: 9px 0 2px; color: #5e685d; cursor: pointer; font-size: 12px; font-weight: 750; }
@@ -474,13 +484,22 @@ main { max-width: 1180px; padding: 28px calc(32px + var(--safe-right)) 42px 32px
   .active-exercise-editor .exercise-edit-actions .secondary { font-size: 0; }
   .active-exercise-editor .exercise-edit-actions .secondary svg { margin: 0; }
   .training-card.expanded .technique { display: none; }
-  .exercise-context-row { gap: 5px; margin-bottom: 7px; }
+  .exercise-context-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 5px;
+    margin-bottom: 7px;
+    overflow: visible;
+  }
   .training-card.expanded .reference {
-    flex: 0 0 auto;
+    min-width: 0;
     margin: 0;
     padding: 6px 8px;
+    white-space: normal;
   }
   .training-card.expanded .reference > span { position: static; background: transparent; }
+  .training-card.expanded .reference-sets { flex-wrap: wrap; gap: 3px 9px; }
+  .training-card.expanded .reference-set:not(:last-child)::after { margin-left: 5px; }
   .training-card.expanded .load-reminder { margin: 0; padding: 6px 8px; }
   .training-card.expanded .saved-sets { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; }
   .set-editor { align-items: center; gap: 10px 12px; margin-top: 3px; padding-top: 11px; }
@@ -519,4 +538,6 @@ main { max-width: 1180px; padding: 28px calc(32px + var(--safe-right)) 42px 32px
   .exercise-summary { grid-template-columns: repeat(2, 1fr); }
   .need-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .need-grid article { min-height: 78px; }
+  .plan-main .muscle-picker-trigger { align-items: center; padding: 9px; }
+  .plan-main .muscle-picker-trigger strong { font-size: 13px; }
 }

@@ -1,14 +1,29 @@
 "use client";
 import { ChevronDown, ChevronUp, CopyPlus, Plus, Trash2 } from "lucide-react";
 import type { Exercise, PlanExercise } from "../domain/types";
-import { MuscleExercisePicker } from "./MuscleExercisePicker";
+import { muscleGroupLabel, MuscleExercisePicker } from "./MuscleExercisePicker";
+
+const MUSCLE_CODES = [
+  "vertical_pull", "horizontal_pull", "chest", "vertical_push",
+  "lateral_rear_delts", "biceps", "triceps", "quads",
+  "posterior_chain", "core", "calves", "forearms_grip",
+] as const;
+
+function readableReason(reason: string) {
+  return MUSCLE_CODES.reduce(
+    (text, group) => text.replaceAll(group, muscleGroupLabel(group)),
+    reason,
+  )
+    .replace(/Estímulo principal:/gi, "Prioridad principal:")
+    .replace(/\s*\(necesidad [^)]+\)/gi, "");
+}
 
 function loadText(row: PlanExercise) {
   const load = row.suggestedLoad;
   if (!load) return null;
   const confidence = load.confidence === "high" ? "confianza alta" : load.confidence === "medium" ? "confianza media" : "por calibrar";
   if (load.kind === "bodyweight") return `Peso corporal · ${confidence}`;
-  if (load.kind === "calibration") return `Carga técnica a calibrar · ${confidence}`;
+  if (load.kind === "calibration") return "Elige una carga cómoda para empezar";
   const label = load.kind === "assistance" ? "Asistencia" : load.kind === "added_weight" ? "Lastre" : "Carga";
   return `${label}: ${load.valueKg ?? "—"} kg · ${confidence}`;
 }
@@ -117,7 +132,7 @@ export function PlanEditor({
             </button>
           </div>
           </details>
-          {row.reason && <p className="muted">{row.reason}</p>}
+          {row.reason && <p className="muted">{readableReason(row.reason)}</p>}
           <p className="muted">{loadText(row)}{row.unilateralPerSide ? " · Series y descansos por lado" : ""}{row.estimatedSeconds ? ` · ~${Math.ceil(row.estimatedSeconds / 60)} min` : ""}</p>
           {row.notes && <p className="muted">{row.notes}</p>}
         </article>
