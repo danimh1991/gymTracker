@@ -44,6 +44,11 @@
   --lime-soft: #e9f9d1;
   --deep: #1b211c;
   --surface: #ffffff;
+  --block-history: #eef2ef;
+  --block-recommendation: #e8f6d2;
+  --block-values: #eaf3f6;
+  --block-effort: #faf1dd;
+  --block-series: #f1edf7;
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 22px;
@@ -244,7 +249,7 @@ main { max-width: 1180px; padding: 28px calc(32px + var(--safe-right)) 42px 32px
   padding: 7px 9px;
   border: 0;
   border-radius: 8px;
-  background: #f2f5f0;
+  background: var(--block-history);
   white-space: nowrap;
 }
 .training-card.expanded .reference strong { font-size: 12px; }
@@ -256,7 +261,7 @@ main { max-width: 1180px; padding: 28px calc(32px + var(--safe-right)) 42px 32px
   padding: 7px 11px;
   border: 0;
   border-radius: 8px;
-  background: var(--lime-soft);
+  background: var(--block-recommendation);
 }
 .training-card.expanded .load-reminder svg { width: 15px; height: 15px; }
 .training-card.expanded .load-reminder span { display: none; }
@@ -271,9 +276,9 @@ main { max-width: 1180px; padding: 28px calc(32px + var(--safe-right)) 42px 32px
   flex: 0 0 auto;
   width: auto;
   overflow: hidden;
-  border: 1px solid #dce6d4;
+  border: 1px solid #cfe1bc;
   border-radius: 999px;
-  background: #f2f7ed;
+  background: #edf7e4;
 }
 .training-card.expanded .saved-set-wrap > button:first-child {
   flex: 0 0 auto;
@@ -318,8 +323,10 @@ main { max-width: 1180px; padding: 28px calc(32px + var(--safe-right)) 42px 32px
   align-items: center;
   align-self: center;
   gap: 9px;
-  padding: 0;
+  padding: 7px 9px;
   border: 0;
+  border-radius: 10px;
+  background: var(--block-series);
 }
 .set-position { display: flex; align-items: baseline; gap: 6px; }
 .set-position > span { color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .13em; }
@@ -332,6 +339,9 @@ main { max-width: 1180px; padding: 28px calc(32px + var(--safe-right)) 42px 32px
   align-items: end;
   gap: 18px;
   margin: 0;
+  padding: 9px 11px;
+  border-radius: 12px;
+  background: var(--block-values);
 }
 .set-editor .number-field {
   flex: 0 0 auto;
@@ -361,7 +371,13 @@ main { max-width: 1180px; padding: 28px calc(32px + var(--safe-right)) 42px 32px
 }
 .set-editor .stepper button:hover { border-color: #a9bc93; background: var(--lime-soft); }
 .set-editor .stepper input { width: 54px; flex: 0 0 54px; background: transparent; font-size: 24px; }
-.set-effort { flex: 0 1 auto; min-width: 310px; padding: 0; }
+.set-effort {
+  flex: 0 1 auto;
+  min-width: 310px;
+  padding: 9px 11px;
+  border-radius: 12px;
+  background: var(--block-effort);
+}
 .set-editor .rir-label { align-items: center; gap: 8px; justify-content: flex-start; margin-bottom: 4px; font-size: 9px; font-weight: 720; }
 .rir-target { padding: 2px 6px; border-radius: 999px; background: var(--lime-soft); color: #45651e; font-size: 8px; }
 .set-editor .rir-buttons { display: flex; gap: 5px; }
@@ -374,7 +390,7 @@ main { max-width: 1180px; padding: 28px calc(32px + var(--safe-right)) 42px 32px
   padding: 4px 10px;
   border: 1px solid #dfe5dc;
   border-radius: 999px;
-  background: #fff;
+  background: #fffdf8;
   line-height: 1;
   text-align: center;
 }
