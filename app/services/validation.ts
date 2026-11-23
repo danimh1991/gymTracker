@@ -13,6 +13,7 @@ const muscleFocus = z.enum(["automatic", "full_body", "upper_body", "lower_body"
 const locationOverride = z.object({
   available: z.array(z.string().trim().min(1).max(80)).max(40),
   unavailable: z.array(z.string().trim().min(1).max(80)).max(40),
+  availableExerciseIds: z.array(z.string().min(1)).max(120).default([]),
   excludedExerciseIds: z.array(z.string().min(1)).max(120),
 });
 const dateKey = z

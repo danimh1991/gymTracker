@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { BrainCircuit, ChevronDown, Play, RefreshCw, Settings2, Sparkles } from "lucide-react";
-import type { AdaptiveConstraints, MuscleFocus, MuscleGroup, PlanExercise, SessionModality, Snapshot, TrainingLocation } from "../domain/types";
+import type { AdaptiveConstraints, LocationEquipmentOverride, MuscleFocus, MuscleGroup, PlanExercise, SessionModality, Snapshot, TrainingLocation } from "../domain/types";
 import type { Command } from "../services/validation";
 import { MUSCLE_GROUPS } from "../services/adaptive-planner";
 import { PlanEditor } from "./PlanEditor";
@@ -24,6 +24,7 @@ const LABELS: Record<MuscleGroup, string> = {
 const LOCATION_LABELS: Record<TrainingLocation, string> = { gym: "Gimnasio", calisthenics_park: "Parque de calistenia", home: "Casa", outdoors: "Aire libre sin equipamiento", hotel: "Hotel / viaje", custom: "Personalizado" };
 const MODALITY_LABELS: Record<SessionModality, string> = { general: "General adaptativo", hypertrophy: "Hipertrofia", calisthenics: "Calistenia", strength: "Fuerza", muscular_endurance: "Resistencia muscular", functional_mobility: "Funcional / movilidad" };
 const FOCUS_LABELS: Record<MuscleFocus, string> = { automatic: "Automático", full_body: "Cuerpo completo", upper_body: "Tren superior", lower_body: "Tren inferior", push: "Empuje", pull: "Tracción", back: "Espalda", chest: "Pecho", shoulders: "Hombros", arms: "Brazos completos", biceps: "Bíceps", triceps: "Tríceps", quads: "Cuádriceps", posterior_chain: "Cadena posterior", calves: "Gemelos", core: "Abdomen / core" };
+const emptyLocationOverride = (): LocationEquipmentOverride => ({ available: [], unavailable: [], availableExerciseIds: [], excludedExerciseIds: [] });
 
 function clock(seconds: number) {
   const safe = Math.max(0, Math.round(seconds));
@@ -115,8 +116,9 @@ export function Coach({
         equipmentProfile,
         excludedExerciseIds: excludedExercises,
         defaultTrainingLocation: location,
-        locationEquipmentOverrides: locationOverrides,
-        customEquipmentProfiles: customProfiles,
+        locationEquipmentOverrides: Object.fromEntries(Object.entries(locationOverrides)
+          .map(([key, value]) => [key, { ...value!, availableExerciseIds: value?.availableExerciseIds ?? [] }])),
+        customEquipmentProfiles: customProfiles.map((profile) => ({ ...profile, availableExerciseIds: profile.availableExerciseIds ?? [] })),
         usualFrequency: frequency,
         variationLevel: variation,
         priorities,
@@ -134,30 +136,36 @@ export function Coach({
   function list(value: string) { return value.split(",").map((item) => item.trim()).filter(Boolean); }
   function updateLocationOverride(field: "available" | "unavailable", value: string) {
     if (location === "custom") return;
-    const current = locationOverrides[location] ?? { available: [], unavailable: [], excludedExerciseIds: [] };
+    const current = locationOverrides[location] ?? emptyLocationOverride();
     setLocationOverrides({ ...locationOverrides, [location]: { ...current, [field]: list(value) } });
   }
   function addCustomProfile() {
     const id = crypto.randomUUID();
-    setCustomProfiles([...customProfiles, { id, name: "Nuevo perfil", baseLocation: "hotel", available: ["Peso corporal", "Suelo"], unavailable: [], excludedExerciseIds: [], exercisePreferences: {} }]);
+    setCustomProfiles([...customProfiles, { id, name: "Nuevo perfil", baseLocation: "hotel", available: ["Peso corporal", "Suelo"], unavailable: [], availableExerciseIds: [], excludedExerciseIds: [], exercisePreferences: {} }]);
     setCustomProfileId(id); setLocation("custom");
   }
-  function toggleLocationExercise(exerciseId: string, checked: boolean) {
+  function setLocationExerciseStatus(exerciseId: string, status: "automatic" | "available" | "unavailable") {
     if (location === "custom") {
       setCustomProfiles(customProfiles.map((profile) => profile.id === customProfileId
-        ? { ...profile, excludedExerciseIds: checked ? [...profile.excludedExerciseIds, exerciseId] : profile.excludedExerciseIds.filter((id) => id !== exerciseId) } : profile));
+        ? { ...profile,
+          availableExerciseIds: status === "available" ? [...new Set([...(profile.availableExerciseIds ?? []), exerciseId])] : (profile.availableExerciseIds ?? []).filter((id) => id !== exerciseId),
+          excludedExerciseIds: status === "unavailable" ? [...new Set([...profile.excludedExerciseIds, exerciseId])] : profile.excludedExerciseIds.filter((id) => id !== exerciseId) } : profile));
       return;
     }
-    const current = locationOverrides[location] ?? { available: [], unavailable: [], excludedExerciseIds: [] };
+    const current = locationOverrides[location] ?? emptyLocationOverride();
     setLocationOverrides({ ...locationOverrides, [location]: { ...current,
-      excludedExerciseIds: checked ? [...current.excludedExerciseIds, exerciseId] : current.excludedExerciseIds.filter((id) => id !== exerciseId) } });
+      availableExerciseIds: status === "available" ? [...new Set([...(current.availableExerciseIds ?? []), exerciseId])] : (current.availableExerciseIds ?? []).filter((id) => id !== exerciseId),
+      excludedExerciseIds: status === "unavailable" ? [...new Set([...current.excludedExerciseIds, exerciseId])] : current.excludedExerciseIds.filter((id) => id !== exerciseId) } });
   }
   function updateCustomProfile(patch: Partial<(typeof customProfiles)[number]>) {
     setCustomProfiles(customProfiles.map((profile) => profile.id === customProfileId ? { ...profile, ...patch } : profile));
   }
-  const currentOverride = location === "custom" ? null : locationOverrides[location] ?? { available: [], unavailable: [], excludedExerciseIds: [] };
+  const currentOverride = location === "custom" ? null : locationOverrides[location] ?? emptyLocationOverride();
   const currentCustomProfile = customProfiles.find((profile) => profile.id === customProfileId);
+  const locationAvailableExercises = location === "custom" ? currentCustomProfile?.availableExerciseIds ?? [] : currentOverride?.availableExerciseIds ?? [];
   const locationExcluded = location === "custom" ? currentCustomProfile?.excludedExerciseIds ?? [] : currentOverride?.excludedExerciseIds ?? [];
+  const configurableExercises = data.exercises.filter((item) => item.enabled && item.planningStatus === "active")
+    .sort((a, b) => a.equipment.localeCompare(b.equipment, "es") || a.name.localeCompare(b.name, "es"));
 
   async function start() {
     if (!generated || !plan.length) return;
@@ -214,7 +222,7 @@ export function Coach({
           <button className="secondary" type="button" onClick={addCustomProfile}>Crear perfil</button>
         </div> : <div className="coach-setting-basics"><label><span>Confirmado disponible</span><input value={(currentOverride?.available ?? []).join(", ")} onChange={(e) => updateLocationOverride("available", e.target.value)} placeholder="Añade excepciones al perfil inicial" /></label><label><span>Confirmado no disponible</span><input value={(currentOverride?.unavailable ?? []).join(", ")} onChange={(e) => updateLocationOverride("unavailable", e.target.value)} placeholder="Bandas, poleas, barra…" /></label></div>}
         {location === "custom" && currentCustomProfile && <details className="exercise-preferences"><summary>Preferencias específicas del perfil</summary><div className="priority-grid">{data.exercises.filter((item) => item.enabled).map((exercise) => <label key={exercise.id}><span>{exercise.name}</span><select value={currentCustomProfile.exercisePreferences[exercise.id] ?? 3} onChange={(e) => updateCustomProfile({ exercisePreferences: { ...currentCustomProfile.exercisePreferences, [exercise.id]: Number(e.target.value) } })}>{[1,2,3,4,5].map((value) => <option key={value}>{value}</option>)}</select></label>)}</div></details>}
-        <details className="exercise-preferences"><summary>Ejercicios no disponibles en este lugar</summary><div className="priority-grid">{data.exercises.filter((item) => item.enabled && item.planningStatus === "active").map((exercise) => <label key={exercise.id}><span><input type="checkbox" checked={locationExcluded.includes(exercise.id)} onChange={(e) => toggleLocationExercise(exercise.id, e.target.checked)} /> {exercise.name}</span></label>)}</div></details>
+        <details className="exercise-preferences"><summary>Ejercicios por equipamiento en este lugar</summary><p className="muted">Automático usa el equipamiento configurado. «Disponible» fuerza una excepción para este lugar y «No disponible» la bloquea solo aquí.</p><div className="priority-grid">{configurableExercises.map((exercise) => { const status = locationExcluded.includes(exercise.id) ? "unavailable" : locationAvailableExercises.includes(exercise.id) ? "available" : "automatic"; return <label key={exercise.id}><span>{exercise.name}<small>{exercise.equipment}</small></span><select value={status} onChange={(e) => setLocationExerciseStatus(exercise.id, e.target.value as typeof status)}><option value="automatic">Automático</option><option value="available">Disponible aquí</option><option value="unavailable">No disponible aquí</option></select></label>; })}</div></details>
         <h3>Prioridad global por estímulo</h3><div className="priority-grid">{MUSCLE_GROUPS.map((group) => <label key={group}><span>{LABELS[group]}</span><select value={priorities[group]} onChange={(e) => setPriorities({ ...priorities, [group]: Number(e.target.value) })}>{[1,2,3,4,5].map((v) => <option key={v} value={v}>{v}</option>)}</select></label>)}</div>
         <details className="exercise-preferences"><summary>Preferencia por ejercicio</summary><div className="priority-grid">{data.exercises.filter((item) => item.enabled).map((exercise) => <label key={exercise.id}><span>{exercise.name}</span><select value={preferences[exercise.id] ?? 3} onChange={(e) => setPreferences({ ...preferences, [exercise.id]: Number(e.target.value) })}>{[1,2,3,4,5].map((v) => <option key={v} value={v}>{v}</option>)}</select></label>)}</div></details>
         <button className="secondary" disabled={busy} onClick={() => void saveSettings()}>Guardar configuración</button>

@@ -1393,14 +1393,14 @@ test("Adaptive 1.2 filtra gimnasio, parque, casa, exterior, hotel y perfil perso
     location: "home", modality: "general", muscleFocus: "automatic" }, context);
   assert.ok(bareHomePlan.every((row) => !/Mancuerna|Máquina|Polea|Prensa/i.test(data.exercises.find((exercise) => exercise.id === row.exerciseId)!.equipment)));
   assert.ok(bareHomePlan.every((row) => !["pullup", "dip", "row"].includes(row.exerciseId)));
-  data.settings.locationEquipmentOverrides.home = { available: ["Mancuernas"], unavailable: [], excludedExerciseIds: [] };
+  data.settings.locationEquipmentOverrides.home = { available: ["Mancuernas"], unavailable: [], availableExerciseIds: ["pullup"], excludedExerciseIds: [] };
   data.settings.customEquipmentProfiles = [{ id: "hotel-basic", name: "Gimnasio del hotel", baseLocation: "hotel",
     available: ["Peso corporal", "Suelo", "Mancuernas"], unavailable: ["Poleas", "Máquinas"], excludedExerciseIds: ["pushup"], exercisePreferences: {} }];
   for (const location of ["gym", "calisthenics_park", "home", "outdoors", "hotel", "custom"] as const) {
     const profile = resolveEquipmentForLocation(data.settings, location, location === "custom" ? "hotel-basic" : null);
     const constraints = { durationMinutes: 45 as const, energy: "normal" as const, blockedExerciseIds: profile.excludedExerciseIds,
       equipment: profile.available, unavailableEquipment: profile.unavailable, equipmentProfile: profile.equipmentProfile,
-      location, modality: "general" as const, muscleFocus: "automatic" as const };
+      availableExerciseIds: profile.availableExerciseIds, location, modality: "general" as const, muscleFocus: "automatic" as const };
     const plan = deterministicPlan(data, constraints, context);
     assert.ok(plan.length > 0, location);
     assert.ok(plan.every((row) => equipmentMatches(data.exercises.find((exercise) => exercise.id === row.exerciseId)!, constraints)), location);
@@ -1411,6 +1411,7 @@ test("Adaptive 1.2 filtra gimnasio, parque, casa, exterior, hotel y perfil perso
       assert.ok(plan.every((row) => !["pullup", "dip", "row"].includes(row.exerciseId)));
     }
     if (location === "custom") assert.ok(plan.every((row) => row.exerciseId !== "pushup"));
+    if (location === "home") assert.equal(equipmentMatches(data.exercises.find((exercise) => exercise.id === "pullup")!, constraints), true);
   }
   sql.close();
 });
@@ -1583,8 +1584,8 @@ test("el presupuesto temporal solo descuenta el calentamiento general cuando se 
   await repo.execute({ action: "setTrainerSettings", settings: {
     defaultDurationMinutes: 45, includeWarmupInDuration: 1, generalWarmupMinutes: 7,
     equipmentProfile: "full_gym", excludedExerciseIds: [],
-    defaultTrainingLocation: "home", locationEquipmentOverrides: { home: { available: ["Mancuernas"], unavailable: ["Poleas"], excludedExerciseIds: ["dip"] } },
-    customEquipmentProfiles: [{ id: "travel-kit", name: "Viaje", baseLocation: "hotel", available: ["Bandas"], unavailable: ["Máquinas"], excludedExerciseIds: [], exercisePreferences: { pushup: 5 } }],
+    defaultTrainingLocation: "home", locationEquipmentOverrides: { home: { available: ["Mancuernas"], unavailable: ["Poleas"], availableExerciseIds: ["pullup"], excludedExerciseIds: ["dip"] } },
+    customEquipmentProfiles: [{ id: "travel-kit", name: "Viaje", baseLocation: "hotel", available: ["Bandas"], unavailable: ["Máquinas"], availableExerciseIds: [], excludedExerciseIds: [], exercisePreferences: { pushup: 5 } }],
     usualFrequency: data.settings.usualFrequency, variationLevel: data.settings.variationLevel,
     priorities: data.settings.priorities, exercisePreferences: data.settings.exercisePreferences,
     availableEquipment: data.settings.availableEquipment,
@@ -1594,6 +1595,7 @@ test("el presupuesto temporal solo descuenta el calentamiento general cuando se 
   assert.equal(data.settings.generalWarmupMinutes, 7);
   assert.equal(data.settings.defaultTrainingLocation, "home");
   assert.deepEqual(data.settings.locationEquipmentOverrides.home?.excludedExerciseIds, ["dip"]);
+  assert.deepEqual(data.settings.locationEquipmentOverrides.home?.availableExerciseIds, ["pullup"]);
   assert.equal(data.settings.customEquipmentProfiles[0]?.name, "Viaje");
   assert.deepEqual(adaptiveTimeBudget(data, constraints), { totalSeconds: 2700, generalWarmupSeconds: 420, mainSessionSeconds: 2280 });
   const plan = deterministicPlan(data, constraints, buildAdaptiveContext(data));

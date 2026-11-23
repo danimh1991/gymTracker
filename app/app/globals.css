@@ -2426,6 +2426,9 @@ textarea {
 .coach-setting-basics input, .coach-setting-basics select { min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: 9px; background: #fff; color: inherit; }
 .exercise-preferences { margin: 18px 0; }
 .exercise-preferences summary { cursor: pointer; font-weight: 800; }
+.exercise-preferences .priority-grid select { width: min(150px, 46%); }
+.exercise-preferences .priority-grid label > span { display: grid; gap: 3px; min-width: 0; }
+.exercise-preferences .priority-grid small { color: var(--muted); font-size: 0.72rem; font-weight: 600; }
 .coach-blocked { margin: 18px 0; padding: 14px 18px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
 .coach-blocked summary { cursor: pointer; font-weight: 750; }
 .coach-blocked > div { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 14px; max-height: 280px; margin-top: 14px; overflow: auto; }

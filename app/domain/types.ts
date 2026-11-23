@@ -24,6 +24,7 @@ export type MuscleFocus = "automatic" | "full_body" | "upper_body" | "lower_body
 export interface LocationEquipmentOverride {
   available: string[];
   unavailable: string[];
+  availableExerciseIds?: string[];
   excludedExerciseIds: string[];
 }
 export interface CustomEquipmentProfile extends LocationEquipmentOverride {
@@ -189,6 +190,7 @@ export interface AdaptiveConstraints {
   equipment: string[];
   equipmentProfile?: "full_gym" | "custom";
   unavailableEquipment?: string[];
+  availableExerciseIds?: string[];
   location?: TrainingLocation;
   customEquipmentProfileId?: string | null;
   equipmentProfileVersion?: string;

@@ -24,6 +24,7 @@
 - Con `equipmentProfile: full_gym`, considera disponibles mancuernas, barras, bancos, poleas, máquinas generales, prensa, barra de dominadas y paralelas, salvo IDs bloqueados. Una etiqueta genérica `Gimnasio` describe el entorno y no un aparato independiente.
 - Con perfil personalizado usa capacidades normalizadas: singular/plural y descripciones compuestas como `Gimnasio / polea` no requieren coincidencia literal.
 - Respeta `location`, la lista elegible estructurada, las ausencias confirmadas y los bloqueos del perfil. Parque, casa, exterior y hotel no heredan máquinas del gimnasio.
+- `availableExerciseIds` y los bloqueos por ubicación son excepciones explícitas del usuario: prevalecen sobre la inferencia automática de equipamiento y solo afectan a ese lugar o perfil.
 - `modality` y `muscleFocus` son modificadores de esta sesión, nunca prioridades globales ni plantillas fijas. General + automático conserva la planificación adaptativa normal.
 - Hipertrofia favorece tensión sostenible y trabajo directo; calistenia prioriza peso corporal; fuerza mantiene movimientos medibles, descansos y continuidad; resistencia usa rangos repetibles; funcional/movilidad es voluntario y de baja fatiga.
 - Un enfoque específico debe recibir trabajo directo recuperable. Hipertrofia + brazos requiere bíceps y tríceps directos cuando ambos estén recuperados; no cuentes solo estímulo indirecto.

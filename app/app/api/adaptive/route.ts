@@ -61,6 +61,7 @@ export async function POST(request: Request) {
       location,
       equipment: equipmentContext.available,
       unavailableEquipment: equipmentContext.unavailable,
+      availableExerciseIds: equipmentContext.availableExerciseIds,
       equipmentProfile: equipmentContext.equipmentProfile,
       equipmentProfileVersion: equipmentContext.version,
       customEquipmentProfileId: equipmentContext.profileId,

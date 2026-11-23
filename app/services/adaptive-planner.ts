@@ -48,14 +48,14 @@ export function resolveEquipmentForLocation(settings: TrainerSettings, location:
     const profile = settings.customEquipmentProfiles.find((item) => item.id === customProfileId) ?? settings.customEquipmentProfiles[0];
     return {
       name: profile?.name ?? "Personalizado", available: profile?.available ?? [], unavailable: profile?.unavailable ?? [],
-      excludedExerciseIds: profile?.excludedExerciseIds ?? [], exercisePreferences: profile?.exercisePreferences ?? {},
+      availableExerciseIds: profile?.availableExerciseIds ?? [], excludedExerciseIds: profile?.excludedExerciseIds ?? [], exercisePreferences: profile?.exercisePreferences ?? {},
       equipmentProfile: "custom" as const, profileId: profile?.id ?? null, version: EQUIPMENT_PROFILE_VERSION,
     };
   }
   const override = settings.locationEquipmentOverrides[location];
   return {
     name: location, available: [...new Set([...LOCATION_EQUIPMENT[location], ...(override?.available ?? [])])],
-    unavailable: override?.unavailable ?? [], excludedExerciseIds: override?.excludedExerciseIds ?? [],
+    unavailable: override?.unavailable ?? [], availableExerciseIds: override?.availableExerciseIds ?? [], excludedExerciseIds: override?.excludedExerciseIds ?? [],
     exercisePreferences: {}, equipmentProfile: location === "gym" ? "full_gym" as const : "custom" as const,
     profileId: location, version: EQUIPMENT_PROFILE_VERSION,
   };
@@ -224,6 +224,7 @@ function equipmentCapabilities(value: string) {
 }
 
 export function equipmentMatches(exercise: Exercise, constraints: AdaptiveConstraints) {
+  if (constraints.availableExerciseIds?.includes(exercise.id)) return true;
   const required = equipmentCapabilities(exercise.equipment);
   if (/^pullup/.test(exercise.id) && !required.has("assisted_pullup_machine")) required.add("pullup_bar");
   if (exercise.id === "dip") required.add("dip_bars");

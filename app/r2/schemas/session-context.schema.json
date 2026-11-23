@@ -11,7 +11,7 @@
     "objectives": { "type": "object", "required": ["hypertrophy", "strengthCalisthenics", "functionalHealth"] },
     "constraints": {
       "type": "object",
-      "required": ["durationMinutes", "energy", "location", "modality", "muscleFocus", "equipment", "unavailableEquipment", "equipmentProfileVersion"],
+      "required": ["durationMinutes", "energy", "location", "modality", "muscleFocus", "equipment", "unavailableEquipment", "availableExerciseIds", "equipmentProfileVersion"],
       "properties": {
         "durationMinutes": { "enum": [30, 45, 50, 60, 75] },
         "energy": { "enum": ["low", "normal", "high"] },
@@ -20,6 +20,7 @@
         "muscleFocus": { "enum": ["automatic", "full_body", "upper_body", "lower_body", "push", "pull", "back", "chest", "shoulders", "arms", "biceps", "triceps", "quads", "posterior_chain", "calves", "core"] },
         "equipment": { "type": "array", "items": { "type": "string" } },
         "unavailableEquipment": { "type": "array", "items": { "type": "string" } },
+        "availableExerciseIds": { "type": "array", "items": { "type": "string" } },
         "equipmentProfileVersion": { "type": "string" }
       }
     },
