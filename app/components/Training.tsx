@@ -78,6 +78,7 @@ function WorkoutExerciseEditor({
         value={draft.exerciseId}
         onChange={(exerciseId) => setDraft({ ...draft, exerciseId })}
       />
+      <div className="exercise-editor-values">
       <label>
         Series
         <input
@@ -120,6 +121,7 @@ function WorkoutExerciseEditor({
           onChange={(event) => setDraft({ ...draft, rir: event.target.value })}
         />
       </label>
+      </div>
       <div className="exercise-edit-actions">
         <button
           type="button"
@@ -444,45 +446,47 @@ export function Training({
                       {techniqueText}
                     </p>
                   )}
-                  <div className="reference">
-                    <span>ÚLTIMA VEZ</span>
-                    {prev.length ? (
-                      <strong className="reference-sets">
-                        {prev.map((s) => (
-                          <span className="reference-set" key={s.id}>
-                            <span className="reference-performance">
-                              {s.reps ?? `${s.durationSeconds}s`} ·{" "}
-                              {loadLabel(s, !!e.bodyweightExercise)}
+                  <div className="exercise-context-row">
+                    <div className="reference">
+                      <span>ÚLTIMA VEZ</span>
+                      {prev.length ? (
+                        <strong className="reference-sets">
+                          {prev.map((s) => (
+                            <span className="reference-set" key={s.id}>
+                              <span className="reference-performance">
+                                {s.reps ?? `${s.durationSeconds}s`} ·{" "}
+                                {loadLabel(s, !!e.bodyweightExercise)}
+                              </span>
+                              <small
+                                className={s.RIR === 0 ? "failure-text" : ""}
+                              >
+                                {s.RIR === 0 ? "Fallo" : `RIR ${s.RIR ?? "—"}`}
+                              </small>
                             </span>
-                            <small
-                              className={s.RIR === 0 ? "failure-text" : ""}
-                            >
-                              {s.RIR === 0 ? "Fallo" : `RIR ${s.RIR ?? "—"}`}
-                            </small>
-                          </span>
-                        ))}
-                      </strong>
-                    ) : (
-                      <strong>Aún sin registros</strong>
+                          ))}
+                        </strong>
+                      ) : (
+                        <strong>Aún sin registros</strong>
+                      )}
+                    </div>
+                    {previousDecision && (
+                      <div className={`load-reminder ${previousDecision}`}>
+                        {previousDecision === "increase" ? (
+                          <ArrowUp size={18} />
+                        ) : (
+                          <Minus size={18} />
+                        )}
+                        <div>
+                          <span>RECOMENDACIÓN</span>
+                          <strong>
+                            {previousDecision === "increase"
+                              ? "Subir peso"
+                              : "Mantener peso"}
+                          </strong>
+                        </div>
+                      </div>
                     )}
                   </div>
-                  {previousDecision && (
-                    <div className={`load-reminder ${previousDecision}`}>
-                      {previousDecision === "increase" ? (
-                        <ArrowUp size={18} />
-                      ) : (
-                        <Minus size={18} />
-                      )}
-                      <div>
-                        <span>INDICACIÓN DE LA ÚLTIMA VEZ</span>
-                        <strong>
-                          {previousDecision === "increase"
-                            ? "Hoy toca subir peso"
-                            : "Hoy toca mantener el peso"}
-                        </strong>
-                      </div>
-                    </div>
-                  )}
                   {["handstand", "pushup-hard"].includes(e.exerciseId) && (
                     <label className="field">
                       Variante
