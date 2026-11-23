@@ -12,8 +12,9 @@ import { buildAdaptiveContext } from "../services/adaptive-planner";
 const MUSCLE_LABEL: Record<string, string> = {
   vertical_pull: "Tracción vertical", horizontal_pull: "Tracción horizontal",
   chest: "Pecho", vertical_push: "Empuje vertical", lateral_rear_delts: "Deltoides",
-  biceps: "Bíceps", triceps: "Tríceps", quadriceps: "Cuádriceps",
+  biceps: "Bíceps", triceps: "Tríceps", quads: "Cuádriceps", quadriceps: "Cuádriceps",
   posterior_chain: "Cadena posterior", core: "Core", calves: "Gemelos",
+  forearms_grip: "Antebrazo y agarre",
 };
 
 const DAY = 86_400_000;

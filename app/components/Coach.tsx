@@ -178,16 +178,22 @@ export function Coach({
       <section className="coach-hero">
         <div className="coach-hero-copy">
           <span className="tag lime"><Sparkles size={14} /> ENTRENADOR ADAPTATIVO</span>
-          <h1>¿Qué necesita tu cuerpo <span>hoy?</span></h1>
-          <p>Analizo recuperación, volumen reciente, prioridades y progresión antes de elegir ejercicios concretos.</p>
+          <h1>Prepara tu sesión de <span>hoy</span></h1>
+          <p>Ajusta lo esencial. El entrenador cruza recuperación, volumen y progresión para construir una sesión realista.</p>
+          <div className="coach-context-strip">
+            <span><strong>{duration}</strong> min</span>
+            <span><strong>{LOCATION_LABELS[location]}</strong> lugar</span>
+            <span><strong>{FOCUS_LABELS[muscleFocus]}</strong> enfoque</span>
+          </div>
         </div>
         <div className="coach-controls">
-          <label><span>Lugar de entrenamiento</span><select value={location} onChange={(e) => setLocation(e.target.value as TrainingLocation)}>{Object.entries(LOCATION_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+          <div className="coach-control-heading"><span>CONFIGURA TU ENTRENO</span><small>3 decisiones rápidas</small></div>
+          <label className="coach-control-wide"><span>Lugar</span><select value={location} onChange={(e) => setLocation(e.target.value as TrainingLocation)}>{Object.entries(LOCATION_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
           {location === "custom" && (customProfiles.length ? <label><span>Perfil personalizado</span><select value={customProfileId} onChange={(e) => setCustomProfileId(e.target.value)}>{customProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.name}</option>)}</select></label> : <button className="secondary" type="button" onClick={addCustomProfile}>Crear perfil personalizado</button>)}
-          <label><span>Tiempo disponible</span><select value={duration} onChange={(e) => setDuration(Number(e.target.value) as typeof duration)}>{[30,45,50,60,75].map((v) => <option key={v} value={v}>{v} min</option>)}</select></label>
-          <label><span>Energía de hoy</span><select value={energy} onChange={(e) => setEnergy(e.target.value as typeof energy)}><option value="low">Baja</option><option value="normal">Normal</option><option value="high">Alta</option></select></label>
+          <fieldset className="coach-segment-field"><legend>Tiempo</legend><div className="coach-segments">{[30,45,50,60,75].map((v) => <button type="button" className={duration === v ? "active" : ""} key={v} onClick={() => setDuration(v as typeof duration)}>{v}</button>)}</div></fieldset>
+          <fieldset className="coach-segment-field"><legend>Energía</legend><div className="coach-segments three">{([['low','Baja'],['normal','Normal'],['high','Alta']] as const).map(([value,label]) => <button type="button" className={energy === value ? "active" : ""} key={value} onClick={() => setEnergy(value)}>{label}</button>)}</div></fieldset>
           <label><span>Modalidad</span><select value={modality} onChange={(e) => setModality(e.target.value as SessionModality)}>{Object.entries(MODALITY_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-          <label><span>Enfoque muscular</span><select value={muscleFocus} onChange={(e) => setMuscleFocus(e.target.value as MuscleFocus)}>{Object.entries(FOCUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+          <label><span>Enfoque</span><select value={muscleFocus} onChange={(e) => setMuscleFocus(e.target.value as MuscleFocus)}>{Object.entries(FOCUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
           <label className="warmup-time-toggle"><span><input type="checkbox" checked={includeWarmup} onChange={(e) => setIncludeWarmup(e.target.checked)} /> Incluir calentamiento en el tiempo</span><small>{includeWarmup ? `${warmupMinutes} min de calentamiento; ${duration - warmupMinutes} min de sesión principal` : `${duration} min íntegros para la sesión principal`}</small></label>
           <button className="primary coach-generate" disabled={busy} onClick={() => void createSession()}>{generated ? <RefreshCw size={18} /> : <BrainCircuit size={18} />}{busy ? "Analizando…" : generated ? "Regenerar propuesta" : "Preparar mi sesión"}</button>
           <button className="coach-settings-button" onClick={() => setSettingsOpen(!settingsOpen)}><Settings2 size={17} /> Ajustar prioridades <ChevronDown size={16} /></button>

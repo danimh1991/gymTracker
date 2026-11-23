@@ -5,6 +5,7 @@ import {
   BookOpen,
   ChartNoAxesCombined,
   Dumbbell,
+  Ellipsis,
   History as HistoryIcon,
   House,
   LockKeyhole,
@@ -41,7 +42,8 @@ export default function Tracker({ onLock }: { onLock?: () => void }) {
   const summary = summaryView.value;
   const [demo, updateDemo] = useState(false),
     [userId, setUserId] = useState(""),
-    [selected, setSelected] = useState<DayKey>("A");
+    [selected, setSelected] = useState<DayKey>("A"),
+    [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   useEffect(() => {
     try {
       updateDemo(sessionStorage.getItem("gym-demo") === "1");
@@ -76,6 +78,7 @@ export default function Tracker({ onLock }: { onLock?: () => void }) {
     );
   }, [last?.id, active?.id, demo, data?.settings.trainingDays]);
   const navigate = (p: AppPage) => {
+    setMobileMoreOpen(false);
     navigationState.navigate(p);
   };
   async function start(
@@ -275,8 +278,21 @@ export default function Tracker({ onLock }: { onLock?: () => void }) {
           GYMTRACKER <span>Construyendo fuerza, sesión a sesión.</span>
         </footer>
       </div>
-      <nav className="bottom-nav">
-        {navigation.map((n) => (
+      {mobileMoreOpen && (
+        <div className="mobile-more-backdrop" onClick={() => setMobileMoreOpen(false)}>
+          <section className="mobile-more-sheet" aria-label="Más secciones" onClick={(event) => event.stopPropagation()}>
+            <div className="mobile-more-handle" />
+            <p className="eyebrow">MÁS EN GYMTRACKER</p>
+            <div className="mobile-more-grid">
+              <button onClick={() => navigate("exercises")}><BookOpen size={21} /><span><strong>Ejercicios</strong><small>Biblioteca y movimientos</small></span></button>
+              <button onClick={() => navigate("templates")}><Activity size={21} /><span><strong>Plantillas</strong><small>Rutinas guardadas</small></span></button>
+              <button onClick={() => navigate("more")}><Settings size={21} /><span><strong>Ajustes</strong><small>Perfil, peso y datos</small></span></button>
+            </div>
+          </section>
+        </div>
+      )}
+      <nav className="bottom-nav" aria-label="Navegación principal">
+        {navigation.slice(0, 4).map((n) => (
           <button
             key={n.id}
             className={page === n.id ? "nav-active" : ""}
@@ -286,6 +302,14 @@ export default function Tracker({ onLock }: { onLock?: () => void }) {
             <span>{n.name}</span>
           </button>
         ))}
+        <button
+          className={mobileMoreOpen || ["exercises", "templates", "more"].includes(page) ? "nav-active" : ""}
+          aria-expanded={mobileMoreOpen}
+          onClick={() => setMobileMoreOpen((open) => !open)}
+        >
+          <Ellipsis size={21} />
+          <span>Más</span>
+        </button>
       </nav>
     </div>
   );

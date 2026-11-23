@@ -46,7 +46,10 @@ export function PlanEditor({
               disabled={lockedIds.has(i)}
               onChange={(exerciseId) => patch(i, { exerciseId })}
             />
+            <span className="plan-summary">{row.sets} × {row.repMin}–{row.repMax} · RIR {row.rir}</span>
           </div>
+          <details className="plan-details">
+            <summary>Ajustar series, repeticiones y orden</summary>
           <div className="plan-targets">
             <label>
               Series
@@ -113,6 +116,7 @@ export function PlanEditor({
               <Trash2 size={17} />
             </button>
           </div>
+          </details>
           {row.reason && <p className="muted">{row.reason}</p>}
           <p className="muted">{loadText(row)}{row.unilateralPerSide ? " · Series y descansos por lado" : ""}{row.estimatedSeconds ? ` · ~${Math.ceil(row.estimatedSeconds / 60)} min` : ""}</p>
           {row.notes && <p className="muted">{row.notes}</p>}
