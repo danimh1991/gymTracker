@@ -570,7 +570,7 @@ export function Training({
                               }}
                             >
                               <CopyPlus size={16} />
-                              Clonar
+                              <span>Clonar</span>
                             </button>
                           )}
                           <button

@@ -305,6 +305,7 @@ main { max-width: 1180px; padding: 28px calc(32px + var(--safe-right)) 42px 32px
 }
 .training-card.expanded .saved-set-wrap .clone-set svg,
 .training-card.expanded .saved-set-wrap .delete-set svg { display: block; width: 14px; height: 14px; margin: 0; }
+.training-card.expanded .saved-set-wrap .clone-set span { display: none; }
 .set-editor {
   display: flex;
   flex-wrap: wrap;
