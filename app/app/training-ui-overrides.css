@@ -288,6 +288,9 @@ main { max-width: 1180px; padding: 28px calc(32px + var(--safe-right)) 42px 32px
 .training-card.expanded .saved-set-wrap > button:first-child small { display: none; }
 .training-card.expanded .saved-set-wrap .clone-set,
 .training-card.expanded .saved-set-wrap .delete-set {
+  display: grid;
+  place-items: center;
+  align-self: stretch;
   min-width: 32px;
   width: 32px;
   min-height: 32px;
@@ -296,7 +299,7 @@ main { max-width: 1180px; padding: 28px calc(32px + var(--safe-right)) 42px 32px
   font-size: 0;
 }
 .training-card.expanded .saved-set-wrap .clone-set svg,
-.training-card.expanded .saved-set-wrap .delete-set svg { width: 14px; height: 14px; }
+.training-card.expanded .saved-set-wrap .delete-set svg { display: block; width: 14px; height: 14px; margin: 0; }
 .set-editor {
   display: flex;
   flex-wrap: wrap;
@@ -363,8 +366,8 @@ main { max-width: 1180px; padding: 28px calc(32px + var(--safe-right)) 42px 32px
 .rir-target { padding: 2px 6px; border-radius: 999px; background: var(--lime-soft); color: #45651e; font-size: 8px; }
 .set-editor .rir-buttons { display: flex; gap: 5px; }
 .set-editor .rir-buttons button {
-  display: flex;
-  align-items: baseline;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
   gap: 4px;
   min-height: 34px;
@@ -372,9 +375,11 @@ main { max-width: 1180px; padding: 28px calc(32px + var(--safe-right)) 42px 32px
   border: 1px solid #dfe5dc;
   border-radius: 999px;
   background: #fff;
+  line-height: 1;
+  text-align: center;
 }
-.set-editor .rir-buttons strong { font-size: 13px; }
-.set-editor .rir-buttons small { color: var(--muted); font-size: 8px; }
+.set-editor .rir-buttons strong { display: block; font-size: 13px; line-height: 1; }
+.set-editor .rir-buttons small { display: block; color: var(--muted); font-size: 8px; line-height: 1; }
 .set-editor .rir-buttons .chosen { border-color: var(--deep); background: var(--deep); color: var(--lime); }
 .set-editor .rir-buttons .chosen small { color: #dbe8ce; }
 .set-editor-footer { display: flex; align-items: center; gap: 9px; margin: 0 0 0 auto; }
@@ -501,7 +506,7 @@ main { max-width: 1180px; padding: 28px calc(32px + var(--safe-right)) 42px 32px
   .training-card.expanded .reference-sets { flex-wrap: wrap; gap: 3px 9px; }
   .training-card.expanded .reference-set:not(:last-child)::after { margin-left: 5px; }
   .training-card.expanded .load-reminder { margin: 0; padding: 6px 8px; }
-  .training-card.expanded .saved-sets { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; }
+  .training-card.expanded .saved-sets { flex-wrap: wrap; overflow: visible; padding-bottom: 0; }
   .set-editor { align-items: center; gap: 10px 12px; margin-top: 3px; padding-top: 11px; }
   .set-editor-heading { flex: 1 0 auto; }
   .set-position strong { font-size: 21px; }
